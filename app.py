@@ -13,7 +13,7 @@ st.markdown("""
     .main { background-color: #f5f7f9; }
     .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     </style>
-    """, unsafe_content_type=True)
+    """, unsafe_allow_html=True)
 
 st.title("🌱 AgroLog IA Professional")
 st.write("Analisi Predittiva ESG, Sequestro Carbonio e Benchmarking Territoriale")
