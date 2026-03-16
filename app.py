@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+# AGGIUNGI QUESTA LINEA:
+import plotly.figure_factory as ff 
 from fpdf import FPDF
 
 # CONFIGURAZIONE ELITE
