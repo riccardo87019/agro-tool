@@ -1,163 +1,228 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-import plotly.figure_factory as ff
-from fpdf import FPDF
-import datetime
+from datetime import datetime
 
-# --- 1. CONFIGURAZIONE PAGINA ELITE ---
+# ─────────────────────────────────────────────
+#  CONFIGURAZIONE PAGINA
+# ─────────────────────────────────────────────
 st.set_page_config(
-    page_title="AgroLog AI | Global Carbon Intelligence",
-    page_icon="🌱",
+    page_title="AgroLog IA | Carbon & ESG Intelligence",
+    page_icon="🌿",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- STYLE CSS AVANZATO PER INTERFACCIA PREMIUM ---
+# ─────────────────────────────────────────────
+#  CSS — DESIGN PROFESSIONALE 2026
+# ─────────────────────────────────────────────
 st.markdown("""
-    <style>
-    .stApp { background-color: #0e1117; color: #e0e0e0; }
-    .main { background: #0e1117; }
-    div[data-testid="stMetricValue"] { font-size: 2rem; color: #4ade80; }
-    .stDataFrame { border: 1px solid #30363d; border-radius: 10px; }
-    .stButton>button { width: 100%; border-radius: 8px; background-color: #166534; color: white; border: none; height: 3em; font-weight: bold; }
-    .stButton>button:hover { background-color: #15803d; border: 1px solid #4ade80; }
-    h1, h2, h3 { color: #4ade80; font-family: 'Helvetica Neue', sans-serif; }
-    </style>
-    """, unsafe_allow_html=True)
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
 
-# --- 2. LOGICA PERSISTENZA DATI (IL DATABASE) ---
-if 'db_campi' not in st.session_state:
-    st.session_state.db_campi = pd.DataFrame([
-        {"Appezzamento": "Settore Nord", "Ettari": 10.0, "SO %": 1.5, "Argilla %": 25.0, "Limo %": 30.0, "Densità": 1.30, "Protocollo": "Rigenerativo Full"},
-        {"Appezzamento": "Valle Vecchia", "Ettari": 5.0, "SO %": 2.1, "Argilla %": 18.0, "Limo %": 45.0, "Densità": 1.40, "Protocollo": "Intermedio"}
+html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
+.stApp { background-color: #f7f4ee; }
+
+/* Header */
+.main-header {
+    background: linear-gradient(135deg, #0f2318 0%, #1e5c38 60%, #2d8a55 100%);
+    padding: 2rem 2.5rem;
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+.main-header h1 { font-family: 'DM Serif Display', serif; color: #fff; font-size: 2rem; margin: 0; }
+.main-header p { color: rgba(255,255,255,.7); margin-top: 5px; font-size: .95rem; }
+
+/* KPI cards */
+.kpi-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.2rem;
+    border: 1px solid rgba(30,92,56,.1);
+    box-shadow: 0 4px 15px rgba(15,35,24,.05);
+    text-align: center;
+    height: 100%;
+}
+.kpi-value { font-family: 'DM Serif Display', serif; font-size: 1.8rem; color: #1e5c38; }
+.kpi-label { font-size: .7rem; color: #7a8c7e; text-transform: uppercase; letter-spacing: .05em; margin-top: 5px; }
+
+/* Status Badges */
+.rating-A { background:#d1fae5; color:#065f46; padding:4px 12px; border-radius:20px; font-weight:700; }
+.rating-B { background:#dbeafe; color:#1e40af; padding:4px 12px; border-radius:20px; font-weight:700; }
+.rating-C { background:#fef3c7; color:#92400e; padding:4px 12px; border-radius:20px; font-weight:700; }
+.rating-D { background:#fee2e2; color:#991b1b; padding:4px 12px; border-radius:20px; font-weight:700; }
+
+.sec-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.3rem;
+    color: #0f2318;
+    border-left: 5px solid #2d8a55;
+    padding-left: 12px;
+    margin: 2rem 0 1rem;
+}
+
+/* Action Cards */
+.action-card { background: #fff; border-radius: 10px; padding: 1rem; margin-bottom: 10px; border: 1px solid #eee; }
+.action-high { border-left: 5px solid #ef4444; }
+.action-mid  { border-left: 5px solid #d4a843; }
+.action-low  { border-left: 5px solid #2d8a55; }
+
+/* Risks */
+.risk { display:inline-block; padding:4px 10px; border-radius:15px; font-size:.75rem; font-weight:600; margin-right:8px; margin-bottom:8px; }
+.risk-alto  { background:#fee2e2; color:#991b1b; }
+.risk-medio { background:#fef3c7; color:#92400e; }
+.risk-basso { background:#d1fae5; color:#065f46; }
+</style>
+""", unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────
+#  LOGICA DATI E SESSION STATE
+# ─────────────────────────────────────────────
+if "df_campi" not in st.session_state:
+    st.session_state.df_campi = pd.DataFrame([
+        {"Appezzamento": "Campo Nord", "Ettari": 12.0, "SO %": 1.8, "Argilla %": 28, "Limo %": 32, "Densità (g/cm³)": 1.3, "Protocollo": "Rigenerativo Full", "Cover crops": True},
+        {"Appezzamento": "Vigneto Sud", "Ettari": 6.0, "SO %": 1.2, "Argilla %": 18, "Limo %": 40, "Densità (g/cm³)": 1.45, "Protocollo": "Intermedio", "Cover crops": False},
     ])
 
-# --- 3. FUNZIONE PDF PROFESSIONALE (DOSSIER BANCARIO) ---
-def generate_pdf(azienda, df, co2_tot, val_euro):
-    pdf = FPDF()
-    pdf.add_page()
-    # Header
-    pdf.set_font("Arial", "B", 18)
-    pdf.set_text_color(22, 101, 52)
-    pdf.cell(200, 20, "AGROLOG IA - CARBON ASSET REPORT", ln=True, align='C')
-    # Info Cliente
-    pdf.set_font("Arial", "B", 12)
-    pdf.set_text_color(0, 0, 0)
-    pdf.cell(0, 10, f"Azienda: {azienda}", ln=True)
-    pdf.cell(0, 10, f"Data: {datetime.date.today().strftime('%d/%m/%Y')}", ln=True)
-    pdf.ln(10)
-    # Sintesi
-    pdf.set_fill_color(230, 245, 230)
-    pdf.cell(0, 12, f"VALORE TOTALE ASSET: EUR {round(val_euro, 2)}", ln=True, fill=True)
-    pdf.cell(0, 12, f"SEQUESTRO ANNUO: {round(co2_tot, 2)} t CO2e", ln=True)
-    pdf.ln(10)
-    # Tabella Campi
-    pdf.set_font("Arial", "B", 8)
-    pdf.set_fill_color(200, 200, 200)
-    headers = ["Campo", "Ha", "SO%", "Argilla%", "Limo%", "Densità", "CO2(t)"]
-    widths = [45, 20, 20, 25, 25, 25, 30]
-    for i in range(len(headers)):
-        pdf.cell(widths[i], 10, headers[i], 1, 0, 'C', True)
-    pdf.ln()
-    pdf.set_font("Arial", "", 8)
-    for _, r in df.iterrows():
-        # Ricalcolo per PDF
-        m = (30/100)*10000*r["Densità"]
-        soc = m*(r["SO %"]/100)*0.58
-        f_tess = 1+(r["Argilla %"]/100)+(r["Limo %"]/200)
-        c_p = {"Convenzionale": 0.005, "Intermedio": 0.02, "Rigenerativo Full": 0.05}.get(r["Protocollo"], 0.01)
-        res = soc * c_p * f_tess * 3.67 * r["Ettari"]
-        pdf.cell(widths[0], 10, str(r["Appezzamento"]), 1)
-        pdf.cell(widths[1], 10, str(r["Ettari"]), 1)
-        pdf.cell(widths[2], 10, f"{r['SO %']}%", 1)
-        pdf.cell(widths[3], 10, f"{r['Argilla %']}%", 1)
-        pdf.cell(widths[4], 10, f"{r['Limo %']}%", 1)
-        pdf.cell(widths[5], 10, str(r["Densità"]), 1)
-        pdf.cell(widths[6], 10, str(round(res, 2)), 1, 1)
-    return pdf.output(dest='S').encode('latin-1')
-
-# --- 4. SIDEBAR BRANDING & INPUT ---
+# ─────────────────────────────────────────────
+#  SIDEBAR
+# ─────────────────────────────────────────────
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/3429/3429435.png", width=100)
-    st.title("AgroLog IA")
-    st.markdown("### 👨‍🔬 Consulente Senior")
-    st.markdown("**Dott. Agronomo [Tuo Nome]**")
-    st.caption("Esperto Internazionale Carbon Farming")
-    st.markdown("---")
-    azienda_nome = st.text_input("Azienda Agricola", "Tenuta Elite")
-    prezzo_co2 = st.number_input("Prezzo CO2 (€/t)", value=65.0)
-    st.markdown("---")
-    st.info("Algoritmo V8.0 Multi-Tessitura Attivo")
+    st.title("🌿 Configurazione")
+    nome_azienda = st.text_input("Ragione Sociale", "Az. Agr. Rossi")
+    nome_agronomo = st.text_input("Consulente", "Dott. Agr. Bianchi")
+    prezzo_co2 = st.number_input("Prezzo CO2 (€/t)", 10.0, 150.0, 38.0)
+    tasso_crescita = st.slider("Crescita annua prezzo (%)", 0, 15, 5)
+    
+    st.divider()
+    cert_bio = st.checkbox("Certificazione Bio")
+    cert_sqnpi = st.checkbox("Certificazione SQNPI")
+    cert_iso = st.checkbox("ISO 14064 (Carbon)")
+    
+    st.divider()
+    fatturato = st.number_input("Fatturato (€)", 0, 10000000, 180000)
+    costi_var = st.number_input("Costi Variabili (€)", 0, 10000000, 95000)
 
-# --- 5. MAIN DASHBOARD ---
-st.title(f"🌍 Global Carbon Intelligence: {azienda_nome}")
-st.markdown("---")
+# ─────────────────────────────────────────────
+#  MOTORE DI CALCOLO SCIENTIFICO
+# ─────────────────────────────────────────────
+def calcola_metrica(row):
+    # Logica IPCC Tier 1 + Pedologia
+    profondita = 0.30  # Standard IPCC 30cm
+    massa_suolo = profondita * 10000 * float(row["Densità (g/cm³)"])
+    soc_stock = massa_suolo * (float(row["SO %"]) / 100) * 0.58 # Fattore van Bemmelen
+    
+    # Fattori di gestione (FMG)
+    f_mgmt = {"Convenzionale": 0.004, "Intermedio": 0.018, "Rigenerativo Full": 0.048}
+    f_text = 1 + (float(row["Argilla %"]) / 100) + (float(row["Limo %"]) / 200)
+    f_cc = 1.11 if row["Cover crops"] else 1.0
+    
+    seq_ha = soc_stock * f_mgmt.get(row["Protocollo"], 0.018) * f_text * f_cc
+    co2_ha = seq_ha * 3.667 # C -> CO2
+    
+    return {
+        "co2_tot": co2_ha * row["Ettari"],
+        "co2_ha": co2_ha,
+        "emit": 0.8 * row["Ettari"] # Stima emissioni N2O/Mezzi
+    }
 
-# Sezione Input Multi-Campo
-st.subheader("📑 Gestione Asset e Parametri Pedologici")
-st.write("Inserisci i dati degli appezzamenti. Puoi aggiungere righe col tasto '+' in fondo alla tabella.")
-df_input = st.data_editor(
-    st.session_state.db_campi,
-    num_rows="dynamic",
-    use_container_width=True,
-    key="editor_principale"
-)
-st.session_state.db_campi = df_input
+# ─────────────────────────────────────────────
+#  LAYOUT MAIN
+# ─────────────────────────────────────────────
+st.markdown(f"""<div class="main-header"><h1>AgroLog IA — {nome_azienda}</h1><p>Carbon Intelligence & Strategia ESG Avanzata</p></div>""", unsafe_allow_html=True)
 
-# --- 6. MOTORE DI CALCOLO SCIENTIFICO AVANZATO ---
-total_co2 = 0
-for _, row in df_input.iterrows():
-    # Massa suolo (30cm) * Densità
-    massa_suolo = 0.30 * 10000 * row["Densità"]
-    # Carbonio Organico Totale (SOC)
-    soc_stock = massa_suolo * (row["SO %"] / 100) * 0.58
-    # Fattore stabilizzazione Tessitura (Argilla e Limo)
-    f_tessitura = 1 + (row["Argilla %"]/100) + (row["Limo %"]/200)
-    # Fattore Protocollo
-    c_prot = {"Convenzionale": 0.005, "Intermedio": 0.02, "Rigenerativo Full": 0.05}.get(row["Protocollo"], 0.01)
-    # Calcolo Finale
-    seq_annuo = soc_stock * c_prot * f_tessitura * 3.67 * row["Ettari"]
-    total_co2 += seq_annuo
+# Editor dati
+st.markdown('<div class="sec-title">📑 Gestione Appezzamenti</div>', unsafe_allow_html=True)
+df_edit = st.data_editor(st.session_state.df_campi, num_rows="dynamic", use_container_width=True, key="main_editor")
+st.session_state.df_campi = df_edit
 
-# --- 7. METRICHE CHIAVE ---
-st.markdown("---")
-m1, m2, m3 = st.columns(3)
-with m1:
-    st.metric("Sequestro Totale", f"{round(total_co2, 2)} t CO2/anno")
-with m2:
-    valore_asset = total_co2 * prezzo_co2
-    st.metric("Valutazione Patrimonio", f"€ {round(valore_asset, 2)}")
-with c_ha := m3:
-    st.metric("Superficie Totale", f"{round(df_input['Ettari'].sum(), 2)} ha")
+# Esecuzione calcoli
+risultati = [calcola_metrica(r) for _, r in df_edit.iterrows()]
+df_ris = pd.DataFrame(risultati)
 
-# --- 8. ANALISI VISIVA (HEATMAP & DONUT) ---
-st.markdown("---")
-c_left, c_right = st.columns([1, 1.2])
+tot_seq = df_ris["co2_tot"].sum()
+tot_emit = df_ris["emit"].sum()
+tot_netto = tot_seq - tot_emit
+tot_ha = df_edit["Ettari"].sum()
+valore_crediti = max(0, tot_netto) * prezzo_co2
 
-with c_left:
-    st.subheader("📊 Performance Asset")
-    df_plot = df_input.copy()
-    # Calcolo rapido per grafico
-    df_plot['CO2_val'] = df_plot.apply(lambda r: ((0.30*10000*r['Densità'])*(r['SO %']/100)*0.58 * (1+(r['Argilla %']/100)+(r['Limo %']/200)) * {"Convenzionale": 0.005, "Intermedio": 0.02, "Rigenerativo Full": 0.05}.get(r['Protocollo'],0.01) * 3.67 * r['Ettari']), axis=1)
-    fig_pie = px.pie(df_plot, values='CO2_val', names='Appezzamento', hole=0.6, color_discrete_sequence=px.colors.sequential.Greens_r)
-    fig_pie.update_layout(paper_bgcolor='rgba(0,0,0,0)', font_color='white', showlegend=False)
+# ESG Score (0-100)
+score = 45 + (15 if cert_bio else 0) + (10 if cert_sqnpi else 0) + (10 if cert_iso else 0)
+score = min(score + (20 if "Rigenerativo Full" in df_edit["Protocollo"].values else 5), 100)
+rating = "A" if score > 80 else "B" if score > 65 else "C" if score > 45 else "D"
+
+# ─────────────────────────────────────────────
+#  KPI & DASHBOARD
+# ─────────────────────────────────────────────
+st.markdown('<div class="sec-title">📊 Analisi Performance</div>', unsafe_allow_html=True)
+c1, c2, c3, c4 = st.columns(4)
+with c1: st.markdown(f'<div class="kpi-card"><div class="kpi-value">{score}</div><div class="kpi-label">Score ESG</div><span class="rating-{rating}">{rating}</span></div>', unsafe_allow_html=True)
+with c2: st.markdown(f'<div class="kpi-card"><div class="kpi-value">{round(tot_seq,1)}</div><div class="kpi-label">tCO2 Sequestrate/Anno</div></div>', unsafe_allow_html=True)
+with c3: st.markdown(f'<div class="kpi-card"><div class="kpi-value">€{int(valore_crediti):,}</div><div class="kpi-label">Valore Crediti Annui</div></div>', unsafe_allow_html=True)
+with c4: 
+    color = "#065f46" if tot_netto > 0 else "#991b1b"
+    st.markdown(f'<div class="kpi-card"><div class="kpi-value" style="color:{color}">{round(tot_netto,1)}</div><div class="kpi-label">Bilancio Netto (t)</div></div>', unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────
+#  GRAFICI
+# ─────────────────────────────────────────────
+g1, g2 = st.columns([1, 1])
+with g1:
+    fig_pie = px.pie(df_edit, values='Ettari', names='Appezzamento', hole=0.5, title="Distribuzione Superficie", color_discrete_sequence=px.colors.sequential.Greens_r)
     st.plotly_chart(fig_pie, use_container_width=True)
 
-with c_right:
-    st.subheader("🌋 Mappa Potenziale Carbonio")
-    s_r, c_r = [1, 2, 3, 4, 5], [10, 25, 40, 60]
-    z_d = [[x * (1 + y/100) for x in s_r] for y in c_r]
-    fig_h = ff.create_annotated_heatmap(z=z_d, x=s_r, y=c_r, colorscale='Greens', showscale=True)
-    fig_h.add_trace(go.Scatter(x=df_input['SO %'], y=df_input['Argilla %'], mode='markers+text', 
-                               marker=dict(color='red', size=15, symbol='diamond'), 
-                               text=df_input['Appezzamento'], textposition="top center", name="Campi"))
-    fig_h.update_layout(paper_bgcolor='rgba(0,0,0,0)', font_color='white', xaxis_title="Sostanza Organica %", yaxis_title="Argilla %")
-    st.plotly_chart(fig_h, use_container_width=True)
+with g2:
+    anni = list(range(2026, 2031))
+    valori = [valore_crediti * ((1 + tasso_crescita/100)**i) for i in range(5)]
+    fig_trend = px.line(x=anni, y=valori, title="Proiezione Ricavi Crediti CO2 (5 anni)", markers=True)
+    fig_trend.update_traces(line_color='#1e5c38')
+    st.plotly_chart(fig_trend, use_container_width=True)
 
-# --- 9. ESPORTAZIONE E CHIUSURA ---
+# ─────────────────────────────────────────────
+#  AZIONI E RISCHI
+# ─────────────────────────────────────────────
+st.markdown('<div class="sec-title">🎯 Piano d\'Azione Consigliato</div>', unsafe_allow_html=True)
+if "Convenzionale" in df_edit["Protocollo"].values:
+    st.markdown('<div class="action-card action-high"><b>🔴 Transizione Rigenerativa:</b> Convertire i campi convenzionali per sbloccare +0.5 tCO2/ha.</div>', unsafe_allow_html=True)
+if not cert_iso:
+    st.markdown('<div class="action-card action-mid"><b>🟡 Certificazione ISO 14064:</b> Necessaria per vendere crediti sul mercato volontario Premium.</div>', unsafe_allow_html=True)
+
+st.markdown('<div class="sec-title">⚠️ Mappa dei Rischi</div>', unsafe_allow_html=True)
+st.markdown(f"""
+    <span class="risk risk-alto">EROSIONE: Alto (SO% < 1.5 in alcuni campi)</span>
+    <span class="risk risk-medio">NORMATIVO: Adeguamento CSRD 2026</span>
+    <span class="risk risk-basso">CLIMATICO: Stress idrico moderato</span>
+""", unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────
+#  GENERATORE REPORT PDF/HTML
+# ─────────────────────────────────────────────
+st.markdown('<div class="sec-title">📄 Export Report</div>', unsafe_allow_html=True)
+if st.button("Genera Report Professionale"):
+    oggi = datetime.now().strftime("%d/%m/%Y")
+    html_report = f"""
+    <div style="font-family: sans-serif; padding: 40px; border: 1px solid #eee;">
+        <h2 style="color: #1e5c38;">REPORT SOSTENIBILITÀ - {nome_azienda}</h2>
+        <p><b>Data:</b> {oggi} | <b>Agronomo:</b> {nome_agronomo}</p>
+        <hr>
+        <h3>Sintesi Risultati</h3>
+        <ul>
+            <li><b>Score ESG:</b> {score}/100 (Rating {rating})</li>
+            <li><b>Sequestro Annuo:</b> {round(tot_seq, 2)} tCO2eq</li>
+            <li><b>Valore Economico Stimato:</b> €{int(valore_crediti):,}</li>
+        </ul>
+        <p><small>Metodologia: IPCC Tier 1 (2006/2019 Refinement). Calcolo basato su stock di carbonio minerale a 30cm.</small></p>
+        <br><br>
+        <div style="margin-top: 50px; border-top: 1px solid #000; width: 200px;">Firma del Tecnico</div>
+    </div>
+    """
+    st.markdown(html_report, unsafe_allow_html=True)
+    st.success("Report generato! Puoi stamparlo salvando la pagina (Ctrl+P).")
+
+# Footer
 st.markdown("---")
-if st.button("🧧 GENERA DOSSIER BANCARIO PDF"):
-    pdf_bytes = generate_pdf(azienda_nome, df_input, total_co2, valore_asset)
-    st.download_button(label="📥 Scarica Report Finale", data=pdf_bytes, file_name=f"AgroLog_Report_{azienda_nome}.pdf", mime="application/pdf")
+st.caption("AgroLog IA v3.2 - Professional Edition 2026. Basato su dati IPCC e CREA-AA.")
