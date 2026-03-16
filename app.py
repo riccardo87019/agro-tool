@@ -69,6 +69,44 @@ for _, row in df_editabile.iterrows():
     c_prot = {"Convenzionale": 0.005, "Intermedio": 0.02, "Rigenerativo Full": 0.05}
     seq = soc * c_prot.get(row["Protocollo"], 0.01) * (1 + row["Argilla %"]/100)
     total_co2_consolidata += seq * 3.67 * row["Ettari"]
+    # --- ANALISI VISIVA E COMMENTO IA (Aggiunta per Unicità) ---
+if not df_editabile.empty:
+    st.markdown("---")
+    col_chart, col_advice = st.columns([2, 1])
+
+    with col_chart:
+        # Calcolo contributo per singolo campo per il grafico
+        df_plot = df_editabile.copy()
+        df_plot['Valore CO2'] = df_plot.apply(
+            lambda x: (0.30 * 10000 * 1.3 * (x['SO %']/100) * 0.58 * {"Convenzionale": 0.005, "Intermedio": 0.02, "Rigenerativo Full": 0.05}.get(x['Protocollo'], 0.01) * (1 + x['Argilla %']/100) * 3.67 * x['Ettari']), axis=1
+        )
+        
+        fig_donut = px.pie(df_plot, values='Valore CO2', names='Appezzamento', 
+                           hole=0.6, title="💰 Distribuzione Valore Carbonio per Campo",
+                           color_discrete_sequence=px.colors.sequential.Greens_r)
+        fig_donut.update_layout(paper_bgcolor='rgba(0,0,0,0)', font_color='white', showlegend=True)
+        st.plotly_chart(fig_donut, use_container_width=True)
+
+    with col_advice:
+        st.write("### 🤖 Agro-Advisor Insights")
+        top_campo = df_plot.loc[df_plot['Valore CO2'].idxmax()]['Appezzamento']
+        st.success(f"**Asset Leader:** Il campo '{top_campo}' genera il maggior ritorno economico.")
+        
+        # Suggerimento dinamico
+        if "Convenzionale" in df_plot['Protocollo'].values:
+            campi_conv = df_plot[df_plot['Protocollo'] == "Convenzionale"]['Appezzamento'].count()
+            st.warning(f"Hai {campi_conv} appezzamenti in 'Convenzionale'. La transizione a 'Rigenerativo' aumenterebbe il tuo asset del 400%.")
+        else:
+            st.balloons()
+            st.info("Tutti i campi sono ottimizzati. Sei pronto per la certificazione internazionale.")
+
+# --- TASTO ESPORTAZIONE EXCEL (Comodità per il cliente) ---
+st.download_button(
+    label="📂 Esporta Tabella in Excel (CSV)",
+    data=df_editabile.to_csv(index=False).encode('utf-8'),
+    file_name=f'analisi_carbonio_{azienda}.csv',
+    mime='text/csv',
+)
 
 # Visualizzazione Risultati Globali
 st.markdown("---")
