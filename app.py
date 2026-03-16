@@ -16,18 +16,41 @@ st.markdown("""
 
 # --- SIDEBAR E DATI ---
 with st.sidebar:
-    st.title("💼 Control Panel")
-    azienda = st.text_input("Ragione Sociale", "Tenuta Agricola d'Elite")
-    ettari = st.number_input("Ettari", 1, 1000, 50)
-    so = st.slider("Sostanza Organica attuale (%)", 0.5, 5.0, 1.8)
-    protocollo = st.selectbox("Protocollo Tecnico", ["Convenzionale", "Intermedio", "Rigenerativo Full"])
-    st.markdown("---")
-    st.info("Algoritmo AgroLog v.4.2 - Aggiornato ai parametri IPCC 2026")
+    st.header("🔬 Parametri Avanzati")
+    coltura = st.selectbox("Coltura Principale", ["Cereali", "Vite", "Olivo", "Frutteto", "Pascolo"])
+    
+    # Dati fisici per calcolo Stock Reale
+    profondita = st.select_slider("Profondità Analisi (cm)", options=[10, 30, 60], value=30)
+    densita = st.number_input("Densità Apparente (g/cm³)", 0.8, 1.8, 1.3)
+    argilla = st.slider("Contenuto Argilla (%)", 5, 60, 25)
+    
+    st.header("🚜 Gestione Residui")
+    residui = st.radio("Gestione Residui", ["Asportati", "Interrati", "Lasciati in superficie (Sodo)"])
+    apporto_organico = st.number_input("Compost/Letame (t/ha/anno)", 0, 50, 0)
 
 # --- CALCOLO PARAMETRI (Logica Scientifica) ---
-co2_tot = ettari * (2.8 if protocollo == "Rigenerativo Full" else 1.2) * (so/1.5)
-rating_val = "AAA" if co2_tot/ettari > 2.5 else "AA" if co2_tot/ettari > 1.5 else "B"
-valore_asset = co2_tot * 65 # Prezzo stimato credito premium 2026
+# --- LOGICA SCIENTIFICA AVANZATA ---
+# 1. Calcoliamo la massa del suolo per ettaro (t/ha) in base alla profondità e densità
+# Formula: Volume (m3) * Densità (t/m3)
+massa_suolo = (profondita / 100) * 10000 * densita 
+
+# 2. Calcoliamo lo stock attuale di Carbonio Organico (SOC)
+# La SO contiene circa il 58% di Carbonio
+soc_attuale = massa_suolo * (so / 100) * 0.58
+
+# 3. Coefficiente di miglioramento basato su Protocollo e Argilla
+# L'argilla aiuta a sequestrare più carbonio (effetto "spugna")
+coeff_argilla = 1 + (argilla / 100)
+coeff_protocollo = {"Convenzionale": 0.01, "Intermedio": 0.03, "Rigenerativo Full": 0.06}
+
+# Sequestro annuo stimato (incremento percentuale dello stock)
+sequestro_annuo_ha = soc_attuale * coeff_protocollo[protocollo] * coeff_argilla
+
+# Trasformiamo il Carbonio (C) in CO2 equivalente (moltiplicando per 3.67)
+co2_tot = sequestro_annuo_ha * 3.67 * ettari
+
+# Valutazione economica
+valore_asset = co2_tot * 65
 
 # --- HEADER DASHBOARD ---
 st.title(f"📊 Dashboard Strategica: {azienda}")
