@@ -261,3 +261,14 @@ if so < 2.0:
     st.warning(f"Il livello di Sostanza Organica ({so}%) è critico per la coltura {coltura}. L'adozione del protocollo {protocollo} potrebbe incrementare il valore del terreno di circa il 15% in 3 anni.")
 else:
     st.success(f"Ottima gestione. Con un contenuto di Argilla del {argilla}%, il potenziale di mineralizzazione è basso: il tuo carbonio è protetto e stabile.")
+
+if st.button("🧧 Genera Dossier Executive PDF"):
+    # Calcolo al volo del valore totale per il PDF
+    valore_finale = total_co2_consolidata * prezzo_co2
+    pdf_output = create_pdf(azienda, df_editabile, total_co2_consolidata, valore_finale)
+    st.download_button(
+        label="📥 Scarica Report per la Banca",
+        data=pdf_output,
+        file_name=f"Report_Carbonio_{azienda}.pdf",
+        mime="application/pdf"
+    )
