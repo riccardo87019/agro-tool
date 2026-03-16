@@ -46,7 +46,36 @@ with st.sidebar:
     protocollo = st.selectbox("Protocollo Tecnico", ["Convenzionale", "Intermedio", "Rigenerativo Full"])
     st.markdown("---")
     st.info("Algoritmo AgroLog v.5.0 - Modello Pedologico Avanzato")
+# --- LOGICA MULTI-CAMPO (Punto 3) ---
+st.subheader("📑 Gestione Asset Fondiari")
+st.write("Configura i singoli appezzamenti per ottenere il bilancio aziendale consolidato.")
 
+# Creiamo la struttura dati iniziale
+if 'data' not in st.session_state:
+    st.session_state.data = pd.DataFrame([
+        {"Appezzamento": "Campo Nord", "Ettari": 10.0, "SO %": 1.5, "Argilla %": 25, "Protocollo": "Rigenerativo Full"},
+        {"Appezzamento": "Vigneto", "Ettari": 5.0, "SO %": 1.2, "Argilla %": 15, "Protocollo": "Convenzionale"}
+    ])
+
+# Tabella Interattiva
+df_editabile = st.data_editor(st.session_state.data, num_rows="dynamic", use_container_width=True)
+
+# Calcolo Aggregato
+total_co2_consolidata = 0
+for _, row in df_editabile.iterrows():
+    # Formula Scientifica (Massa suolo * SO * Coeff)
+    massa = 0.30 * 10000 * 1.3 # 30cm, 10k mq, densità 1.3
+    soc = massa * (row["SO %"] / 100) * 0.58
+    c_prot = {"Convenzionale": 0.005, "Intermedio": 0.02, "Rigenerativo Full": 0.05}
+    seq = soc * c_prot.get(row["Protocollo"], 0.01) * (1 + row["Argilla %"]/100)
+    total_co2_consolidata += seq * 3.67 * row["Ettari"]
+
+# Visualizzazione Risultati Globali
+st.markdown("---")
+st.subheader("🏁 Bilancio Aziendale Totale")
+c1, c2 = st.columns(2)
+c1.metric("CO2 Totale Sequestrata", f"{round(total_co2_consolidata, 1)} t/anno")
+c2.metric("Valore Asset Carbonio", f"€ {round(total_co2_consolidata * prezzo_co2, 2)}")
 # --- LOGICA SCIENTIFICA AVANZATA (La tua unicità) ---
 # 1. Massa del suolo (t/ha) = Volume * Densità
 massa_suolo = (profondita / 100) * 10000 * densita 
