@@ -5,3 +5,4 @@ plotly
 fpdf
 folium
 streamlit-folium
+geopandas
