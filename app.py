@@ -102,6 +102,48 @@ if not df_editabile.empty:
             st.balloons()
             st.info("Tutti i campi sono ottimizzati. Sei pronto per la certificazione internazionale.")
 
+# --- NUOVA SEZIONE: HEATMAP DEL POTENZIALE PEDOLOGICO (Unicità) ---
+if not df_editabile.empty:
+    st.markdown("---")
+    st.subheader("🌋 Heatmap del Potenziale Pedologico")
+    st.write("Visualizzazione del potenziale di stoccaggio basata sull'incrocio tra Sostanza Organica e Argilla (frazione minerale stabilizzante).")
+
+    # Creiamo i dati per la Heatmap
+    som_range = [0.5, 1.5, 2.5, 3.5, 4.5, 5.0]
+    clay_range = [5, 15, 25, 35, 45, 60]
+    z_data = [[x * (1 + y/100) for x in som_range] for y in clay_range]
+
+    # Generiamo la Heatmap
+    fig_heatmap = ff.create_annotated_heatmap(
+        z=z_data,
+        x=som_range,
+        y=clay_range,
+        annotation_text=[[f"{val:.1f}" for val in row] for row in z_data],
+        colorscale='Greens',
+        showscale=True
+    )
+
+    # Aggiungiamo i punti dei campi dell'utente sulla Heatmap
+    fig_heatmap.add_trace(go.Scatter(
+        x=df_editabile['SO %'],
+        y=df_editabile['Argilla %'],
+        mode='markers+text',
+        name='I tuoi campi',
+        marker=dict(color='red', size=12, symbol='x'),
+        text=df_editabile['Appezzamento'],
+        textposition="top center"
+    ))
+
+    # Layout finale
+    fig_heatmap.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)',
+        font_color='white',
+        xaxis_title="Sostanza Organica (%)",
+        yaxis_title="Contenuto Argilla (%)"
+    )
+
+    st.plotly_chart(fig_heatmap, use_container_width=True)
+
 # --- TASTO ESPORTAZIONE EXCEL (Comodità per il cliente) ---
 st.download_button(
     label="📂 Esporta Tabella in Excel (CSV)",
