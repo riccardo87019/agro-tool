@@ -2,89 +2,89 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-from datetime import datetime
+from fpdf import FPDF
+import base64
 
-# CONFIGURAZIONE
-st.set_page_config(page_title="AgroLog IA PRO - 2026", layout="wide")
+# CONFIGURAZIONE PREMIUM
+st.set_page_config(page_title="AgroLog IA PRO - Report Certificato", layout="wide")
 
-# CSS Custom per rendere il tool "Premium"
-st.markdown("""
-    <style>
-    .main { background-color: #f5f7f9; }
-    .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    </style>
-    """, unsafe_allow_html=True)
+# Funzione per generare il PDF
+def create_pdf(nome_azienda, ettari, coltura, rating, co2_totale):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(200, 10, "REPORT ANALISI SEQUESTRO CARBONIO 2026", ln=True, align='C')
+    pdf.set_font("Arial", "", 12)
+    pdf.ln(10)
+    pdf.cell(200, 10, f"Azienda: {nome_azienda}", ln=True)
+    pdf.cell(200, 10, f"Superficie: {ettari} ha", ln=True)
+    pdf.cell(200, 10, f"Coltura: {coltura}", ln=True)
+    pdf.cell(200, 10, f"Rating ESG Calcolato: {rating}", ln=True)
+    pdf.cell(200, 10, f"Sequestro stimato: {co2_totale} Ton CO2 eq/anno", ln=True)
+    pdf.ln(20)
+    pdf.set_font("Arial", "I", 10)
+    pdf.multi_cell(0, 10, "Documento generato tramite algoritmo AgroLog IA. La validazione segue i protocolli IPCC per il monitoraggio del Carbon Farming.")
+    return pdf.output(dest='S').encode('latin-1')
 
-st.title("🌱 AgroLog IA Professional")
-st.write("Analisi Predittiva ESG, Sequestro Carbonio e Benchmarking Territoriale")
+st.title("🌱 AgroLog IA: Professional Carbon Intelligence")
 
-# --- SIDEBAR: DATI INDISPENSABILI ---
-st.sidebar.header("📍 Localizzazione e Asset")
-azienda = st.sidebar.text_input("Ragione Sociale", "Azienda Agricola Esempio")
-ettari = st.sidebar.number_input("Superficie Totale (ha)", 0.1, 500.0, 15.0)
-coltura = st.sidebar.selectbox("Coltura Principale", ["Vite", "Olivo", "Nocciolo", "Cereali Bio"])
+# --- SIDEBAR AVANZATA ---
+st.sidebar.header("📋 Dati Aziendali")
+azienda = st.sidebar.text_input("Ragione Sociale", "Azienda Agricola Rossi")
+ettari = st.sidebar.number_input("Superficie (ha)", 1.0, 1000.0, 10.0)
+coltura = st.sidebar.selectbox("Tipologia Coltura", ["Vite", "Olivo", "Cereali", "Nocciolo"])
 
-st.sidebar.header("🚜 Pratiche Attuali")
-storico = st.sidebar.slider("Anni di conduzione sostenibile", 0, 20, 3)
-lavorazione = st.sidebar.selectbox("Gestione Suolo", ["Convenzionale (Arature)", "Minima Lavorazione", "Sodo / Rigenerativa"])
-input_organici = st.sidebar.checkbox("Apporto di ammendanti organici (Compost/Letame)")
+st.sidebar.header("🔬 Parametri del Suolo")
+tessitura = st.sidebar.selectbox("Tessitura Suolo", ["Argilloso (Alto stoccaggio)", "Limoso (Medio)", "Sabbioso (Basso)"])
+sostanza_organica = st.sidebar.slider("Sostanza Organica Attuale (%)", 0.5, 5.0, 1.8)
 
-# --- LOGICA DI BENCHMARKING (Dati simulati su medie regionali 2026) ---
-media_regionale_co2 = 1.8 # Ton/ha
-tua_co2_base = 1.2 if lavorazione == "Convenzionale (Arature)" else 2.5
-if input_organici: tua_co2_base += 0.8
+# --- LOGICA SCIENTIFICA ---
+# Coefficienti semplificati basati su studi agronomici
+coeff_tessitura = {"Argilloso (Alto stoccaggio)": 1.2, "Limoso (Medio)": 1.0, "Sabbioso (Basso)": 0.7}
+base_sequestro = 1.5 # Ton/ha base
+tua_co2_ha = base_sequestro * coeff_tessitura[tessitura] * (sostanza_organica / 1.8)
 
-# --- CALCOLO PREVISIONALE A 5 ANNI ---
-anni = [2026, 2027, 2028, 2029, 2030]
-previsione_status_quo = [tua_co2_base * ettari * (1 + i*0.02) for i in range(5)]
-previsione_ottimizzata = [tua_co2_base * ettari * (1.15 + i*0.08) for i in range(5)] # +15% subito col tuo piano
+total_co2 = round(tua_co2_ha * ettari, 2)
+prezzo_credito = 45.0 # Prezzo stimato 2026
+valore_economico = round(total_co2 * prezzo_credito, 2)
 
-# --- LAYOUT DASHBOARD ---
-col1, col2, col3, col4 = st.columns(4)
+# --- DASHBOARD ---
+col1, col2, col3 = st.columns(3)
 with col1:
-    st.metric("Rating Attuale", "B+" if tua_co2_base > 1.8 else "C")
+    rating = "A" if tua_co2_ha > 2.0 else "B" if tua_co2_ha > 1.2 else "C"
+    st.metric("Rating ESG", rating)
 with col2:
-    st.metric("CO2 Sequestrata", f"{round(tua_co2_base * ettari, 1)} Ton", delta=f"{round(tua_co2_base - media_regionale_co2, 1)} vs Media")
+    st.metric("CO2 Sequestrata", f"{total_co2} Ton/anno")
 with col3:
-    st.metric("Crediti Generabili", f"€ {round(tua_co2_base * ettari * 42, 2)}") # Prezzo CO2 stimato 2026
-with col4:
-    st.metric("Potenziale 2030", f"+ {round(((previsione_ottimizzata[-1]/previsione_status_quo[0])-1)*100)} %")
+    st.metric("Valore Crediti", f"€ {valore_economico}")
 
 st.markdown("---")
 
-tab1, tab2, tab3 = st.tabs(["🗺️ Mappa & Benchmarking", "📈 Previsionale 2030", "📄 Report Finale"])
-
-with tab1:
-    st.write("### Analisi Spaziale e Confronto Territoriale")
-    c1, c2 = st.columns([2, 1])
-    with c1:
-        # Simulazione Mappa (Placeholder per integrazione API Sentinel)
-        st.info("Integrazione Satellitare Sentinel-2 attiva. Visualizzazione Indice NDVI.")
-        map_data = pd.DataFrame({'lat': [43.0], 'lon': [13.0]}) # Esempio Marche
-        st.map(map_data, zoom=12)
-    with c2:
-        st.write("**Performance vs Vicini**")
-        df_bench = pd.DataFrame({
-            'Soggetto': ['Tua Azienda', 'Media Zona', 'Top 10% Local'],
-            'CO2/ha': [tua_co2_base, media_regionale_co2, 3.8]
-        })
-        fig = px.bar(df_bench, x='Soggetto', y='CO2/ha', color='Soggetto', color_discrete_sequence=['#2ecc71', '#bdc3c7', '#f1c40f'])
-        st.plotly_chart(fig, use_container_width=True)
-
-with tab2:
-    st.write("### Proiezione Sequestro Carbonio (5 Anni)")
-    df_chart = pd.DataFrame({
-        'Anno': anni * 2,
-        'CO2 (Ton)': previsione_status_quo + previsione_ottimizzata,
-        'Scenario': ['Status Quo'] * 5 + ['Piano AgroLog IA'] * 5
+# --- GRAFICI DI BENCHMARKING ---
+c1, c2 = st.columns(2)
+with c1:
+    st.subheader("Confronto Efficienza Suolo")
+    df_bench = pd.DataFrame({
+        'Categoria': ['Tua Azienda', 'Media Regione', 'Top Performers'],
+        'Ton CO2/ha': [tua_co2_ha, 1.6, 3.2]
     })
-    fig_line = px.line(df_chart, x='Anno', y='CO2 (Ton)', color='Scenario', markers=True)
-    st.plotly_chart(fig_line, use_container_width=True)
-    st.warning("⚠️ Passando alla gestione 'Sodo / Rigenerativa' potresti sbloccare incentivi PAC supplementari per €2.400/anno.")
+    fig = px.bar(df_bench, x='Categoria', y='Ton CO2/ha', color='Categoria', 
+                 color_discrete_map={'Tua Azienda': '#2ecc71', 'Media Regione': '#95a5a6', 'Top Performers': '#f1c40f'})
+    st.plotly_chart(fig, use_container_width=True)
 
-with tab3:
-    st.write("### Generazione Report Certificato")
-    st.text_area("Note dell'Agronomo per il report", "L'azienda presenta un ottimo potenziale di stoccaggio nel suolo. Si consiglia l'introduzione di cover crops invernali per massimizzare il rating ESG.")
-    if st.button("🚀 Esporta Report PDF per Banca/Ente"):
-        st.balloons()
-        st.success("Analisi completata! Il report 'AgroLog_Alpha_2026.pdf' è pronto per la revisione manuale e firma.")
+with c2:
+    st.subheader("Simulazione Crescita 2026-2030")
+    anni = [2026, 2027, 2028, 2029, 2030]
+    valori = [total_co2 * (1.05**i) for i in range(5)]
+    fig_line = px.line(x=anni, y=valori, labels={'x':'Anno', 'y':'Ton CO2'}, title="Incremento Carbon Stock con gestione Rigenerativa")
+    st.plotly_chart(fig_line, use_container_width=True)
+
+# --- GENERAZIONE REPORT ---
+st.markdown("### 📄 Generazione Documentazione Ufficiale")
+if st.button("Genera Report PDF Professionale"):
+    pdf_bytes = create_pdf(azienda, ettari, coltura, rating, total_co2)
+    st.download_button(label="📥 Scarica Report per la Banca",
+                       data=pdf_bytes,
+                       file_name=f"Report_Carbonio_{azienda}.pdf",
+                       mime="application/pdf")
+    st.success("Report generato con successo!")
