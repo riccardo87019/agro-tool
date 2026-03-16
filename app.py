@@ -129,6 +129,33 @@ for _, row in df_editabile.iterrows():
     seq = soc * c_prot.get(row["Protocollo"], 0.01) * (1 + row["Argilla %"]/100)
     total_co2_consolidata += seq * 3.67 * row["Ettari"]
 
+# 1. Inizializzazione della memoria (Session State)
+if 'df_agro' not in st.session_state:
+    st.session_state.df_agro = pd.DataFrame([
+        {"Appezzamento": "Campo Nord", "Ettari": 10.0, "SO %": 1.5, "Argilla %": 25, "Protocollo": "Rigenerativo Full"},
+        {"Appezzamento": "Vigneto", "Ettari": 5.0, "SO %": 1.2, "Argilla %": 15, "Protocollo": "Convenzionale"}
+    ])
+
+# 2. Il data_editor legge e scrive direttamente nella "memoria" session_state
+df_editabile = st.data_editor(
+    st.session_state.df_agro, 
+    num_rows="dynamic", 
+    use_container_width=True,
+    key="editor_principale" # Una chiave unica per bloccare i dati
+)
+
+# 3. Salviamo le modifiche nella memoria globale così non si perdono al refresh
+st.session_state.df_agro = df_editabile
+
+# --- LOGICA DI CALCOLO AGGREGATA ---
+total_co2_consolidata = 0
+for _, row in df_editabile.iterrows():
+    massa = 0.30 * 10000 * 1.3 
+    soc = massa * (row["SO %"] / 100) * 0.58
+    c_prot = {"Convenzionale": 0.005, "Intermedio": 0.02, "Rigenerativo Full": 0.05}
+    seq = soc * c_prot.get(row["Protocollo"], 0.01) * (1 + row["Argilla %"]/100)
+    total_co2_consolidata += seq * 3.67 * row["Ettari"]
+
 # Creiamo la struttura dati iniziale
 if 'data' not in st.session_state:
     st.session_state.data = pd.DataFrame([
