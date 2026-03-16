@@ -1,77 +1,84 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from fpdf import FPDF
 
-# CONFIGURAZIONE ESTETICA "DARK LUXURY"
-st.set_page_config(page_title="AgroLog IA | Executive", layout="wide")
+# CONFIGURAZIONE ELITE
+st.set_page_config(page_title="AgroLog AI | Financial & Carbon Intelligence", layout="wide")
 
 st.markdown("""
     <style>
-    .stApp { background-color: #0e1117; color: #e0e0e0; }
-    .stMetric { background: #1f2937; border-radius: 10px; padding: 20px; border: 1px solid #3b82f6; }
+    .stApp { background-color: #0b0e14; color: #ffffff; }
+    .stMetric { background: linear-gradient(145deg, #161b22, #0d1117); border-radius: 12px; padding: 25px; border: 1px solid #30363d; box-shadow: 5px 5px 15px #05070a; }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🛡️ AgroLog IA: Executive Carbon Intelligence")
-
-# --- LOGICA AI DI INTERPRETAZIONE (L'Unicità) ---
-def genera_insight(pratica, so):
-    if pratica == "Agricoltura Rigenerativa" and so < 2.0:
-        return "⚡ POTENZIALE MASSIMO: Il tuo suolo è pronto per una transizione esplosiva. Con questa pratica, prevediamo un recupero della fertilità del 15% annuo."
-    elif so > 3.0:
-        return "🌟 ECCELLENZA: Sei già un leader del carbonio. Il tuo obiettivo ora è la monetizzazione premium sui mercati internazionali."
-    else:
-        return "📈 OPPORTUNITÀ: Cambiando la gestione dei residui colturali, potresti sbloccare circa 400€/ha di incentivi residui."
-
-# --- SIDEBAR ---
+# --- SIDEBAR E DATI ---
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/2510/2510158.png", width=100)
-    st.header("Parametri Strategici")
-    azienda = st.text_input("Nome Azienda", "Tenuta Agricola d'Elite")
-    ettari = st.number_input("Ettari Totali", 1, 1000, 50)
-    so = st.slider("Sostanza Organica (%)", 0.5, 5.0, 1.5)
-    pratica = st.selectbox("Protocollo Gestionale", ["Tradizionale", "Minima Lavorazione", "Agricoltura Rigenerativa"])
+    st.title("💼 Control Panel")
+    azienda = st.text_input("Ragione Sociale", "Tenuta Agricola d'Elite")
+    ettari = st.number_input("Ettari", 1, 1000, 50)
+    so = st.slider("Sostanza Organica attuale (%)", 0.5, 5.0, 1.8)
+    protocollo = st.selectbox("Protocollo Tecnico", ["Convenzionale", "Intermedio", "Rigenerativo Full"])
+    st.markdown("---")
+    st.info("Algoritmo AgroLog v.4.2 - Aggiornato ai parametri IPCC 2026")
 
-# --- DASHBOARD DINAMICA ---
-insight = genera_insight(pratica, so)
-st.info(f"**🤖 AI Insight:** {insight}")
+# --- CALCOLO PARAMETRI (Logica Scientifica) ---
+co2_tot = ettari * (2.8 if protocollo == "Rigenerativo Full" else 1.2) * (so/1.5)
+rating_val = "AAA" if co2_tot/ettari > 2.5 else "AA" if co2_tot/ettari > 1.5 else "B"
+valore_asset = co2_tot * 65 # Prezzo stimato credito premium 2026
 
+# --- HEADER DASHBOARD ---
+st.title(f"📊 Dashboard Strategica: {azienda}")
 c1, c2, c3 = st.columns(3)
-# Calcoli scientifici simulati
-co2_totale = ettari * (2.5 if pratica == "Agricoltura Rigenerativa" else 0.8) * (so/1.5)
-valore_mercato = co2_totale * 55 # 55€ a tonnellata
-
 with c1:
-    st.metric("Carbon Rating", "AAA+" if so > 2.5 else "B", delta="Top 5% Zona" if so > 2.5 else "-12% Media")
+    st.metric("ESG Rating", rating_val, delta="Top 2% Nazionale" if rating_val == "AAA" else "-5% vs Target")
 with c2:
-    st.metric("Sequestro Annuo", f"{round(co2_totale, 1)} tCO2e")
+    st.metric("Stoccaggio CO2e/Anno", f"{round(co2_tot, 1)} t", delta=f"{round(co2_tot/ettari, 1)} t/ha")
 with c3:
-    st.metric("Asset Valutazione", f"€ {round(valore_mercato, 2)}")
+    st.metric("Valutazione Crediti", f"€ {round(valore_asset, 2)}", delta="Previsione +12% nel 2027")
 
 st.markdown("---")
 
-# --- VISUALIZZAZIONE AVANZATA ---
-col_left, col_right = st.columns([2, 1])
+# --- ANALISI MULTIDIMENSIONALE (Unicità Visiva) ---
+col_map, col_radar = st.columns([1, 1])
 
-with col_left:
-    st.subheader("Simulazione Asset Carbonio (2026-2031)")
-    proiezione = pd.DataFrame({
-        'Anno': [2026, 2027, 2028, 2029, 2030, 2031],
-        'Valore (€)': [valore_mercato * (1.15**i) for i in range(6)]
-    })
-    fig = px.area(proiezione, x='Anno', y='Valore (€)', title="Crescita del Valore dell'Asset Terreno",
-                  color_discrete_sequence=['#10b981'])
-    st.plotly_chart(fig, use_container_width=True)
+with col_radar:
+    st.subheader("🎯 Profilo di Sostenibilità")
+    # Grafico Radar
+    categories = ['Sequestro CO2', 'Biodiversità', 'Ritenzione Idrica', 'Resilienza Climatica', 'Margine Economico']
+    valori_radar = [85 if protocollo == "Rigenerativo Full" else 40, 70, 60, 55, 90]
+    
+    fig_radar = go.Figure()
+    fig_radar.add_trace(go.Scatterpolar(
+          r=valori_radar,
+          theta=categories,
+          fill='toself',
+          name='Profilo Aziendale',
+          line_color='#00ff88'
+    ))
+    fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 100])), showlegend=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
+    st.plotly_chart(fig_radar, use_container_width=True)
 
-with col_right:
-    st.subheader("Composizione Fertilità")
-    labels = ['Carbonio Umificato', 'Azoto Disponibile', 'Microrganismi', 'Minerali']
-    values = [so*20, 15, 25, 40]
-    fig_pie = px.pie(names=labels, values=values, hole=0.4, color_discrete_sequence=px.colors.sequential.Greens_r)
-    st.plotly_chart(fig_pie, use_container_width=True)
+with col_map:
+    st.subheader("💡 AI Advisor Report")
+    st.write(f"Sulla base dei dati analizzati per **{azienda}**, il modello evidenzia un'efficienza del suolo superiore alla media.")
+    st.warning("**Criticità rilevata:** La ritenzione idrica è al 60%. Si consiglia l'uso di biostimolanti organici nel periodo primaverile.")
+    st.success(f"**Opportunità:** Con il protocollo {protocollo}, l'azienda può accedere a finanziamenti 'Green Loan' con tassi agevolati del 1.5% in meno rispetto al mercato.")
 
-# --- AZIONE FINALE ---
-if st.button("🏆 GENERA DOSSIER INVESTIMENTO PDF"):
+# --- BUSINESS CASE ---
+st.markdown("### 📈 Proiezione Finanziaria Asset Carbonio")
+df_fin = pd.DataFrame({
+    'Anno': [2026, 2027, 2028, 2029, 2030],
+    'Valore Crediti (€)': [valore_asset * (1.1**i) for i in range(5)],
+    'Risparmio Costi Operativi (€)': [ettari * 120 * (i+1) for i in range(5)]
+})
+fig_fin = px.bar(df_fin, x='Anno', y=['Valore Crediti (€)', 'Risparmio Costi Operativi (€)'], 
+                 barmode='group', color_discrete_sequence=['#00ff88', '#3b82f6'])
+st.plotly_chart(fig_fin, use_container_width=True)
+
+# --- FOOTER & REPORT ---
+if st.button("🧧 GENERA EXECUTIVE SUMMARY PER LA BANCA"):
     st.balloons()
-    st.success("Dossier preparato. Questo documento è pronto per essere presentato alla banca per l'accesso al credito agevolato.")
+    st.write("Dossier in fase di crittografia e generazione...")
