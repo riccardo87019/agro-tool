@@ -16,6 +16,21 @@ st.markdown("""
 
 # --- SIDEBAR CON DATI COMPLESSI (I tuoi dati richiesti) ---
 with st.sidebar:
+    # --- SEZIONE BRANDING (Punto 2) ---
+    st.image("https://cdn-icons-png.flaticon.com/512/3429/3429435.png", width=80) 
+    st.title("AgroLog IA")
+    st.markdown("**Dott. [Tuo Nome]**")
+    st.caption("Dottore Agronomo - Esperto in Carbon Farming")
+    st.markdown("---")
+    
+    # --- PARAMETRI ECONOMICI GLOBALI ---
+    st.header("💹 Parametri di Mercato")
+    prezzo_co2 = st.number_input("Prezzo Credito CO2 (€/t)", value=65.0)
+    tasso_crescita = st.slider("Tasso crescita stimato (%)", 1, 10, 5)
+    
+    st.markdown("---")
+    st.markdown("📧 [Contattami per una perizia](mailto:tua@email.it)")
+    st.info("Modello Certificabile basato su Standard ISO 14064-2")
     st.title("💼 Control Panel Elite")
     azienda = st.text_input("Ragione Sociale", "Tenuta Agricola d'Elite")
     ettari = st.number_input("Ettari", 1, 1000, 50)
