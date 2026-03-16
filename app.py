@@ -28,7 +28,6 @@ with st.sidebar:
     residui = st.radio("Gestione Residui", ["Asportati", "Interrati", "Lasciati in superficie (Sodo)"])
     apporto_organico = st.number_input("Compost/Letame (t/ha/anno)", 0, 50, 0)
 
-# --- CALCOLO PARAMETRI (Logica Scientifica) ---
 # --- LOGICA SCIENTIFICA AVANZATA ---
 # 1. Calcoliamo la massa del suolo per ettaro (t/ha) in base alla profondità e densità
 # Formula: Volume (m3) * Densità (t/m3)
