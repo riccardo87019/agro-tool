@@ -2,12 +2,62 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-# AGGIUNGI QUESTA LINEA:
-import plotly.figure_factory as ff 
+import plotly.figure_factory as ff
 from fpdf import FPDF
 
-# CONFIGURAZIONE ELITE
-st.set_page_config(page_title="AgroLog AI | Financial & Carbon Intelligence", layout="wide")
+# --- 1. FUNZIONE PDF (Mettila qui all'inizio!) ---
+def create_pdf(azienda, df_campi, co2_totale, valore_euro):
+    pdf = FPDF()
+    pdf.add_page()
+    
+    # Header
+    pdf.set_font("Arial", "B", 20)
+    pdf.set_text_color(16, 124, 65) 
+    pdf.cell(200, 15, "AGROLOG IA - CARBON REPORT 2026", ln=True, align='C')
+    
+    pdf.set_font("Arial", "I", 10)
+    pdf.set_text_color(100, 100, 100)
+    pdf.cell(200, 10, f"Dossier Certificabile Generato per: {azienda}", ln=True, align='C')
+    pdf.ln(10)
+    
+    # Sintesi
+    pdf.set_fill_color(240, 240, 240)
+    pdf.set_font("Arial", "B", 12)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(0, 10, "1. SINTESI PATRIMONIALE", ln=True, fill=True)
+    pdf.set_font("Arial", "", 11)
+    pdf.cell(0, 10, f"- Sequestro Annuo Totale: {round(co2_totale, 2)} Ton CO2e", ln=True)
+    pdf.cell(0, 10, f"- Valutazione Asset Mercato Volontario: EUR {round(valore_euro, 2)}", ln=True)
+    pdf.ln(5)
+    
+    # Tabella
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, "2. DETTAGLIO APPEZZAMENTI", ln=True, fill=True)
+    pdf.set_font("Arial", "B", 9)
+    pdf.cell(50, 8, "Campo", border=1)
+    pdf.cell(25, 8, "Ettari", border=1)
+    pdf.cell(25, 8, "SO %", border=1)
+    pdf.cell(45, 8, "Protocollo", border=1)
+    pdf.cell(45, 8, "CO2 (t/anno)", border=1, ln=True)
+    
+    pdf.set_font("Arial", "", 8)
+    for _, row in df_campi.iterrows():
+        # Calcolo tecnico per riga nel PDF
+        massa = 0.30 * 10000 * 1.3
+        soc = massa * (row["SO %"] / 100) * 0.58
+        c_prot = {"Convenzionale": 0.005, "Intermedio": 0.02, "Rigenerativo Full": 0.05}
+        seq = soc * c_prot.get(row["Protocollo"], 0.01) * (1 + row["Argilla %"]/100) * 3.67 * row["Ettari"]
+        
+        pdf.cell(50, 8, str(row["Appezzamento"]), border=1)
+        pdf.cell(25, 8, str(row["Ettari"]), border=1)
+        pdf.cell(25, 8, f"{row['SO %']}%", border=1)
+        pdf.cell(45, 8, str(row["Protocollo"]), border=1)
+        pdf.cell(45, 8, str(round(seq, 2)), border=1, ln=True)
+        
+    return pdf.output(dest='S').encode('latin-1')
+
+# --- 2. CONFIGURAZIONE PAGINA ---
+st.set_page_config(page_title="AgroLog AI | Executive", layout="wide")
 
 st.markdown("""
     <style>
