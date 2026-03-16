@@ -455,7 +455,10 @@ with g2:
         line=dict(color="#1a6b3a",width=2.5),
         fillcolor="rgba(26,107,58,0.18)"
     ))
-    fig_r.update_layout(**PLT, title="Radar ESG 6 Dimensioni",
+    fig_r.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="#faf9f6",
+        font=dict(family="Lexend", color="#061912"),
+        title="Radar ESG 6 Dimensioni",
         polar=dict(radialaxis=dict(visible=True,range=[0,100],
                    tickfont=dict(size=9),gridcolor="rgba(15,53,32,.12)"),
                    angularaxis=dict(tickfont=dict(size=10))),
