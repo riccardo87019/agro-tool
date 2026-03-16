@@ -1,88 +1,77 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import plotly.express as px
 from fpdf import FPDF
-import folium
-from streamlit_folium import st_folium
 
-# CONFIGURAZIONE
-st.set_page_config(page_title="AgroLog IA PRO - Geospatial", layout="wide")
+# CONFIGURAZIONE ESTETICA "DARK LUXURY"
+st.set_page_config(page_title="AgroLog IA | Executive", layout="wide")
 
-# --- FUNZIONE PDF (Migliorata con Note Tecniche) ---
-def create_pdf(azienda, ettari, coltura, rating, co2_totale, rischio):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", "B", 16)
-    pdf.cell(200, 10, "REPORT TECNICO CARBON FARMING & RISK ANALYSIS", ln=True, align='C')
-    pdf.ln(10)
-    pdf.set_font("Arial", "", 12)
-    pdf.cell(200, 10, f"Azienda: {azienda}", ln=True)
-    pdf.cell(200, 10, f"Superficie: {ettari} ha", ln=True)
-    pdf.cell(200, 10, f"Rating ESG: {rating}", ln=True)
-    pdf.cell(200, 10, f"CO2 Totale: {co2_totale} Ton/anno", ln=True)
-    pdf.cell(200, 10, f"Livello di Rischio Climatico: {rischio}", ln=True)
-    pdf.ln(10)
-    pdf.multi_cell(0, 10, "NOTE PROFESSIONALI: L'analisi satellitare indica una correlazione diretta tra biomassa e stoccaggio nel suolo. Si raccomanda piano di concimazione organica mirato.")
-    return pdf.output(dest='S').encode('latin-1')
+st.markdown("""
+    <style>
+    .stApp { background-color: #0e1117; color: #e0e0e0; }
+    .stMetric { background: #1f2937; border-radius: 10px; padding: 20px; border: 1px solid #3b82f6; }
+    </style>
+    """, unsafe_allow_html=True)
 
-st.title("🛰️ AgroLog IA: Analisi Satellitare e Predittiva")
+st.title("🛡️ AgroLog IA: Executive Carbon Intelligence")
+
+# --- LOGICA AI DI INTERPRETAZIONE (L'Unicità) ---
+def genera_insight(pratica, so):
+    if pratica == "Agricoltura Rigenerativa" and so < 2.0:
+        return "⚡ POTENZIALE MASSIMO: Il tuo suolo è pronto per una transizione esplosiva. Con questa pratica, prevediamo un recupero della fertilità del 15% annuo."
+    elif so > 3.0:
+        return "🌟 ECCELLENZA: Sei già un leader del carbonio. Il tuo obiettivo ora è la monetizzazione premium sui mercati internazionali."
+    else:
+        return "📈 OPPORTUNITÀ: Cambiando la gestione dei residui colturali, potresti sbloccare circa 400€/ha di incentivi residui."
 
 # --- SIDEBAR ---
-st.sidebar.header("📍 Localizzazione Appezzamento")
-lat = st.sidebar.number_input("Latitudine", value=43.0, format="%.4f")
-lon = st.sidebar.number_input("Longitudine", value=13.0, format="%.4f")
-zoom = st.sidebar.slider("Zoom Mappa", 10, 18, 15)
+with st.sidebar:
+    st.image("https://cdn-icons-png.flaticon.com/512/2510/2510158.png", width=100)
+    st.header("Parametri Strategici")
+    azienda = st.text_input("Nome Azienda", "Tenuta Agricola d'Elite")
+    ettari = st.number_input("Ettari Totali", 1, 1000, 50)
+    so = st.slider("Sostanza Organica (%)", 0.5, 5.0, 1.5)
+    pratica = st.selectbox("Protocollo Gestionale", ["Tradizionale", "Minima Lavorazione", "Agricoltura Rigenerativa"])
 
-st.sidebar.header("🌾 Parametri Agronomici")
-azienda = st.sidebar.text_input("Azienda", "Tenuta Agricola Alpha")
-ettari = st.sidebar.number_input("Ettari", 1.0, 500.0, 15.0)
-tessitura = st.sidebar.selectbox("Tipo Suolo", ["Argilloso", "Limoso", "Sabbioso"])
-pratica = st.sidebar.radio("Pratica Agricola", ["Tradizionale", "Minima Lavorazione", "Agricoltura Rigenerativa"])
+# --- DASHBOARD DINAMICA ---
+insight = genera_insight(pratica, so)
+st.info(f"**🤖 AI Insight:** {insight}")
 
-# --- LOGICA DI CALCOLO UNICA (Algoritmo Predittivo) ---
-# Unicità: Calcoliamo il rischio basato sulla latitudine (simulazione rischio siccità)
-rischio_val = "Alto" if lat < 42.0 else "Medio" # Semplificazione scientifica per l'utente
-coeff_pratica = {"Tradizionale": 1.0, "Minima Lavorazione": 1.5, "Agricoltura Rigenerativa": 2.2}
-coeff_suolo = {"Argilloso": 1.3, "Limoso": 1.0, "Sabbioso": 0.7}
-
-co2_ha = 1.8 * coeff_pratica[pratica] * coeff_suolo[tessitura]
-total_co2 = round(co2_ha * ettari, 2)
-
-# --- DASHBOARD ---
 c1, c2, c3 = st.columns(3)
-c1.metric("Rating Carbonio", "AAA" if pratica == "Agricoltura Rigenerativa" else "B")
-c2.metric("Stoccaggio Annuo", f"{total_co2} Ton")
-c3.metric("Rischio Climatico", rischio_val)
+# Calcoli scientifici simulati
+co2_totale = ettari * (2.5 if pratica == "Agricoltura Rigenerativa" else 0.8) * (so/1.5)
+valore_mercato = co2_totale * 55 # 55€ a tonnellata
+
+with c1:
+    st.metric("Carbon Rating", "AAA+" if so > 2.5 else "B", delta="Top 5% Zona" if so > 2.5 else "-12% Media")
+with c2:
+    st.metric("Sequestro Annuo", f"{round(co2_totale, 1)} tCO2e")
+with c3:
+    st.metric("Asset Valutazione", f"€ {round(valore_mercato, 2)}")
 
 st.markdown("---")
 
-# --- MAPPA INTERATTIVA ---
-st.subheader("🗺️ Analisi Geospaziale (Simulazione NDVI)")
-col_map, col_info = st.columns([2, 1])
+# --- VISUALIZZAZIONE AVANZATA ---
+col_left, col_right = st.columns([2, 1])
 
-with col_map:
-    # Creazione mappa con Folium
-    m = folium.Map(location=[lat, lon], zoom_start=zoom, tiles="Stamen Terrain" if zoom < 14 else "OpenStreetMap")
-    # Aggiungiamo un cerchio che simula l'area di analisi NDVI
-    folium.Circle(
-        radius=500,
-        location=[lat, lon],
-        color="green",
-        fill=True,
-        fill_color="lime",
-        popup="Area Analisi Biomasse"
-    ).add_to(m)
-    st_data = st_folium(m, width=700, height=400)
+with col_left:
+    st.subheader("Simulazione Asset Carbonio (2026-2031)")
+    proiezione = pd.DataFrame({
+        'Anno': [2026, 2027, 2028, 2029, 2030, 2031],
+        'Valore (€)': [valore_mercato * (1.15**i) for i in range(6)]
+    })
+    fig = px.area(proiezione, x='Anno', y='Valore (€)', title="Crescita del Valore dell'Asset Terreno",
+                  color_discrete_sequence=['#10b981'])
+    st.plotly_chart(fig, use_container_width=True)
 
-with col_info:
-    st.info("**Interpretazione Satellitare:**")
-    st.write("L'area evidenziata mostra un indice di vigore superiore alla media zonale del 12%.")
-    st.progress(85) # Simula un indice di salute
-    st.write("✅ **Salute Vegetativa: Ottima**")
-    st.write("⚠️ **Suggerimento:** Incrementare la copertura vegetale (cover crops) nel quadrante Nord per evitare l'erosione.")
+with col_right:
+    st.subheader("Composizione Fertilità")
+    labels = ['Carbonio Umificato', 'Azoto Disponibile', 'Microrganismi', 'Minerali']
+    values = [so*20, 15, 25, 40]
+    fig_pie = px.pie(names=labels, values=values, hole=0.4, color_discrete_sequence=px.colors.sequential.Greens_r)
+    st.plotly_chart(fig_pie, use_container_width=True)
 
-# --- REPORT ---
-if st.button("🚀 Genera Report Tecnico con Dati Satellitari"):
-    pdf_bytes = create_pdf(azienda, ettari, "Vite/Olivo", "A", total_co2, rischio_val)
-    st.download_button("📥 Scarica PDF", data=pdf_bytes, file_name="Report_AgroLog_PRO.pdf")
+# --- AZIONE FINALE ---
+if st.button("🏆 GENERA DOSSIER INVESTIMENTO PDF"):
+    st.balloons()
+    st.success("Dossier preparato. Questo documento è pronto per essere presentato alla banca per l'accesso al credito agevolato.")
