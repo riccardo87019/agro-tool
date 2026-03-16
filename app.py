@@ -10,97 +10,78 @@ st.set_page_config(page_title="AgroLog AI | Financial & Carbon Intelligence", la
 st.markdown("""
     <style>
     .stApp { background-color: #0b0e14; color: #ffffff; }
-    .stMetric { background: linear-gradient(145deg, #161b22, #0d1117); border-radius: 12px; padding: 25px; border: 1px solid #30363d; box-shadow: 5px 5px 15px #05070a; }
+    .stMetric { background: linear-gradient(145deg, #161b22, #0d1117); border-radius: 12px; padding: 25px; border: 1px solid #30363d; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- SIDEBAR E DATI ---
+# --- SIDEBAR CON DATI COMPLESSI (I tuoi dati richiesti) ---
 with st.sidebar:
-    st.header("🔬 Parametri Avanzati")
-    coltura = st.selectbox("Coltura Principale", ["Cereali", "Vite", "Olivo", "Frutteto", "Pascolo"])
+    st.title("💼 Control Panel Elite")
+    azienda = st.text_input("Ragione Sociale", "Tenuta Agricola d'Elite")
+    ettari = st.number_input("Ettari", 1, 1000, 50)
     
-    # Dati fisici per calcolo Stock Reale
-    profondita = st.select_slider("Profondità Analisi (cm)", options=[10, 30, 60], value=30)
-    densita = st.number_input("Densità Apparente (g/cm³)", 0.8, 1.8, 1.3)
+    st.header("🔬 Analisi del Suolo")
+    so = st.slider("Sostanza Organica attuale (%)", 0.5, 5.0, 1.8)
     argilla = st.slider("Contenuto Argilla (%)", 5, 60, 25)
+    densita = st.number_input("Densità Apparente (g/cm³)", 0.8, 1.8, 1.3)
+    profondita = st.selectbox("Profondità Campionamento (cm)", [10, 30, 60], index=1)
     
-    st.header("🚜 Gestione Residui")
-    residui = st.radio("Gestione Residui", ["Asportati", "Interrati", "Lasciati in superficie (Sodo)"])
-    apporto_organico = st.number_input("Compost/Letame (t/ha/anno)", 0, 50, 0)
+    st.header("🚜 Gestione")
+    coltura = st.selectbox("Coltura", ["Cereali", "Vite", "Olivo", "Nocciolo", "Foraggere"])
+    protocollo = st.selectbox("Protocollo Tecnico", ["Convenzionale", "Intermedio", "Rigenerativo Full"])
+    st.markdown("---")
+    st.info("Algoritmo AgroLog v.5.0 - Modello Pedologico Avanzato")
 
-# --- LOGICA SCIENTIFICA AVANZATA ---
-# 1. Calcoliamo la massa del suolo per ettaro (t/ha) in base alla profondità e densità
-# Formula: Volume (m3) * Densità (t/m3)
+# --- LOGICA SCIENTIFICA AVANZATA (La tua unicità) ---
+# 1. Massa del suolo (t/ha) = Volume * Densità
 massa_suolo = (profondita / 100) * 10000 * densita 
-
-# 2. Calcoliamo lo stock attuale di Carbonio Organico (SOC)
-# La SO contiene circa il 58% di Carbonio
+# 2. Stock attuale di Carbonio (SOC) - Il Carbonio è circa il 58% della Sostanza Organica
 soc_attuale = massa_suolo * (so / 100) * 0.58
-
-# 3. Coefficiente di miglioramento basato su Protocollo e Argilla
-# L'argilla aiuta a sequestrare più carbonio (effetto "spugna")
+# 3. Coefficienti di sequestro basati su protocollo e tessitura (Argilla)
 coeff_argilla = 1 + (argilla / 100)
-coeff_protocollo = {"Convenzionale": 0.01, "Intermedio": 0.03, "Rigenerativo Full": 0.06}
-
-# Sequestro annuo stimato (incremento percentuale dello stock)
-sequestro_annuo_ha = soc_attuale * coeff_protocollo[protocollo] * coeff_argilla
-
-# Trasformiamo il Carbonio (C) in CO2 equivalente (moltiplicando per 3.67)
-co2_tot = sequestro_annuo_ha * 3.67 * ettari
-
-# Valutazione economica
-valore_asset = co2_tot * 65
+coeff_prot = {"Convenzionale": 0.005, "Intermedio": 0.02, "Rigenerativo Full": 0.05}
+# 4. Calcolo CO2 Sequestrata (C * 3.67 = CO2)
+sequestro_c = soc_attuale * coeff_prot[protocollo] * coeff_argilla
+co2_tot = sequestro_c * 3.67 * ettari
+valore_asset = co2_tot * 65 # Prezzo credito 2026
 
 # --- HEADER DASHBOARD ---
-st.title(f"📊 Dashboard Strategica: {azienda}")
+st.title(f"📊 Analisi Strategica: {azienda}")
 c1, c2, c3 = st.columns(3)
 with c1:
-    st.metric("ESG Rating", rating_val, delta="Top 2% Nazionale" if rating_val == "AAA" else "-5% vs Target")
+    rating_val = "AAA" if protocollo == "Rigenerativo Full" and so > 2.0 else "AA" if so > 1.5 else "B"
+    st.metric("ESG Rating", rating_val)
 with c2:
-    st.metric("Stoccaggio CO2e/Anno", f"{round(co2_tot, 1)} t", delta=f"{round(co2_tot/ettari, 1)} t/ha")
+    st.metric("CO2 Sequestrata/Anno", f"{round(co2_tot, 1)} t", delta=f"{round(co2_tot/ettari, 2)} t/ha")
 with c3:
-    st.metric("Valutazione Crediti", f"€ {round(valore_asset, 2)}", delta="Previsione +12% nel 2027")
+    st.metric("Valutazione Asset", f"€ {round(valore_asset, 2)}")
 
 st.markdown("---")
 
-# --- ANALISI MULTIDIMENSIONALE (Unicità Visiva) ---
-col_map, col_radar = st.columns([1, 1])
+# --- GRAFICI ---
+col_radar, col_proiezione = st.columns([1, 1])
 
 with col_radar:
-    st.subheader("🎯 Profilo di Sostenibilità")
-    # Grafico Radar
-    categories = ['Sequestro CO2', 'Biodiversità', 'Ritenzione Idrica', 'Resilienza Climatica', 'Margine Economico']
-    valori_radar = [85 if protocollo == "Rigenerativo Full" else 40, 70, 60, 55, 90]
-    
-    fig_radar = go.Figure()
-    fig_radar.add_trace(go.Scatterpolar(
-          r=valori_radar,
-          theta=categories,
-          fill='toself',
-          name='Profilo Aziendale',
-          line_color='#00ff88'
-    ))
-    fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 100])), showlegend=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
+    st.subheader("🎯 Profilo Pedo-Agronomico")
+    categories = ['Stoccaggio C', 'Biodiversità', 'Ritenzione Idrica', 'Resilienza', 'Margine']
+    # I valori cambiano dinamicamente in base ad argilla e sostanza organica
+    valori_radar = [so*20, 70 if protocollo != "Convenzionale" else 30, argilla*1.5, 60, 85]
+    fig_radar = go.Figure(data=go.Scatterpolar(r=valori_radar, theta=categories, fill='toself', line_color='#00ff88'))
+    fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 100])), paper_bgcolor='rgba(0,0,0,0)', font_color='white')
     st.plotly_chart(fig_radar, use_container_width=True)
 
-with col_map:
-    st.subheader("💡 AI Advisor Report")
-    st.write(f"Sulla base dei dati analizzati per **{azienda}**, il modello evidenzia un'efficienza del suolo superiore alla media.")
-    st.warning("**Criticità rilevata:** La ritenzione idrica è al 60%. Si consiglia l'uso di biostimolanti organici nel periodo primaverile.")
-    st.success(f"**Opportunità:** Con il protocollo {protocollo}, l'azienda può accedere a finanziamenti 'Green Loan' con tassi agevolati del 1.5% in meno rispetto al mercato.")
+with col_proiezione:
+    st.subheader("📈 Capitalizzazione Carbonio (5 anni)")
+    df_fin = pd.DataFrame({
+        'Anno': [2026, 2027, 2028, 2029, 2030],
+        'Valore Cumulato (€)': [valore_asset * (i+1) for i in range(5)]
+    })
+    fig_fin = px.line(df_fin, x='Anno', y='Valore Cumulato (€)', markers=True, color_discrete_sequence=['#3b82f6'])
+    st.plotly_chart(fig_fin, use_container_width=True)
 
-# --- BUSINESS CASE ---
-st.markdown("### 📈 Proiezione Finanziaria Asset Carbonio")
-df_fin = pd.DataFrame({
-    'Anno': [2026, 2027, 2028, 2029, 2030],
-    'Valore Crediti (€)': [valore_asset * (1.1**i) for i in range(5)],
-    'Risparmio Costi Operativi (€)': [ettari * 120 * (i+1) for i in range(5)]
-})
-fig_fin = px.bar(df_fin, x='Anno', y=['Valore Crediti (€)', 'Risparmio Costi Operativi (€)'], 
-                 barmode='group', color_discrete_sequence=['#00ff88', '#3b82f6'])
-st.plotly_chart(fig_fin, use_container_width=True)
-
-# --- FOOTER & REPORT ---
-if st.button("🧧 GENERA EXECUTIVE SUMMARY PER LA BANCA"):
-    st.balloons()
-    st.write("Dossier in fase di crittografia e generazione...")
+# --- AI INSIGHT ---
+st.subheader("🤖 AI Executive Analysis")
+if so < 2.0:
+    st.warning(f"Il livello di Sostanza Organica ({so}%) è critico per la coltura {coltura}. L'adozione del protocollo {protocollo} potrebbe incrementare il valore del terreno di circa il 15% in 3 anni.")
+else:
+    st.success(f"Ottima gestione. Con un contenuto di Argilla del {argilla}%, il potenziale di mineralizzazione è basso: il tuo carbonio è protetto e stabile.")
