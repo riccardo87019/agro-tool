@@ -194,13 +194,16 @@ if "df_campi" not in st.session_state:
     st.session_state.df_campi = pd.DataFrame([
         {"Campo":"Nord A1","Ettari":14.0,"SO %":1.6,"Argilla %":26,"Limo %":30,
          "Densità":1.32,"Protocollo":"Convenzionale","Cover crops":False,
-         "Coltura":"Cereali","Irrigazione m³/ha":750,"Lat":43.62,"Lon":13.51},
+         "Coltura":"Cereali","Irrigazione m³/ha":750,"Lat":43.62,"Lon":13.51,
+         "Analisi suolo":   "2022-03"},
         {"Campo":"Vigneto Est","Ettari":7.0,"SO %":1.3,"Argilla %":17,"Limo %":42,
          "Densità":1.44,"Protocollo":"Intermedio","Cover crops":False,
-         "Coltura":"Vite (DOC/IGT)","Irrigazione m³/ha":280,"Lat":43.60,"Lon":13.54},
+         "Coltura":"Vite (DOC/IGT)","Irrigazione m³/ha":280,"Lat":43.60,"Lon":13.54,
+         "Analisi suolo":   "2024-06"},
         {"Campo":"Oliveto Sud","Ettari":5.0,"SO %":2.2,"Argilla %":23,"Limo %":36,
          "Densità":1.24,"Protocollo":"Rigenerativo Full","Cover crops":True,
-         "Coltura":"Olivo","Irrigazione m³/ha":0,"Lat":43.58,"Lon":13.49},
+         "Coltura":"Olivo","Irrigazione m³/ha":0,"Lat":43.58,"Lon":13.49,
+         "Analisi suolo":   "2025-09"},
     ])
 
 # ══════════════════════════════════════════════════════════════════════
@@ -396,6 +399,23 @@ def calcola(row, boost=False):
         "seq_ha":    round(seq_ha*3.667,3),
     }
 
+# ── MODELLO RothC SEMPLIFICATO ────────────────────────────────────────
+def rothc_proiezione(so0, protocollo, anni=10):
+    """
+    Proiezione SOM con modello RothC semplificato (Coleman & Jenkinson 1996).
+    Tasso annuo di variazione k:
+      Convenzionale:     -3.8%/anno (perdita netta — aratura profonda)
+      Intermedio:        -1.0%/anno (perdita lieve — lavorazione ridotta)
+      Rigenerativo Full: +1.5%/anno (guadagno — no-till + cover crops)
+    Fonte: Bispo et al. 2017, Lugato et al. 2014 su suoli mediterranei.
+    """
+    k = {"Convenzionale": -0.038, "Intermedio": -0.010, "Rigenerativo Full": 0.015
+         }.get(str(protocollo), -0.010)
+    valori = [round(so0 * ((1 + k) ** i), 3) for i in range(anni + 1)]
+    delta_5  = round(valori[5]  - so0, 3)
+    delta_10 = round(valori[10] - so0, 3)
+    return valori, delta_5, delta_10, k
+
 # ══════════════════════════════════════════════════════════════════════
 #  HERO HEADER
 # ══════════════════════════════════════════════════════════════════════
@@ -544,11 +564,34 @@ df_edit = st.data_editor(
         "Irrigazione m³/ha": st.column_config.NumberColumn(min_value=0,max_value=10000),
         "Lat": st.column_config.NumberColumn(min_value=-90,max_value=90,format="%.5f",help="Latitudine GPS (es. 43.62)"),
         "Lon": st.column_config.NumberColumn(min_value=-180,max_value=180,format="%.5f",help="Longitudine GPS (es. 13.51)"),
+        "Analisi suolo": st.column_config.TextColumn(
+            help="Data ultimo prelievo analisi suolo (YYYY-MM, es. 2022-03). Avviso se > 3 anni."),
     }, key="editor_v7"
 )
 st.session_state.df_campi = df_edit
 if len(df_edit) == 0:
     st.warning("Aggiungi almeno un appezzamento."); st.stop()
+
+# ── AVVISO ANALISI SUOLO DATATA ────────────────────────────────────────
+if "Analisi suolo" in df_edit.columns:
+    campi_datati = []
+    for _, _r in df_edit.iterrows():
+        da = str(_r.get("Analisi suolo","")).strip()
+        if da and len(da) >= 7:
+            try:
+                anno_a, mese_a = int(da[:4]), int(da[5:7])
+                anni_fa = (date.today() - date(anno_a, mese_a, 1)).days / 365.25
+                if anni_fa > 3:
+                    campi_datati.append((str(_r.get("Campo","")), round(anni_fa, 1), da))
+            except Exception:
+                pass
+    if campi_datati:
+        elenco = " · ".join([f"**{c}** ({a}a — {d})" for c,a,d in campi_datati])
+        st.warning(
+            f"⚠️ **Analisi suolo datata** su: {elenco} — "
+            "Dati SO%, Argilla% e Densità potrebbero non riflettere la situazione attuale. "
+            "Si consiglia un nuovo prelievo (costo 150-300 euro/campo) — calcoli IPCC dipendono da questi valori."
+        )
 
 # ══════════════════════════════════════════════════════════════════════
 #  MAPPA INTERATTIVA FONDIARIA — Folium + Satellite
@@ -1207,6 +1250,83 @@ with g5:
     st.plotly_chart(fig_w,use_container_width=True)
 
 # ══════════════════════════════════════════════════════════════════════
+#  MODELLO RothC — PROIEZIONE SOM NEL TEMPO
+# ══════════════════════════════════════════════════════════════════════
+st.markdown('<div class="sec">🌱 Proiezione Sostanza Organica — Modello RothC (10 anni)</div>',
+            unsafe_allow_html=True)
+st.caption("Simulazione basata su RothC semplificato (Coleman & Jenkinson 1996). "
+           "Convenzionale: -3.8%/anno · Intermedio: -1.0%/anno · Rigenerativo: +1.5%/anno")
+
+anni_proj = list(range(date.today().year, date.today().year + 11))
+col_prot  = {"Convenzionale":"#ef4444","Intermedio":"#c9963a","Rigenerativo Full":"#1a6b3a"}
+
+rc1, rc2 = st.columns([3, 1])
+with rc1:
+    fig_rc = go.Figure()
+    # Soglia critica e ottimale
+    fig_rc.add_hline(y=1.5, line_dash="dash", line_color="#94a3b8",
+                     annotation_text="Soglia critica 1.5%", annotation_position="top right")
+    fig_rc.add_hline(y=2.5, line_dash="dot", line_color="#1a6b3a",
+                     annotation_text="Obiettivo 4‰ 2.5%", annotation_position="top right")
+    for _, _r in df_edit.iterrows():
+        so0   = max(0.1, float(_r.get("SO %", 1.5)))
+        prot  = str(_r.get("Protocollo", "Intermedio"))
+        nome  = str(_r.get("Campo", ""))
+        vals, d5, d10, k = rothc_proiezione(so0, prot, 10)
+        clr   = col_prot.get(prot, "#94a3b8")
+        fig_rc.add_scatter(
+            x=anni_proj, y=vals, name=f"{nome} ({prot[:4]}…)",
+            line=dict(color=clr, width=2.5), mode="lines+markers",
+            marker=dict(size=5),
+            hovertemplate=f"<b>{nome}</b><br>Anno: %{{x}}<br>SO: %{{y:.2f}}%<extra></extra>"
+        )
+    PLT_rc = dict(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="#faf9f6",
+                  font=dict(family="Lexend", color="#061912"),
+                  margin=dict(t=44, b=28, l=28, r=16))
+    fig_rc.update_layout(**PLT_rc,
+        title="Evoluzione SO% — Proiezione 10 anni per protocollo",
+        yaxis_title="Sostanza Organica %",
+        xaxis_title="Anno",
+        legend=dict(orientation="h", y=-0.22, font=dict(size=9)))
+    st.plotly_chart(fig_rc, use_container_width=True)
+
+with rc2:
+    st.markdown("""<div style="background:#fff;border-radius:12px;padding:.9rem 1rem;
+        border:1px solid rgba(15,53,32,.1);font-size:.78rem">
+        <b style="color:#061912">Impatto a 5 e 10 anni</b>""", unsafe_allow_html=True)
+    for _, _r in df_edit.iterrows():
+        so0  = max(0.1, float(_r.get("SO %", 1.5)))
+        prot = str(_r.get("Protocollo", "Intermedio"))
+        nome = str(_r.get("Campo", ""))
+        _, d5, d10, k = rothc_proiezione(so0, prot, 10)
+        clr5  = "#1a6b3a" if d5  >= 0 else "#ef4444"
+        clr10 = "#1a6b3a" if d10 >= 0 else "#ef4444"
+        st.markdown(f"""<div style="border-left:3px solid {col_prot.get(prot,'#94a3b8')};
+            padding:.4rem .6rem;margin:.3rem 0;background:#fafaf9;border-radius:0 8px 8px 0">
+            <b style="font-size:.8rem">{nome}</b><br>
+            <span style="color:#7a8c7e;font-size:.72rem">{prot[:12]}…</span><br>
+            5a: <b style="color:{clr5}">{"+" if d5>=0 else ""}{d5}%</b> &nbsp;
+            10a: <b style="color:{clr10}">{"+" if d10>=0 else ""}{d10}%</b>
+        </div>""", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# Avviso campi a rischio perdita critica
+campi_rischio_som = []
+for _, _r in df_edit.iterrows():
+    so0  = max(0.1, float(_r.get("SO %", 1.5)))
+    prot = str(_r.get("Protocollo", "Intermedio"))
+    nome = str(_r.get("Campo", ""))
+    vals, d5, _, _ = rothc_proiezione(so0, prot, 10)
+    if vals[5] < 1.5:
+        campi_rischio_som.append((nome, round(vals[5], 2)))
+if campi_rischio_som:
+    elenco_c = ", ".join([f"**{n}** ({v}%)" for n,v in campi_rischio_som])
+    st.error(
+        f"⚠️ **RothC — Rischio SOM critico entro 5 anni:** {elenco_c} — "
+        "SO% < 1.5% compromette struttura suolo, sequestro C e fertilita. "
+        "Passare a protocollo Intermedio o Rigenerativo Full."
+    )
+# ══════════════════════════════════════════════════════════════════════
 #  SCENARI
 # ══════════════════════════════════════════════════════════════════════
 st.markdown('<div class="sec">🚀 Business Case & ROI Sostenibilità</div>',unsafe_allow_html=True)
@@ -1457,12 +1577,345 @@ with st.expander("🔬 Metodologia Scientifica Completa — IPCC + GHG Protocol 
     """)
 
 # ══════════════════════════════════════════════════════════════════════
-#  REPORT HTML COMPLETO
+#  REPORT — PDF NATIVO (ReportLab) + HTML FALLBACK
 # ══════════════════════════════════════════════════════════════════════
-st.markdown('<div class="sec">📄 Genera Dossier Professionale</div>',unsafe_allow_html=True)
-st.info("Dossier completo con bilancio GHG Scope 1+2+3, meteo storico, fertilizzanti, scarti. **Ctrl+P → Salva come PDF.**")
+try:
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm, mm
+    from reportlab.lib import colors
+    from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Table,
+                                     TableStyle, HRFlowable, KeepTogether)
+    from reportlab.platypus import PageBreak
+    from io import BytesIO
+    RL_OK = True
+except ImportError:
+    RL_OK = False
 
-if st.button("🖨️ Genera Dossier ESG Completo v7"):
+st.markdown('<div class="sec">📄 Genera Dossier Professionale</div>',unsafe_allow_html=True)
+
+if RL_OK:
+    st.success("✅ **ReportLab installato** — generazione PDF nativa attiva. File .pdf scaricabile direttamente.")
+else:
+    st.info("📦 Aggiungi **reportlab** al requirements.txt per il PDF nativo. "
+            "Nel frattempo usa il dossier HTML (Ctrl+P → Salva come PDF).")
+
+col_pdf, col_html = st.columns(2)
+with col_pdf:
+    gen_pdf  = st.button("📄 Scarica PDF nativo", disabled=not RL_OK,
+                          help="Richiede reportlab nel requirements.txt")
+with col_html:
+    gen_html = st.button("🌐 Genera dossier HTML")
+
+# ─── PDF GENERATOR ────────────────────────────────────────────────────
+if RL_OK and gen_pdf:
+    oggi = datetime.now().strftime("%d/%m/%Y")
+    buf  = BytesIO()
+
+    # Colori azienda
+    C_DARK   = colors.HexColor("#061912")
+    C_GREEN  = colors.HexColor("#1a6b3a")
+    C_GOLD   = colors.HexColor("#c9963a")
+    C_RED    = colors.HexColor("#ef4444")
+    C_LIGHT  = colors.HexColor("#f4f1ea")
+    C_LGRAY  = colors.HexColor("#f9f7f3")
+    C_GRAY   = colors.HexColor("#7a8c7e")
+    C_WHITE  = colors.white
+
+    styles = getSampleStyleSheet()
+
+    def sty(name, **kw):
+        return ParagraphStyle(name, parent=styles["Normal"], **kw)
+
+    S_title    = sty("title",    fontSize=18, textColor=C_DARK,  fontName="Helvetica-Bold",   spaceAfter=4)
+    S_sub      = sty("sub",      fontSize=10, textColor=C_GRAY,  fontName="Helvetica",         spaceAfter=12)
+    S_h2       = sty("h2",       fontSize=11, textColor=C_GREEN, fontName="Helvetica-Bold",   spaceBefore=14, spaceAfter=4, borderPadding=(0,0,2,6),
+                     borderColor=C_GOLD, borderLeftPadding=6, leftIndent=6)
+    S_body     = sty("body",     fontSize=8.5, textColor=C_DARK, fontName="Helvetica",         spaceAfter=3,   leading=13)
+    S_small    = sty("small",    fontSize=7.5, textColor=C_GRAY, fontName="Helvetica",         spaceAfter=2,   leading=11)
+    S_bold     = sty("bold",     fontSize=8.5, textColor=C_DARK, fontName="Helvetica-Bold",    spaceAfter=3)
+    S_warn     = sty("warn",     fontSize=8,   textColor=colors.HexColor("#92400e"),
+                     fontName="Helvetica", backColor=colors.HexColor("#fef3c7"),
+                     borderPadding=4, spaceAfter=6, leading=12)
+    S_ok       = sty("ok",       fontSize=8,   textColor=colors.HexColor("#065f46"),
+                     fontName="Helvetica", backColor=colors.HexColor("#d1fae5"),
+                     borderPadding=4, spaceAfter=6, leading=12)
+
+    def th(txt):  return Paragraph(f"<b>{txt}</b>", sty("th", fontSize=7.5, textColor=C_WHITE, fontName="Helvetica-Bold"))
+    def td(txt, bold=False, color=None):
+        st_= sty("td", fontSize=7.5, textColor=color or C_DARK,
+                  fontName="Helvetica-Bold" if bold else "Helvetica")
+        return Paragraph(str(txt), st_)
+
+    TS_HEAD = TableStyle([
+        ("BACKGROUND", (0,0),(-1,0), C_DARK),
+        ("TEXTCOLOR",  (0,0),(-1,0), C_WHITE),
+        ("FONTNAME",   (0,0),(-1,0), "Helvetica-Bold"),
+        ("FONTSIZE",   (0,0),(-1,-1), 7.5),
+        ("GRID",       (0,0),(-1,-1), 0.3, colors.HexColor("#dddddd")),
+        ("ROWBACKGROUNDS",(0,1),(-1,-1),[C_WHITE, C_LGRAY]),
+        ("VALIGN",     (0,0),(-1,-1), "MIDDLE"),
+        ("TOPPADDING", (0,0),(-1,-1), 3),
+        ("BOTTOMPADDING",(0,0),(-1,-1), 3),
+        ("LEFTPADDING", (0,0),(-1,-1), 4),
+        ("RIGHTPADDING",(0,0),(-1,-1), 4),
+    ])
+
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+                            leftMargin=1.8*cm, rightMargin=1.8*cm,
+                            topMargin=2*cm,    bottomMargin=2*cm,
+                            title=f"AgroLog IA — {nome_az}",
+                            author=agronomo)
+    W = A4[0] - 3.6*cm  # larghezza utile
+
+    story = []
+
+    # ── INTESTAZIONE ───────────────────────────────────────────────────
+    story.append(Paragraph(f"🌿 {nome_az}", S_title))
+    story.append(Paragraph(
+        f"Dossier Carbon &amp; ESG Strategic Intelligence — {oggi}  |  "
+        f"Consulente: {agronomo}  |  {regione} / {zona}", S_sub))
+    story.append(Paragraph(
+        f"IPCC 2006 Tier 1 · FAO-PM · GHG Protocol Scope 1+2+3 · ecoinvent 3.9 · Open-Meteo ERA5", S_small))
+    story.append(HRFlowable(width=W, thickness=2, color=C_GOLD, spaceAfter=8))
+
+    # ── KPI GRIGLIA ─────────────────────────────────────────────────────
+    story.append(Paragraph("Indicatori Chiave", S_h2))
+    kpi_data = [
+        [th("Score ESG"),     th("CO₂ Sequestrata"),  th("Bilancio GHG"),   th("Crediti CO₂/anno")],
+        [td(f"{score}/100 — {rcls}", bold=True),
+         td(f"{round(tot_seq,1)} t  ({round(tot_seq/tot_ha,2)} t/ha)"),
+         td(f'{"+" if tot_netto>=0 else ""}{round(tot_netto,1)} t', bold=True,
+            color=C_GREEN if tot_netto>=0 else C_RED),
+         td(f"€{int(val_cred):,}", bold=True, color=C_GREEN)],
+        [th("Fabbisogno Idrico"), th("Valore Fondo"),  th("Margine Netto"),  th("Stress Idrico")],
+        [td(f"{int(tot_fabb):,} m³  (spreco {int(tot_spreco):,})"),
+         td(f"€{int(tot_vf):,}"),
+         td(f"{marg_pct}%", bold=True, color=C_GREEN if marg_pct>=25 else C_RED),
+         td(f"{round(stress_idx*100):.0f}%", bold=True,
+            color=C_RED if stress_idx>0.4 else colors.HexColor("#92400e") if stress_idx>0.2 else C_GREEN)],
+    ]
+    t_kpi = Table(kpi_data, colWidths=[W/4]*4)
+    t_kpi.setStyle(TS_HEAD)
+    story.append(t_kpi)
+    story.append(Spacer(1, 6*mm))
+
+    # ── METEO ─────────────────────────────────────────────────────────
+    story.append(Paragraph("Meteo Live &amp; Storico", S_h2))
+    story.append(Paragraph(
+        f"🌡️ {M['tmax']}°/{M['tmin']}°C  |  🌧️ Pioggia 7gg: {M['pioggia_7g']} mm  |  "
+        f"💧 ET₀: {M['et0']} mm/g  |  📊 Pioggia 30gg: {MS['pioggia_30g']} mm  |  "
+        f"⚡ Deficit: {round(deficit)} mm  |  🔥 Stress: {round(stress_idx*100):.0f}%", S_body))
+    if MA:
+        mesi_nomi_pdf={"01":"Gen","02":"Feb","03":"Mar","04":"Apr","05":"Mag","06":"Giu",
+                       "07":"Lug","08":"Ago","09":"Set","10":"Ott","11":"Nov","12":"Dic"}
+        hdr_m = [th("Mese"), th("Pioggia"), th("ET₀"), th("Bilancio"), th("Temp.")]
+        rows_m = []
+        for mm_d in MA:
+            mn  = mesi_nomi_pdf.get(mm_d["mese"][5:], mm_d["mese"][5:])
+            bal = round(mm_d["pioggia"]-mm_d["et0"],0)
+            rows_m.append([td(f"{mn} {mm_d['mese'][:4]}"),
+                           td(f"{mm_d['pioggia']} mm"),
+                           td(f"{mm_d['et0']} mm"),
+                           td(f'{"+" if bal>=0 else ""}{bal} mm', color=C_GREEN if bal>=0 else C_RED),
+                           td(f"{mm_d['temp_media']}°C")])
+        t_m = Table([hdr_m]+rows_m, colWidths=[W*0.20, W*0.18, W*0.18, W*0.22, W*0.22])
+        t_m.setStyle(TS_HEAD)
+        story.append(t_m)
+    story.append(Spacer(1, 5*mm))
+
+    # ── BILANCIO GHG ──────────────────────────────────────────────────
+    story.append(Paragraph("Bilancio GHG — Scope 1 + 2 + 3 (GHG Protocol)", S_h2))
+    ghg_data = [
+        [th("Voce"), th("Scope"), th("tCO₂eq/anno"), th("Note")],
+        [td("Sequestro suolo"), td("Credito"), td(f"+{round(tot_seq,2)}", bold=True, color=C_GREEN), td("IPCC Tier 1")],
+        [td("Gasolio macchine"), td("Sc.1"), td(f"-{round(S('diesel_co2'),2)}", color=C_RED), td("DEFRA 2024")],
+        [td("N₂O fertilizzanti"), td("Sc.1"), td(f"-{round(S('n2o')+co2_fert_n2o,2)}", color=C_RED), td(f"minerali {round(co2_n2o_min,2)} / organici {round(co2_n2o_org,2)} t")],
+        [td("Scarti emissivi"), td("Sc.1"), td(f"-{round(max(0,co2_scarti),2)}", color=C_RED), td("IPCC 2006 Vol.5")],
+        [td("Fertilizzanti — produzione"), td("Sc.3"), td(f"-{round(co2_fert_prod,2)}", color=colors.HexColor("#c9963a")), td("ecoinvent 3.9")],
+        [td("Fitofarmaci"), td("Sc.3"), td(f"-{round(co2_fito_s3,2)}", color=colors.HexColor("#c9963a")), td("ecoinvent 3.9")],
+        [td("Materie prime"), td("Sc.3"), td(f"-{round(co2_materie,2)}", color=colors.HexColor("#c9963a")), td("LCA letteratura")],
+        [td("Trasporti & mobilità"), td("Sc.3"), td(f"-{round(co2_trasporti,2)}", color=colors.HexColor("#c9963a")), td("DEFRA 2024")],
+        [td("Scarti virtuosi"), td("Credito"), td(f"+{round(abs(min(0,co2_scarti)),2)}", color=C_GREEN), td("IPCC 2006 Vol.5")],
+        [td("BILANCIO NETTO", bold=True), td(""), td(f'{"+" if tot_netto>=0 else ""}{round(tot_netto,2)}', bold=True,
+             color=C_GREEN if tot_netto>=0 else C_RED), td(f"→ €{int(val_cred):,}/anno crediti")],
+    ]
+    t_ghg = Table(ghg_data, colWidths=[W*0.35, W*0.12, W*0.20, W*0.33])
+    ts_ghg = TableStyle(TS_HEAD.getCommands() + [
+        ("BACKGROUND", (0,-1),(-1,-1), colors.HexColor("#f0fdf4")),
+        ("FONTNAME", (0,-1),(-1,-1), "Helvetica-Bold"),
+    ])
+    t_ghg.setStyle(ts_ghg)
+    story.append(t_ghg)
+    story.append(Spacer(1, 5*mm))
+
+    # ── APPEZZAMENTI ──────────────────────────────────────────────────
+    story.append(Paragraph("Dettaglio Appezzamenti — IPCC Tier 1", S_h2))
+    hdr_c = [th("Campo"), th("ha"), th("Coltura"), th("Protocollo"),
+             th("SO%"), th("Arg/Lim%"), th("CC"), th("Seq.t"), th("Emit.t"), th("Netto"), th("Analisi")]
+    rows_c = []
+    for i, (_,rr) in enumerate(df_edit.iterrows()):
+        rc = res_att[i]
+        da_pdf = str(rr.get("Analisi suolo","—"))
+        rows_c.append([
+            td(str(rr.get("Campo","")), bold=True),
+            td(str(rr.get("Ettari",""))),
+            td(str(rr.get("Coltura",""))),
+            td(str(rr.get("Protocollo",""))[:12]),
+            td(f"{rr.get('SO %','')}%"),
+            td(f"{rr.get('Argilla %','')}%/{rr.get('Limo %','')}%"),
+            td("✓" if rr.get("Cover crops",False) else "—"),
+            td(str(rc["co2_seq"]), color=C_GREEN),
+            td(str(rc["co2_emit"]), color=C_RED),
+            td(f'{"+" if rc["co2_netto"]>=0 else ""}{rc["co2_netto"]}',
+               bold=True, color=C_GREEN if rc["co2_netto"]>=0 else C_RED),
+            td(da_pdf, color=C_RED if da_pdf not in ["—",""] and
+               any(c == str(rr.get("Campo","")) for c,_,_ in (campi_datati if "campi_datati" in dir() else [])) else C_GRAY),
+        ])
+    cw_c = [W*0.13, W*0.06, W*0.12, W*0.13, W*0.06, W*0.09, W*0.05, W*0.07, W*0.07, W*0.07, W*0.09]
+    t_c = Table([hdr_c]+rows_c, colWidths=cw_c, repeatRows=1)
+    t_c.setStyle(TS_HEAD)
+    story.append(t_c)
+    story.append(Spacer(1, 5*mm))
+
+    # ── RothC PROIEZIONE ─────────────────────────────────────────────
+    story.append(Paragraph("Proiezione SOM — Modello RothC semplificato (5 anni)", S_h2))
+    hdr_r = [th("Campo"), th("Protocollo"), th("SO% ora"), th("SO% +5a"), th("Δ 5 anni"), th("SO% +10a"), th("Δ 10 anni")]
+    rows_r = []
+    for _,rr in df_edit.iterrows():
+        so0   = max(0.1, float(rr.get("SO %",1.5)))
+        prot_ = str(rr.get("Protocollo","Intermedio"))
+        nome_ = str(rr.get("Campo",""))
+        vals_, d5_, d10_, _ = rothc_proiezione(so0, prot_, 10)
+        rows_r.append([
+            td(nome_, bold=True),
+            td(prot_[:16]),
+            td(f"{so0}%"),
+            td(f"{vals_[5]}%", color=C_GREEN if d5_>=0 else C_RED),
+            td(f'{"+" if d5_>=0 else ""}{d5_}%', bold=True, color=C_GREEN if d5_>=0 else C_RED),
+            td(f"{vals_[10]}%", color=C_GREEN if d10_>=0 else C_RED),
+            td(f'{"+" if d10_>=0 else ""}{d10_}%', bold=True, color=C_GREEN if d10_>=0 else C_RED),
+        ])
+    t_r = Table([hdr_r]+rows_r, colWidths=[W*0.16, W*0.19, W*0.11, W*0.13, W*0.13, W*0.13, W*0.15])
+    t_r.setStyle(TS_HEAD)
+    story.append(t_r)
+    story.append(Spacer(1, 3*mm))
+    story.append(Paragraph(
+        "Fonte: Coleman &amp; Jenkinson 1996, RothC-26.3. k: Convenzionale -3.8%/a · Intermedio -1.0%/a · Rigenerativo +1.5%/a", S_small))
+    story.append(Spacer(1, 5*mm))
+
+    # ── FERTILIZZANTI ─────────────────────────────────────────────────
+    story.append(Paragraph("Fertilizzanti &amp; Fitofarmaci — Scope 1 + 3", S_h2))
+    hdr_f = [th("Prodotto"), th("Tipo"), th("Quantità"), th("N₂O Sc.1 (t)"), th("Prod. Sc.3 (t)"), th("EF N₂O")]
+    rows_f = [[td(fd["prod"]), td(fd["tipo"].capitalize()), td(f'{int(fd["qty"]):,} kg'),
+               td(str(fd["s1"]), color=C_RED), td(str(fd["s3"]), color=colors.HexColor("#c9963a")),
+               td(str(fd["ef"]["ef_n2o"]))] for fd in fert_detail]
+    t_f = Table([hdr_f]+rows_f, colWidths=[W*0.32, W*0.12, W*0.14, W*0.14, W*0.14, W*0.14])
+    t_f.setStyle(TS_HEAD)
+    story.append(t_f)
+    story.append(Spacer(1, 5*mm))
+
+    # ── PAC ECO-SCHEME ────────────────────────────────────────────────
+    story.append(Paragraph("Piano PAC — Eco-Scheme 2023-2027 (AGEA 2024)", S_h2))
+    hdr_p = [th("Misura"), th("Accessibile"), th("Ettari"), th("€/ha"), th("Importo/anno")]
+    rows_p = []
+    for pp in pac_items:
+        imp = round(pp["ha"]*pp["pag_ha"],0) if pp["ok"] else 0
+        rows_p.append([
+            td(pp["nome"]),
+            td("✅ Sì" if pp["ok"] else "○ No", color=C_GREEN if pp["ok"] else C_GRAY),
+            td(f'{pp["ha"]:.1f}'),
+            td(f'€{pp["pag_ha"]}'),
+            td(f'€{int(imp):,}' if pp["ok"] else "—", bold=pp["ok"], color=C_GREEN if pp["ok"] else C_GRAY),
+        ])
+    rows_p.append([td("TOTALE ACCESSIBILE", bold=True), td(""), td(""), td(""),
+                   td(f"€{int(pac_totale):,}/anno", bold=True, color=C_GREEN)])
+    t_p = Table([hdr_p]+rows_p, colWidths=[W*0.40, W*0.15, W*0.12, W*0.12, W*0.21])
+    ts_p = TableStyle(TS_HEAD.getCommands() + [
+        ("BACKGROUND", (0,-1),(-1,-1), colors.HexColor("#f0fdf4")),
+    ])
+    t_p.setStyle(ts_p)
+    story.append(t_p)
+    story.append(Spacer(1, 5*mm))
+
+    # ── SCENARI ECONOMICI ─────────────────────────────────────────────
+    story.append(Paragraph("Scenari Economici", S_h2))
+    sc_data = [
+        [th("Voce"), th("Stato Attuale"), th("Scenario Rigenerativo"), th("Δ annuo")],
+        [td("CO₂ netta Sc.1+3"),
+         td(f'{"+" if tot_netto>=0 else ""}{round(tot_netto,1)} t'),
+         td(f'{"+" if pot_netto>=0 else ""}{round(pot_netto,1)} t'),
+         td(f'+{round(pot_netto-tot_netto,1)} t', color=C_GREEN)],
+        [td("Crediti CO₂"),
+         td(f"€{int(val_cred):,}"),
+         td(f"€{int(pot_cred):,}"),
+         td(f"+€{int(pot_cred-val_cred):,}", color=C_GREEN)],
+        [td("Risparmio gasolio"), td("—"), td(f"+€{int(risp_die):,}"), td(f"+€{int(risp_die):,}", color=C_GREEN)],
+        [td("Risparmio acqua"),   td("—"), td(f"+€{int(risp_h2o):,}"), td(f"+€{int(risp_h2o):,}", color=C_GREEN)],
+        [td("PAC Eco-Scheme"),    td(f"€{int(pac_totale):,}"), td(f"€{int(pac_totale):,}", ), td("—")],
+        [td("TOTALE GUADAGNO", bold=True), td(""), td(""), td(f"+€{int(guadagno):,}/a", bold=True, color=C_GREEN)],
+    ]
+    t_sc = Table(sc_data, colWidths=[W*0.32, W*0.22, W*0.24, W*0.22])
+    ts_sc = TableStyle(TS_HEAD.getCommands() + [
+        ("BACKGROUND",(0,-1),(-1,-1), colors.HexColor("#f0fdf4")),
+    ])
+    t_sc.setStyle(ts_sc)
+    story.append(t_sc)
+    story.append(Spacer(1, 5*mm))
+
+    # ── AZIONI ────────────────────────────────────────────────────────
+    story.append(Paragraph("Piano d'Azione Prioritario", S_h2))
+    for ii, az in enumerate(azioni[:6], 1):
+        clr_az = {"alta": "#ef4444","media":"#c9963a","bassa":"#1a6b3a"}[az["p"]]
+        story.append(Paragraph(
+            f'<font color="{clr_az}">●</font> <b>{ii}. {az["t"]}</b>', S_body))
+        story.append(Paragraph(f'📊 {az["i"]}  |  💶 {az["e"]}  |  📜 {az["c"]}', S_small))
+    story.append(Spacer(1, 5*mm))
+
+    # ── NOTA METODOLOGICA ─────────────────────────────────────────────
+    story.append(Paragraph("Nota Metodologica", S_h2))
+    story.append(Paragraph(
+        "Carbonio suolo: IPCC 2006 Vol.4 Tier 1, AR5 GWP.  "
+        "Fertilizzanti Scope 1+3: ecoinvent 3.9, N₂O per tipo (urea EF=0.013, organico=0.004-0.006).  "
+        "Trasporti Scope 3: DEFRA 2024.  Acqua: FAO Penman-Monteith, Kc FAO-56.  "
+        "RothC: Coleman &amp; Jenkinson 1996.  PAC: AGEA 2024.  "
+        "Meteo: Open-Meteo ECMWF+ERA5 1km.  Valore fondiario: CREA-AA 2025.  "
+        "Prezzi CO₂: Xpansiv CBL Q1 2026.  "
+        "Report previsionale — certificazione ufficiale crediti richiede verifica Ente Terzo (Verra VCS / Gold Standard / ISAE 3000).", S_small))
+    story.append(Spacer(1, 6*mm))
+
+    # ── FIRMA ────────────────────────────────────────────────────────
+    story.append(HRFlowable(width=W, thickness=0.5, color=C_GOLD))
+    story.append(Spacer(1,3*mm))
+    firma_data = [
+        [td("Dottore Agronomo:", bold=True), td(agronomo),
+         td("N. Albo:", bold=True), td("______________________")],
+        [td("Data:", bold=True), td(oggi),
+         td("Luogo:", bold=True), td("______________________")],
+        [td("Firma:", bold=True), td("______________________________"),
+         td("Timbro:", bold=True), td("")],
+    ]
+    t_firma = Table(firma_data, colWidths=[W*0.15, W*0.35, W*0.15, W*0.35])
+    t_firma.setStyle(TableStyle([
+        ("FONTSIZE",(0,0),(-1,-1),8.5),
+        ("TOPPADDING",(0,0),(-1,-1),5),
+        ("BOTTOMPADDING",(0,0),(-1,-1),5),
+    ]))
+    story.append(t_firma)
+
+    # ── BUILD PDF ────────────────────────────────────────────────────
+    doc.build(story)
+    buf.seek(0)
+    pdf_bytes = buf.getvalue()
+    fn_pdf = f"AgroLog_v8_{nome_az.replace(' ','_')}_{datetime.now().strftime('%Y%m%d')}.pdf"
+    st.download_button(
+        label="⬇️ Scarica Dossier ESG — PDF nativo",
+        data=pdf_bytes, file_name=fn_pdf, mime="application/pdf",
+        help="File PDF generato con ReportLab — nessun passaggio Ctrl+P richiesto")
+    st.success(f"✅ **{fn_pdf}** generato con ReportLab — {round(len(pdf_bytes)/1024,0)} KB")
+
+# ─── HTML FALLBACK ────────────────────────────────────────────────────
+if gen_html:
     oggi = datetime.now().strftime("%d/%m/%Y")
 
     # Tabella campi
@@ -1760,7 +2213,7 @@ Dati previsionali — verifica Ente Terzo per certificazione ufficiale crediti c
         f'margin-top:.6rem;box-shadow:0 4px 12px rgba(201,150,58,.35)">'
         f'⬇️ Scarica Dossier ESG v7 — Scope 1+2+3</a>',
         unsafe_allow_html=True)
-    st.success(f"✅ '{fn}' generato — Apri nel browser → Ctrl+P → Salva come PDF.")
+    st.success(f"✅ '{fn}' generato — Apri nel browser e usa Ctrl+P → Salva come PDF.")
 
 st.markdown("""<div class="footer">
   AgroLog IA v7.0 — Carbon & ESG Strategic Intelligence |
