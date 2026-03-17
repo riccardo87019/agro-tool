@@ -13,6 +13,13 @@ try:
 except ImportError:
     FOLIUM_OK = False
 
+# Controlla ReportLab disponibilità (serve prima del blocco CSRD)
+try:
+    from reportlab.lib.pagesizes import A4 as _A4_test
+    RL_OK = True
+except ImportError:
+    RL_OK = False
+
 # ══════════════════════════════════════════════════════════════════════
 #  CONFIG
 # ══════════════════════════════════════════════════════════════════════
