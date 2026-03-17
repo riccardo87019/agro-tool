@@ -483,6 +483,53 @@ if "df_campi" not in st.session_state:
          "Analisi suolo":"2025-09"},
     ])
 
+
+# ══════════════════════════════════════════════════════════════════════
+#  FUNZIONI SALVATAGGIO / CARICAMENTO PROFILO
+# ══════════════════════════════════════════════════════════════════════
+import json as _json
+
+def esporta_profilo():
+    """Serializza tutto lo stato corrente in JSON."""
+    profilo = {
+        "version": "1.0",
+        "nome_az":   st.session_state.get("_nome_az", "Az. Agr. Rossi"),
+        "agronomo":  st.session_state.get("_agronomo", "Dott. [Cognome]"),
+        "df_campi":  st.session_state.df_campi.to_dict(orient="records")
+            if "df_campi" in st.session_state else [],
+        "df_fert":   st.session_state.df_fert.to_dict(orient="records")
+            if "df_fert" in st.session_state else [],
+        "df_fito":   st.session_state.df_fito.to_dict(orient="records")
+            if "df_fito" in st.session_state else [],
+        "df_scarti": st.session_state.df_scarti.to_dict(orient="records")
+            if "df_scarti" in st.session_state else [],
+        "df_materie":st.session_state.df_materie.to_dict(orient="records")
+            if "df_materie" in st.session_state else [],
+        "df_trasporti": st.session_state.df_trasporti.to_dict(orient="records")
+            if "df_trasporti" in st.session_state else [],
+    }
+    return _json.dumps(profilo, ensure_ascii=False, indent=2)
+
+def importa_profilo(raw_bytes):
+    """Carica un profilo JSON e aggiorna lo session_state."""
+    try:
+        profilo = _json.loads(raw_bytes.decode("utf-8"))
+        if "df_campi" in profilo:
+            st.session_state.df_campi = pd.DataFrame(profilo["df_campi"])
+        if "df_fert" in profilo:
+            st.session_state.df_fert = pd.DataFrame(profilo["df_fert"])
+        if "df_fito" in profilo:
+            st.session_state.df_fito = pd.DataFrame(profilo["df_fito"])
+        if "df_scarti" in profilo:
+            st.session_state.df_scarti = pd.DataFrame(profilo["df_scarti"])
+        if "df_materie" in profilo:
+            st.session_state.df_materie = pd.DataFrame(profilo["df_materie"])
+        if "df_trasporti" in profilo:
+            st.session_state.df_trasporti = pd.DataFrame(profilo["df_trasporti"])
+        return True, "Profilo caricato con successo!"
+    except Exception as e:
+        return False, f"Errore nel file JSON: {str(e)}"
+
 # ══════════════════════════════════════════════════════════════════════
 #  SIDEBAR
 # ══════════════════════════════════════════════════════════════════════
