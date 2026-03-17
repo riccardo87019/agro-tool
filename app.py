@@ -6,6 +6,13 @@ import plotly.express as px
 from datetime import datetime, date, timedelta
 import requests, base64
 
+try:
+    import folium
+    from streamlit_folium import st_folium
+    FOLIUM_OK = True
+except ImportError:
+    FOLIUM_OK = False
+
 # ══════════════════════════════════════════════════════════════════════
 #  CONFIG
 # ══════════════════════════════════════════════════════════════════════
@@ -151,13 +158,13 @@ if "df_campi" not in st.session_state:
     st.session_state.df_campi = pd.DataFrame([
         {"Campo":"Nord A1","Ettari":14.0,"SO %":1.6,"Argilla %":26,"Limo %":30,
          "Densità":1.32,"Protocollo":"Convenzionale","Cover crops":False,
-         "Coltura":"Cereali","Irrigazione m³/ha":750},
+         "Coltura":"Cereali","Irrigazione m³/ha":750,"Lat":43.62,"Lon":13.51},
         {"Campo":"Vigneto Est","Ettari":7.0,"SO %":1.3,"Argilla %":17,"Limo %":42,
          "Densità":1.44,"Protocollo":"Intermedio","Cover crops":False,
-         "Coltura":"Vite (DOC/IGT)","Irrigazione m³/ha":280},
+         "Coltura":"Vite (DOC/IGT)","Irrigazione m³/ha":280,"Lat":43.60,"Lon":13.54},
         {"Campo":"Oliveto Sud","Ettari":5.0,"SO %":2.2,"Argilla %":23,"Limo %":36,
          "Densità":1.24,"Protocollo":"Rigenerativo Full","Cover crops":True,
-         "Coltura":"Olivo","Irrigazione m³/ha":0},
+         "Coltura":"Olivo","Irrigazione m³/ha":0,"Lat":43.58,"Lon":13.49},
     ])
 
 # ══════════════════════════════════════════════════════════════════════
@@ -497,11 +504,182 @@ df_edit = st.data_editor(
         "Limo %":            st.column_config.NumberColumn(min_value=1,max_value=80),
         "Densità":           st.column_config.NumberColumn(min_value=0.7,max_value=1.9,format="%.2f"),
         "Irrigazione m³/ha": st.column_config.NumberColumn(min_value=0,max_value=10000),
+        "Lat": st.column_config.NumberColumn(min_value=-90,max_value=90,format="%.5f",help="Latitudine GPS (es. 43.62)"),
+        "Lon": st.column_config.NumberColumn(min_value=-180,max_value=180,format="%.5f",help="Longitudine GPS (es. 13.51)"),
     }, key="editor_v7"
 )
 st.session_state.df_campi = df_edit
 if len(df_edit) == 0:
     st.warning("Aggiungi almeno un appezzamento."); st.stop()
+
+# ══════════════════════════════════════════════════════════════════════
+#  MAPPA INTERATTIVA FONDIARIA — Folium + Satellite
+# ══════════════════════════════════════════════════════════════════════
+st.markdown('<div class="sec">🗺️ Mappa Interattiva Aziendale</div>', unsafe_allow_html=True)
+
+def colore_score(s):
+    """Restituisce colore marker in base allo score ESG stimato del campo"""
+    if s >= 70: return "green"
+    if s >= 48: return "orange"
+    return "red"
+
+def score_campo(row):
+    """Score ESG semplificato per singolo campo"""
+    s = 30
+    prot = str(row.get("Protocollo",""))
+    so   = float(row.get("SO %",1.5))
+    if prot == "Rigenerativo Full": s += 35
+    elif prot == "Intermedio":      s += 18
+    if row.get("Cover crops",False): s += 12
+    if so > 2.5: s += 10
+    elif so > 1.8: s += 5
+    return min(100, s)
+
+def icona_coltura(col):
+    return {"Vite (DOC/IGT)":"🍇","Olivo":"🫒","Cereali":"🌾",
+            "Frutteto":"🍎","Nocciolo":"🌰","Orticole":"🥬",
+            "Foraggere":"🌿","Misto":"🌱"}.get(col,"🌱")
+
+if FOLIUM_OK:
+    # Centro mappa = media coordinate campi con GPS, altrimenti centroide regione
+    campi_gps = df_edit.dropna(subset=["Lat","Lon"]) if "Lat" in df_edit.columns else pd.DataFrame()
+    if len(campi_gps) > 0:
+        map_lat = float(campi_gps["Lat"].mean())
+        map_lon = float(campi_gps["Lon"].mean())
+        zoom    = 14
+    else:
+        map_lat, map_lon = lat, lon
+        zoom = 11
+
+    m = folium.Map(
+        location=[map_lat, map_lon],
+        zoom_start=zoom,
+        tiles=None,
+    )
+
+    # Layer 1 — OpenStreetMap
+    folium.TileLayer(
+        tiles="OpenStreetMap",
+        name="Mappa stradale",
+        control=True
+    ).add_to(m)
+
+    # Layer 2 — Satellite Esri (gratuito, no API key)
+    folium.TileLayer(
+        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        attr="Esri World Imagery",
+        name="🛰️ Satellite",
+        overlay=False,
+        control=True,
+    ).add_to(m)
+
+    # Layer 3 — Satellite ibrido con strade
+    folium.TileLayer(
+        tiles="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+        attr="Google",
+        name="🛰️ Satellite + Strade",
+        overlay=False,
+        control=True,
+    ).add_to(m)
+
+    # Marker per ogni campo con GPS
+    if "Lat" in df_edit.columns and "Lon" in df_edit.columns:
+        for _, row in df_edit.iterrows():
+            try:
+                rlat = float(row["Lat"]) if row["Lat"] else None
+                rlon = float(row["Lon"]) if row["Lon"] else None
+            except (TypeError, ValueError):
+                rlat, rlon = None, None
+
+            if rlat and rlon and not (rlat==0 and rlon==0):
+                sc   = score_campo(row)
+                col  = colore_score(sc)
+                ico  = icona_coltura(str(row.get("Coltura","")))
+                nome = str(row.get("Campo","Campo"))
+                prot = str(row.get("Protocollo",""))
+                so   = float(row.get("SO %",0))
+                ha   = float(row.get("Ettari",0))
+                coltura = str(row.get("Coltura",""))
+
+                # Badge colore score
+                badge_col = "#1a6b3a" if sc>=70 else "#c9963a" if sc>=48 else "#ef4444"
+                badge_rating = "A" if sc>=80 else "B" if sc>=65 else "C" if sc>=48 else "D"
+
+                popup_html = f"""
+                <div style="font-family:Arial,sans-serif;min-width:220px;font-size:13px">
+                  <div style="background:linear-gradient(135deg,#061912,#1a6b3a);
+                       color:#fff;padding:10px 14px;border-radius:8px 8px 0 0;
+                       border-bottom:3px solid #c9963a">
+                    <b style="font-size:15px">{ico} {nome}</b>
+                  </div>
+                  <div style="padding:10px 14px;background:#f4f1ea;border-radius:0 0 8px 8px">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                      <span style="color:#7a8c7e;font-size:11px">Score ESG</span>
+                      <span style="background:{badge_col};color:#fff;padding:2px 9px;
+                            border-radius:20px;font-weight:700;font-size:11px">
+                        {badge_rating} — {sc}/100</span>
+                    </div>
+                    <table style="width:100%;font-size:12px;border-collapse:collapse">
+                      <tr><td style="color:#7a8c7e;padding:2px 0">Coltura</td>
+                          <td style="text-align:right;font-weight:600">{coltura}</td></tr>
+                      <tr><td style="color:#7a8c7e;padding:2px 0">Superficie</td>
+                          <td style="text-align:right;font-weight:600">{ha} ha</td></tr>
+                      <tr><td style="color:#7a8c7e;padding:2px 0">Sostanza Organica</td>
+                          <td style="text-align:right;font-weight:600">{so}%</td></tr>
+                      <tr><td style="color:#7a8c7e;padding:2px 0">Protocollo</td>
+                          <td style="text-align:right;font-weight:600">{prot}</td></tr>
+                      <tr><td style="color:#7a8c7e;padding:2px 0">Coordinate</td>
+                          <td style="text-align:right;color:#999;font-size:11px">{round(rlat,4)}, {round(rlon,4)}</td></tr>
+                    </table>
+                  </div>
+                </div>"""
+
+                folium.Marker(
+                    location=[rlat, rlon],
+                    popup=folium.Popup(popup_html, max_width=260),
+                    tooltip=f"{ico} {nome} — Score {sc}/100",
+                    icon=folium.Icon(
+                        color=col,
+                        icon="leaf",
+                        prefix="fa"
+                    )
+                ).add_to(m)
+
+    # Marker stazione meteo (posizione regione)
+    folium.Marker(
+        location=[lat, lon],
+        tooltip=f"🌦️ Stazione meteo {regione} — {M['tmax']}°/{M['tmin']}°C · ET₀ {M['et0']} mm/g",
+        icon=folium.Icon(color="blue", icon="cloud", prefix="fa")
+    ).add_to(m)
+
+    # Controllo layer
+    folium.LayerControl(position="topright").add_to(m)
+
+    # Render mappa
+    map_col, info_col = st.columns([3, 1])
+    with map_col:
+        st_folium(m, width=None, height=480, returned_objects=[])
+    with info_col:
+        st.markdown("""
+        <div style="background:#fff;border-radius:12px;padding:1rem;
+             border:1px solid rgba(15,53,32,.12);font-size:.8rem">
+          <b style="color:#061912">Legenda marker</b>
+          <div style="margin-top:.6rem;line-height:2">
+            🟢 <b>Verde</b> — Score ≥70 (A/B)<br>
+            🟡 <b>Arancione</b> — Score 48-69 (C)<br>
+            🔴 <b>Rosso</b> — Score &lt;48 (D)<br>
+            🔵 <b>Blu</b> — Stazione meteo<br>
+          </div>
+          <hr style="border:none;border-top:1px solid #eee;margin:.6rem 0">
+          <b style="color:#061912">Come usarla</b>
+          <div style="margin-top:.4rem;color:#7a8c7e;line-height:1.6">
+            Clicca un marker<br>per i dettagli.<br><br>
+            Cambia vista con<br>il selettore layer<br>in alto a destra.<br><br>
+            Inserisci Lat/Lon<br>nella tabella per<br>posizionare i campi.
+          </div>
+        </div>""", unsafe_allow_html=True)
+else:
+    st.info("📦 Per attivare la mappa interattiva, aggiungi **folium** e **streamlit-folium** al requirements.txt e fai redeploy.")
 
 # ══════════════════════════════════════════════════════════════════════
 #  MODULO FERTILIZZANTI — Scope 1 + Scope 3
