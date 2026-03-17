@@ -3,3 +3,6 @@ pandas
 numpy
 plotly
 requests
+fpdf2
+folium
+streamlit-folium
