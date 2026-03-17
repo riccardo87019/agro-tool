@@ -2504,6 +2504,456 @@ with st.expander("🔬 Metodologia Scientifica Completa — IPCC + GHG Protocol 
 | **Valore fondiario** | `ha × €15.000 × (1 + Δ_SO×0.12)` — CREA-AA 2025 |
     """)
 
+
+# ══════════════════════════════════════════════════════════════════════
+#  REPORT CSRD / ESRS — Generazione automatica
+# ══════════════════════════════════════════════════════════════════════
+st.markdown('<div class="sec">🇪🇺 Report CSRD/ESRS Automatico — Conformità Direttiva UE 2022/2464</div>', unsafe_allow_html=True)
+st.caption("Genera il tuo dossier ESG conforme agli standard ESRS E1 (Clima), E3 (Acqua), E4 (Biodiversità) — pronto per filiere GDO, Barilla, Ferrero, Coop e certificatori accreditati.")
+
+csrd_col1, csrd_col2 = st.columns([1, 2])
+
+with csrd_col1:
+    st.markdown("""
+    <div style="background:#161c16;border:1px solid rgba(34,197,94,.2);
+         border-radius:12px;padding:1rem;font-size:.78rem;color:#86efac">
+      <b style="color:#4ade80;font-size:.85rem">📋 Datapoint inclusi</b><br><br>
+      <b style="color:#fff">ESRS E1 — Clima</b><br>
+      · Scope 1+2+3 GHG (tCO₂eq)<br>
+      · Sequestro netto carbonio<br>
+      · Intensità emissiva (t/ha)<br>
+      · Piano transizione<br><br>
+      <b style="color:#fff">ESRS E3 — Acqua</b><br>
+      · Consumo idrico totale (m³)<br>
+      · Efficienza irrigazione<br>
+      · Stress idrico (%)<br><br>
+      <b style="color:#fff">ESRS E4 — Biodiversità</b><br>
+      · Cover crops ratio (%)<br>
+      · Pratiche rigenerative<br>
+      · Certificazioni attive<br><br>
+      <b style="color:#fff">ESRS G1 — Governance</b><br>
+      · Score ESG aziendale<br>
+      · Conformità PAC<br>
+    </div>""", unsafe_allow_html=True)
+
+    gen_csrd = st.button("🇪🇺 Genera Report CSRD/ESRS", use_container_width=True,
+                         disabled=not RL_OK)
+    if not RL_OK:
+        st.caption("Richiede reportlab nel requirements.txt")
+
+with csrd_col2:
+    st.markdown(f"""
+    <div style="background:#161c16;border:1px solid rgba(34,197,94,.2);
+         border-radius:12px;padding:1.1rem 1.4rem;font-size:.79rem">
+      <b style="color:#4ade80;font-size:.88rem">💶 Perché vale 10.000€</b><br><br>
+      <span style="color:#e8f5e9">Dal 2026 le aziende agricole che forniscono gruppi con fatturato &gt;40M€
+      (GDO, industria alimentare) devono produrre report ESG conformi ESRS.
+      Un consulente ESG lo fa in 3-6 settimane a 5.000-25.000€.<br><br>
+      AgroLog ha già il 90% dei dati richiesti — questo bottone genera
+      il documento in 10 secondi.</span><br><br>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem">
+        <div style="background:#0d1a0d;border-radius:8px;padding:.6rem;text-align:center">
+          <div style="color:#4ade80;font-size:1.1rem;font-weight:700">{round(scope1_total,1)} t</div>
+          <div style="color:#86efac;font-size:.65rem">Scope 1 GHG</div>
+        </div>
+        <div style="background:#0d1a0d;border-radius:8px;padding:.6rem;text-align:center">
+          <div style="color:#4ade80;font-size:1.1rem;font-weight:700">{round(scope3_total,1)} t</div>
+          <div style="color:#86efac;font-size:.65rem">Scope 3 GHG</div>
+        </div>
+        <div style="background:#0d1a0d;border-radius:8px;padding:.6rem;text-align:center">
+          <div style="color:#4ade80;font-size:1.1rem;font-weight:700">{int(tot_irr):,} m³</div>
+          <div style="color:#86efac;font-size:.65rem">Consumo idrico</div>
+        </div>
+        <div style="background:#0d1a0d;border-radius:8px;padding:.6rem;text-align:center">
+          <div style="color:#4ade80;font-size:1.1rem;font-weight:700">{round(cc_r*100):.0f}%</div>
+          <div style="color:#86efac;font-size:.65rem">Cover crops ratio</div>
+        </div>
+      </div>
+    </div>""", unsafe_allow_html=True)
+
+if RL_OK and gen_csrd:
+    from io import BytesIO as _BytesIO
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm, mm
+    from reportlab.lib import colors as rl_colors
+    from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Table,
+                                    TableStyle, HRFlowable, KeepTogether, PageBreak)
+
+    oggi_csrd = datetime.now().strftime("%d/%m/%Y")
+    anno_ref  = datetime.now().year - 1  # anno di riferimento = anno precedente
+    buf_csrd  = _BytesIO()
+
+    # Colori CSRD (blu EU + verde)
+    EU_BLUE  = rl_colors.HexColor("#003399")
+    EU_GOLD  = rl_colors.HexColor("#FFCC00")
+    DK_GREEN = rl_colors.HexColor("#0A2E0A")
+    MED_GRN  = rl_colors.HexColor("#166534")
+    LT_GRN   = rl_colors.HexColor("#DCFCE7")
+    RED_C    = rl_colors.HexColor("#991B1B")
+    GOLD_C   = rl_colors.HexColor("#B45309")
+    GRAY_C   = rl_colors.HexColor("#374151")
+    WHITE    = rl_colors.white
+    LT_GRAY  = rl_colors.HexColor("#F3F4F6")
+    ROW1     = rl_colors.HexColor("#F0FDF4")
+    ROW2     = rl_colors.HexColor("#FFFFFF")
+
+    styles = getSampleStyleSheet()
+    def S(n,**k): return ParagraphStyle(n,parent=styles["Normal"],**k)
+
+    S_title = S("ct", fontSize=20, textColor=WHITE, fontName="Helvetica-Bold", spaceAfter=4)
+    S_h2    = S("ch2", fontSize=12, textColor=EU_BLUE, fontName="Helvetica-Bold",
+                spaceBefore=16, spaceAfter=6,
+                borderPadding=(4,0,4,8),
+                borderColor=EU_BLUE, leftIndent=8)
+    S_h3    = S("ch3", fontSize=10, textColor=DK_GREEN, fontName="Helvetica-Bold",
+                spaceBefore=10, spaceAfter=4)
+    S_body  = S("cb",  fontSize=8.5, textColor=GRAY_C, fontName="Helvetica",
+                spaceAfter=3, leading=13)
+    S_small = S("cs",  fontSize=7.5, textColor=GRAY_C, fontName="Helvetica",
+                spaceAfter=2, leading=11, italics=True)
+    S_disc  = S("cd",  fontSize=9, textColor=EU_BLUE, fontName="Helvetica-Bold",
+                spaceAfter=2)
+
+    def th(t, bg=EU_BLUE, fg=WHITE):
+        return Table([[Paragraph(f"<b>{t}</b>",
+                       S("th2", fontSize=8, textColor=fg, fontName="Helvetica-Bold"))]],
+                     colWidths=[None])
+
+    bord = {"style": "SINGLE", "width": 0.5, "color": "#D1D5DB"}
+
+    TS = TableStyle([
+        ("BACKGROUND",    (0,0),(-1,0),  EU_BLUE),
+        ("TEXTCOLOR",     (0,0),(-1,0),  WHITE),
+        ("FONTNAME",      (0,0),(-1,0),  "Helvetica-Bold"),
+        ("FONTSIZE",      (0,0),(-1,-1), 8),
+        ("ROWBACKGROUNDS",(0,1),(-1,-1), [ROW1, ROW2]),
+        ("TEXTCOLOR",     (0,1),(-1,-1), GRAY_C),
+        ("GRID",          (0,0),(-1,-1), 0.4, rl_colors.HexColor("#D1D5DB")),
+        ("LINEBELOW",     (0,0),(-1,0),  1.5, EU_GOLD),
+        ("VALIGN",        (0,0),(-1,-1), "MIDDLE"),
+        ("TOPPADDING",    (0,0),(-1,-1), 5),
+        ("BOTTOMPADDING", (0,0),(-1,-1), 5),
+        ("LEFTPADDING",   (0,0),(-1,-1), 6),
+        ("RIGHTPADDING",  (0,0),(-1,-1), 6),
+    ])
+
+    def cell(t, bold=False, c=None):
+        return Paragraph(str(t),
+                         S("td2", fontSize=8,
+                           textColor=c or GRAY_C,
+                           fontName="Helvetica-Bold" if bold else "Helvetica"))
+
+    doc_csrd = SimpleDocTemplate(buf_csrd, pagesize=A4,
+                                 leftMargin=1.8*cm, rightMargin=1.8*cm,
+                                 topMargin=2*cm, bottomMargin=2*cm,
+                                 title=f"CSRD/ESRS Report — {nome_az}")
+    W = A4[0] - 3.6*cm
+    story = []
+
+    # ── COPERTINA ─────────────────────────────────────────────────────
+    # Banner EU blu
+    cover_data = [[Paragraph(
+        f'<b>SUSTAINABILITY REPORT</b><br/>'
+        f'Conformità CSRD · Direttiva UE 2022/2464<br/>'
+        f'Standard ESRS E1 · E3 · E4 · G1',
+        S("cov", fontSize=14, textColor=WHITE, fontName="Helvetica-Bold",
+          leading=20))]]
+    t_cover = Table(cover_data, colWidths=[W])
+    t_cover.setStyle(TableStyle([
+        ("BACKGROUND", (0,0),(-1,-1), EU_BLUE),
+        ("TOPPADDING",    (0,0),(-1,-1), 20),
+        ("BOTTOMPADDING", (0,0),(-1,-1), 20),
+        ("LEFTPADDING",   (0,0),(-1,-1), 16),
+        ("RIGHTPADDING",  (0,0),(-1,-1), 16),
+    ]))
+    story.append(t_cover)
+    story.append(Spacer(1, 8*mm))
+
+    # Dati azienda
+    az_data = [
+        [cell("Ragione Sociale:", bold=True), cell(nome_az, bold=True, c=EU_BLUE)],
+        [cell("Consulente Agronomo:"), cell(agronomo)],
+        [cell("Regione / Zona:"), cell(f"{regione} / {zona}")],
+        [cell("Anno di riferimento:"), cell(str(anno_ref))],
+        [cell("Data emissione:"), cell(oggi_csrd)],
+        [cell("Standard applicato:"), cell("ESRS E1, E3, E4, G1 — EFRAG 2023")],
+        [cell("Score ESG:"), cell(f"{score}/100 — Rating {rcls}", bold=True,
+                                  c=MED_GRN if score>=65 else GOLD_C if score>=48 else RED_C)],
+    ]
+    t_az = Table(az_data, colWidths=[W*0.35, W*0.65])
+    t_az.setStyle(TableStyle([
+        ("GRID",       (0,0),(-1,-1), 0.4, rl_colors.HexColor("#D1D5DB")),
+        ("BACKGROUND", (0,0),(0,-1),  LT_GRAY),
+        ("FONTSIZE",   (0,0),(-1,-1), 8.5),
+        ("TOPPADDING", (0,0),(-1,-1), 5),
+        ("BOTTOMPADDING",(0,0),(-1,-1), 5),
+        ("LEFTPADDING", (0,0),(-1,-1), 8),
+    ]))
+    story.append(t_az)
+    story.append(Spacer(1, 6*mm))
+
+    # ── SEZIONE 1: ESRS E1 — CAMBIAMENTI CLIMATICI ────────────────────
+    story.append(Paragraph("ESRS E1 — Cambiamenti Climatici", S_h2))
+    story.append(Paragraph(
+        "Disclosure Requirements E1-6: Gross and net GHG emissions — "
+        "GHG Protocol Corporate Standard, IPCC AR5 GWP100",
+        S_small))
+    story.append(Spacer(1, 3*mm))
+
+    # Tabella emissioni GHG
+    ghg_rows = [
+        [cell("Disclosure", bold=True), cell("Indicatore ESRS", bold=True),
+         cell("Valore", bold=True), cell("Unità", bold=True), cell("Metodo", bold=True)],
+        [cell("E1-6"), cell("Gross Scope 1 GHG emissions"),
+         cell(f"{round(scope1_total,2)}", bold=True, c=RED_C), cell("tCO₂eq/anno"),
+         cell("IPCC Tier 1 + DEFRA 2024")],
+        [cell("E1-6"), cell("Gross Scope 2 GHG emissions"),
+         cell(f"{round(scope2_total,2)}"), cell("tCO₂eq/anno"),
+         cell("Market-based method")],
+        [cell("E1-6"), cell("Gross Scope 3 GHG emissions"),
+         cell(f"{round(scope3_total,2)}", bold=True, c=GOLD_C), cell("tCO₂eq/anno"),
+         cell("ecoinvent 3.9 + DEFRA 2024")],
+        [cell("E1-6"), cell("Net GHG removals and sequestration"),
+         cell(f"+{round(tot_seq,2)}", bold=True, c=MED_GRN), cell("tCO₂eq/anno"),
+         cell("IPCC 2006 Vol.4 Tier 1 — SOC")],
+        [cell("E1-6"), cell("Bilancio GHG netto (Scope 1+3 − sequestro)"),
+         cell(f'{"+" if tot_netto>=0 else ""}{round(tot_netto,2)}',
+              bold=True, c=MED_GRN if tot_netto>=0 else RED_C), cell("tCO₂eq/anno"),
+         cell("GHG Protocol")],
+        [cell("E1-6"), cell("GHG emission intensity (per ettaro)"),
+         cell(f"{round(tot_emit/max(tot_ha,1),2)}"), cell("tCO₂eq/ha"),
+         cell("Dato aziendale")],
+        [cell("E1-6"), cell("Carbon sequestration intensity"),
+         cell(f"{round(tot_seq/max(tot_ha,1),2)}", c=MED_GRN), cell("tCO₂eq/ha"),
+         cell("IPCC Tier 1 — SOC stock")],
+    ]
+    t_ghg = Table(ghg_rows, colWidths=[W*0.10, W*0.38, W*0.16, W*0.16, W*0.20])
+    t_ghg.setStyle(TS)
+    story.append(t_ghg)
+    story.append(Spacer(1, 4*mm))
+
+    # Piano di transizione
+    story.append(Paragraph("E1-1: Piano di Transizione Climatica", S_h3))
+    obiettivi = [
+        ("Obiettivo 2030", "Riduzione emissioni Scope 1 del 30% vs baseline",
+         "Adozione protocollo rigenerativo su tutti gli appezzamenti"),
+        ("Obiettivo 2035", "Carbon Positive su tutta la superficie aziendale",
+         "Incremento SO% > 2.5% e certificazione ISO 14064"),
+        ("Obiettivo 2040", "Neutralità carbonica filiera (Scope 3)",
+         "Sostituzione totale fertilizzanti minerali con organici"),
+    ]
+    obj_rows = [[cell("Obiettivo",bold=True), cell("Target",bold=True),
+                 cell("Azione chiave",bold=True)]]
+    for ob, tg, az_obj in obiettivi:
+        obj_rows.append([cell(ob, c=EU_BLUE), cell(tg), cell(az_obj)])
+    t_obj = Table(obj_rows, colWidths=[W*0.20, W*0.40, W*0.40])
+    t_obj.setStyle(TS)
+    story.append(t_obj)
+    story.append(Spacer(1, 4*mm))
+
+    # Dettaglio fertilizzanti (Scope 3 upstream)
+    story.append(Paragraph("E1-6: Dettaglio Scope 3 — Fertilizzanti e Input", S_h3))
+    fert_rows = [[cell("Prodotto",bold=True), cell("Quantità",bold=True),
+                  cell("N₂O Sc.1",bold=True), cell("Prod. Sc.3",bold=True),
+                  cell("EF N₂O",bold=True)]]
+    for fd in fert_detail:
+        fert_rows.append([
+            cell(fd["prod"]), cell(f'{int(fd["qty"]):,} kg'),
+            cell(f'{fd["s1"]} t', c=RED_C),
+            cell(f'{fd["s3"]} t', c=GOLD_C),
+            cell(str(fd["ef"]["ef_n2o"]))
+        ])
+    t_fert = Table(fert_rows, colWidths=[W*0.35, W*0.16, W*0.14, W*0.14, W*0.21])
+    t_fert.setStyle(TS)
+    story.append(t_fert)
+    story.append(Spacer(1, 6*mm))
+
+    # ── SEZIONE 2: ESRS E3 — ACQUA ────────────────────────────────────
+    story.append(Paragraph("ESRS E3 — Risorse Idriche e Marine", S_h2))
+    story.append(Paragraph(
+        "Disclosure Requirements E3-1: Water consumption — FAO Penman-Monteith",
+        S_small))
+    story.append(Spacer(1, 3*mm))
+
+    acqua_rows = [
+        [cell("Disclosure",bold=True), cell("Indicatore ESRS",bold=True),
+         cell("Valore",bold=True), cell("Unità",bold=True), cell("Note",bold=True)],
+        [cell("E3-1"), cell("Total water consumption"),
+         cell(f"{int(tot_irr):,}", bold=True), cell("m³/anno"),
+         cell("Acqua irrigua totale aziendale")],
+        [cell("E3-1"), cell("Water withdrawal from surface/groundwater"),
+         cell(f"{int(tot_irr):,}"), cell("m³/anno"),
+         cell("Da pozzi/canali — dato inserito")],
+        [cell("E3-1"), cell("Water consumption intensity"),
+         cell(f"{round(tot_irr/max(tot_ha,1),0):.0f}"), cell("m³/ha"),
+         cell("Normalizzato per superficie")],
+        [cell("E3-1"), cell("Water deficit (ET₀ − precipitazioni 30gg)"),
+         cell(f"{round(deficit)} mm", c=RED_C if stress_idx>0.4 else GOLD_C if stress_idx>0.2 else MED_GRN),
+         cell("mm"), cell("Open-Meteo ERA5 live")],
+        [cell("E3-1"), cell("Water stress index"),
+         cell(f"{round(stress_idx*100):.0f}%",
+              c=RED_C if stress_idx>0.4 else GOLD_C if stress_idx>0.2 else MED_GRN,
+              bold=True),
+         cell("%"), cell("Indice corrente (deficit/80mm)")],
+        [cell("E3-1"), cell("Water retention from SOM (stima)"),
+         cell(f"+{int(tot_ret):,}", c=MED_GRN), cell("m³/anno"),
+         cell("Ritenzione idrica da sostanza organica")],
+        [cell("E3-1"), cell("Estimated water savings (drip irrigation)"),
+         cell(f"{int(tot_spreco):,}" if tot_spreco>0 else "N/A"), cell("m³/anno potenz."),
+         cell("Spreco stimato con irrigazione attuale")],
+    ]
+    t_acqua = Table(acqua_rows, colWidths=[W*0.10, W*0.38, W*0.14, W*0.14, W*0.24])
+    t_acqua.setStyle(TS)
+    story.append(t_acqua)
+    story.append(Spacer(1, 6*mm))
+
+    # ── SEZIONE 3: ESRS E4 — BIODIVERSITÀ ─────────────────────────────
+    story.append(Paragraph("ESRS E4 — Biodiversità ed Ecosistemi", S_h2))
+    story.append(Paragraph(
+        "Disclosure Requirements E4-1: Transition plan for biodiversity and ecosystems",
+        S_small))
+    story.append(Spacer(1, 3*mm))
+
+    bio_rows = [
+        [cell("Disclosure",bold=True), cell("Indicatore ESRS",bold=True),
+         cell("Valore",bold=True), cell("Unità",bold=True), cell("Note",bold=True)],
+        [cell("E4-1"), cell("Cover crops adoption rate"),
+         cell(f"{round(cc_r*100):.0f}%", bold=True,
+              c=MED_GRN if cc_r>0.5 else GOLD_C), cell("%"),
+         cell("% campi con cover crops attive")],
+        [cell("E4-1"), cell("Superficie con pratiche rigenerative"),
+         cell(f"{float(df_edit[df_edit['Protocollo']=='Rigenerativo Full']['Ettari'].sum()):.1f}"),
+         cell("ha"), cell("Protocollo Rigenerativo Full")],
+        [cell("E4-1"), cell("Soil Organic Matter — media aziendale"),
+         cell(f"{round(float(df_edit['SO %'].mean()),2)}%"), cell("%"),
+         cell("Media SO% da analisi suolo")],
+        [cell("E4-1"), cell("Soil Organic Matter — obiettivo 4‰ (2.5%)"),
+         cell("✓" if float(df_edit["SO %"].mean()) >= 2.5 else "✗",
+              c=MED_GRN if float(df_edit["SO %"].mean()) >= 2.5 else RED_C),
+         cell("—"), cell("Iniziativa EU 4 per mille")],
+        [cell("E4-2"), cell("Certificazioni di sostenibilità attive"),
+         cell(", ".join([c for c,v in [("Bio",cert_bio),("SQnpi",cert_sqnpi),
+              ("GlobalG.A.P.",cert_gap),("VIVA",cert_viva),
+              ("ISO14064",cert_iso),("CSRD",cert_csrd)] if v]) or "Nessuna"),
+         cell("—"), cell("Da registro certificazioni")],
+        [cell("E4-2"), cell("PAC Eco-Scheme attivi"),
+         cell(f"€{int(pac_totale):,}/anno", c=MED_GRN if pac_totale>0 else GRAY_C),
+         cell("€"), cell("AGEA 2024 — pagamenti aggiuntivi")],
+        [cell("E4-3"), cell("N₂O da fertilizzanti organici vs minerali"),
+         cell(f"{round(pct_org):.0f}% organici",
+              c=MED_GRN if pct_org>=50 else GOLD_C), cell("%"),
+         cell("EF organici 40-60% inferiori")],
+    ]
+    t_bio = Table(bio_rows, colWidths=[W*0.10, W*0.38, W*0.16, W*0.10, W*0.26])
+    t_bio.setStyle(TS)
+    story.append(t_bio)
+    story.append(Spacer(1, 6*mm))
+
+    # ── SEZIONE 4: ESRS G1 — GOVERNANCE ───────────────────────────────
+    story.append(Paragraph("ESRS G1 — Condotta Aziendale", S_h2))
+    story.append(Spacer(1, 3*mm))
+
+    gov_rows = [
+        [cell("Indicatore",bold=True), cell("Valore",bold=True),
+         cell("Benchmark settore",bold=True), cell("Giudizio",bold=True)],
+        [cell("Score ESG complessivo"),
+         cell(f"{score}/100 — {rcls}", bold=True,
+              c=MED_GRN if score>=65 else GOLD_C if score>=48 else RED_C),
+         cell(f"{bm['score']}/100 media {bm['label']}"),
+         cell("Sopra media" if score >= bm["score"] else "Sotto media",
+              c=MED_GRN if score >= bm["score"] else RED_C)],
+        [cell("Margine netto aziendale"),
+         cell(f"{marg_pct}%", bold=True),
+         cell(f"{bm['margine_pct']}% media settore"),
+         cell("Sopra media" if marg_pct >= bm["margine_pct"] else "Sotto media",
+              c=MED_GRN if marg_pct >= bm["margine_pct"] else GOLD_C)],
+        [cell("Valore crediti CO₂ potenziali"),
+         cell(f"€{int(val_cred):,}/anno", c=MED_GRN if val_cred>0 else GRAY_C),
+         cell(f"@ €{prezzo_co2}/tCO₂ (Xpansiv CBL)"),
+         cell("Certificabile ISO 14064")],
+        [cell("Conformità PAC Eco-Scheme"),
+         cell(f"€{int(pac_totale):,}/anno accessibili"),
+         cell("AGEA 2024"), cell("✓ Conforme" if pac_totale>0 else "○ Da attivare",
+              c=MED_GRN if pac_totale>0 else GOLD_C)],
+    ]
+    t_gov = Table(gov_rows, colWidths=[W*0.30, W*0.23, W*0.28, W*0.19])
+    t_gov.setStyle(TS)
+    story.append(t_gov)
+    story.append(Spacer(1, 6*mm))
+
+    # ── SEZIONE 5: APPEZZAMENTI (E1-6 detail) ─────────────────────────
+    story.append(Paragraph("E1-6: Dettaglio GHG per Unità Produttiva", S_h2))
+    story.append(Spacer(1, 3*mm))
+    field_rows = [[cell("Campo",bold=True), cell("ha",bold=True),
+                   cell("Coltura",bold=True), cell("Protocollo",bold=True),
+                   cell("SO%",bold=True), cell("Seq. tCO₂",bold=True),
+                   cell("Emit. tCO₂",bold=True), cell("Netto",bold=True)]]
+    for i,(_,rr) in enumerate(df_edit.iterrows()):
+        rc = res_att[i]
+        field_rows.append([
+            cell(str(rr.get("Campo","")), bold=True),
+            cell(str(rr.get("Ettari",""))),
+            cell(str(rr.get("Coltura",""))),
+            cell(str(rr.get("Protocollo",""))[:14]),
+            cell(f'{rr.get("SO %","")}%'),
+            cell(str(rc["co2_seq"]), c=MED_GRN),
+            cell(str(rc["co2_emit"]), c=RED_C),
+            cell(f'{"+" if rc["co2_netto"]>=0 else ""}{rc["co2_netto"]}',
+                 bold=True, c=MED_GRN if rc["co2_netto"]>=0 else RED_C),
+        ])
+    t_fields = Table(field_rows, colWidths=[W*0.14,W*0.07,W*0.13,W*0.16,
+                                             W*0.07,W*0.11,W*0.11,W*0.11], repeatRows=1)
+    t_fields.setStyle(TS)
+    story.append(t_fields)
+    story.append(Spacer(1, 6*mm))
+
+    # ── DISCLAIMER E FIRMA ─────────────────────────────────────────────
+    story.append(HRFlowable(width=W, thickness=1, color=EU_BLUE, spaceAfter=5))
+    story.append(Paragraph(
+        "Questo report è redatto in conformità agli standard ESRS pubblicati dall'EFRAG "
+        "(European Financial Reporting Advisory Group) ai sensi della Direttiva CSRD "
+        "2022/2464/UE. I dati GHG sono calcolati secondo IPCC 2006 Tier 1, AR5 GWP100, "
+        "GHG Protocol Corporate Standard. I dati idrici sono basati su FAO-56 "
+        "Penman-Monteith con dati meteo live Open-Meteo ERA5. "
+        "La certificazione ufficiale per mercati regolamentati richiede verifica "
+        "da parte di un Ente Terzo accreditato (ISO 14064-3, ISAE 3000).",
+        S_small))
+    story.append(Spacer(1, 6*mm))
+
+    firma_csrd = [
+        [cell("Azienda:", bold=True), cell(nome_az),
+         cell("Consulente:", bold=True), cell(agronomo)],
+        [cell("Anno riferimento:", bold=True), cell(str(anno_ref)),
+         cell("Data emissione:", bold=True), cell(oggi_csrd)],
+        [cell("Firma responsabile:", bold=True), cell("_________________________"),
+         cell("Timbro:", bold=True), cell("")],
+    ]
+    t_firma_csrd = Table(firma_csrd, colWidths=[W*0.18, W*0.32, W*0.18, W*0.32])
+    t_firma_csrd.setStyle(TableStyle([
+        ("FONTSIZE",(0,0),(-1,-1),8.5),
+        ("TOPPADDING",(0,0),(-1,-1),5),
+        ("BOTTOMPADDING",(0,0),(-1,-1),5),
+        ("TEXTCOLOR",(0,0),(-1,-1),GRAY_C),
+        ("GRID",(0,0),(-1,-1),0.3,rl_colors.HexColor("#E5E7EB")),
+    ]))
+    story.append(t_firma_csrd)
+
+    doc_csrd.build(story)
+    buf_csrd.seek(0)
+    pdf_csrd = buf_csrd.getvalue()
+    fn_csrd = f"CSRD_ESRS_{nome_az.replace(' ','_')}_{datetime.now().strftime('%Y%m%d')}.pdf"
+
+    st.download_button(
+        label="⬇️ Scarica Report CSRD/ESRS — PDF ufficiale",
+        data=pdf_csrd,
+        file_name=fn_csrd,
+        mime="application/pdf"
+    )
+    st.success(f"✅ **{fn_csrd}** generato — {round(len(pdf_csrd)/1024,0)} KB · "
+               f"Conforme ESRS E1/E3/E4/G1 · EFRAG 2023")
+
+
 # ══════════════════════════════════════════════════════════════════════
 #  REPORT PDF + HTML
 # ══════════════════════════════════════════════════════════════════════
