@@ -28,104 +28,69 @@ html,body,[class*="css"]{font-family:'Lexend',sans-serif;}
 .stApp{background:#f4f1ea;}
 
 /* ══════════════════════════════════════════════════════════
-   DATA EDITOR & DATAFRAME — colori scuri leggibili
+   DATA EDITOR — bordo + label visibili (il canvas è WebGL,
+   non modificabile via CSS — colori celle gestiti dal tema)
    ══════════════════════════════════════════════════════════ */
-
-/* Contenitore principale */
-[data-testid="stDataEditor"],
-[data-testid="stDataFrame"] {
-    background: #0f3520 !important;
+[data-testid="stDataEditor"] {
+    border: 2px solid #c9963a !important;
     border-radius: 12px !important;
     overflow: hidden !important;
-    border: 1.5px solid #c9963a !important;
+    box-shadow: 0 4px 16px rgba(6,25,18,.10) !important;
 }
-
-/* Intestazioni colonne */
-[data-testid="stDataEditor"] th,
-[data-testid="stDataFrame"] th,
-.dvn-column-header,
-.dvn-col-header-cell {
-    background: #061912 !important;
-    color: #c9963a !important;
+/* Label sopra ogni data_editor */
+[data-testid="stDataEditor"] > label {
+    color: #061912 !important;
     font-weight: 700 !important;
-    font-size: .78rem !important;
-    letter-spacing: .04em !important;
-    border-bottom: 2px solid #c9963a !important;
-    border-right: 1px solid rgba(201,150,58,.25) !important;
-    padding: 8px 10px !important;
-}
-
-/* Celle righe dispari */
-[data-testid="stDataEditor"] .dvn-row:nth-child(odd) .dvn-cell,
-[data-testid="stDataFrame"] tr:nth-child(odd) td,
-.dvn-row:nth-child(odd) .gdg-cell {
-    background: #0d2b1a !important;
-    color: #d4edda !important;
-}
-
-/* Celle righe pari */
-[data-testid="stDataEditor"] .dvn-row:nth-child(even) .dvn-cell,
-[data-testid="stDataFrame"] tr:nth-child(even) td,
-.dvn-row:nth-child(even) .gdg-cell {
-    background: #132f1e !important;
-    color: #d4edda !important;
-}
-
-/* Hover riga */
-[data-testid="stDataEditor"] .dvn-row:hover .dvn-cell,
-[data-testid="stDataFrame"] tr:hover td {
-    background: #1a6b3a !important;
-    color: #ffffff !important;
-}
-
-/* Input dentro cella in modifica */
-[data-testid="stDataEditor"] input,
-[data-testid="stDataEditor"] select,
-[data-testid="stDataEditor"] textarea {
-    background: #0a1f12 !important;
-    color: #f0fdf4 !important;
-    border: 1.5px solid #c9963a !important;
-    border-radius: 5px !important;
-}
-
-/* Celle selezionate */
-[data-testid="stDataEditor"] .dvn-cell.selected,
-[data-testid="stDataEditor"] .gdg-cell[data-testid="glide-cell"].selected {
-    background: #1a6b3a !important;
-    outline: 2px solid #c9963a !important;
-}
-
-/* Numero riga (index) */
-[data-testid="stDataEditor"] .row-header,
-[data-testid="stDataFrame"] .row-header {
-    background: #061912 !important;
-    color: #7a8c7e !important;
-    font-size: .7rem !important;
-    border-right: 1px solid rgba(201,150,58,.3) !important;
-}
-
-/* Scrollbar */
-[data-testid="stDataEditor"] ::-webkit-scrollbar,
-[data-testid="stDataFrame"] ::-webkit-scrollbar { height: 6px; width: 6px; }
-[data-testid="stDataEditor"] ::-webkit-scrollbar-track,
-[data-testid="stDataFrame"] ::-webkit-scrollbar-track { background: #061912; }
-[data-testid="stDataEditor"] ::-webkit-scrollbar-thumb,
-[data-testid="stDataFrame"] ::-webkit-scrollbar-thumb {
-    background: #c9963a; border-radius: 3px;
-}
-
-/* Pulsanti aggiungi riga */
-[data-testid="stDataEditor"] button[kind="secondary"] {
-    background: #0f3520 !important;
-    color: #c9963a !important;
-    border: 1px solid #c9963a !important;
-    border-radius: 8px !important;
+    font-size: .82rem !important;
 }
 
 /* ══════════════════════════════════════════════════════════
-   FINE DATA EDITOR STYLES
+   TABELLE HTML custom (riepilogo GHG, metodologia, ecc.)
+   Sfondo bianco, testo scuro — massimo contrasto
    ══════════════════════════════════════════════════════════ */
+.tbl-agro {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .79rem;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1.5px solid #c9963a;
+    background: #fff;
+}
+.tbl-agro thead th {
+    background: #0f3520;
+    color: #f0e6cc;
+    font-weight: 700;
+    padding: 9px 12px;
+    text-align: left;
+    border-bottom: 2px solid #c9963a;
+    letter-spacing: .04em;
+    font-size: .76rem;
+    text-transform: uppercase;
+}
+.tbl-agro tbody tr:nth-child(odd)  td { background: #f4f1ea; color: #061912; }
+.tbl-agro tbody tr:nth-child(even) td { background: #ffffff; color: #061912; }
+.tbl-agro tbody td {
+    padding: 7px 12px;
+    border-bottom: 1px solid rgba(15,53,32,.10);
+    color: #061912;
+    vertical-align: middle;
+}
+.tbl-agro tbody tr:hover td { background: #e8f5e9; color: #061912; }
+.tbl-agro tfoot td {
+    background: #0f3520;
+    color: #f0e6cc;
+    font-weight: 700;
+    padding: 8px 12px;
+    border-top: 2px solid #c9963a;
+}
+.tbl-agro .pos { color: #155724; font-weight: 700; }
+.tbl-agro .neg { color: #7f1d1d; font-weight: 700; }
+.tbl-agro .gold{ color: #78450a; font-weight: 700; }
 
+/* ══════════════════════════════════════════════════════════
+   HERO
+   ══════════════════════════════════════════════════════════ */
 .hero{background:linear-gradient(135deg,#061912 0%,#0f3520 45%,#1a6b3a 100%);
   padding:2.4rem 3rem 2rem;border-radius:22px;margin-bottom:2rem;
   box-shadow:0 14px 44px rgba(6,25,18,.24);border-bottom:4px solid #c9963a;
@@ -140,84 +105,136 @@ html,body,[class*="css"]{font-family:'Lexend',sans-serif;}
 .hero-badge{background:#c9963a;color:#061912;font-size:.62rem;font-weight:700;
   letter-spacing:.12em;text-transform:uppercase;padding:3px 12px;
   border-radius:20px;margin-bottom:.6rem;display:inline-block;}
+
+/* ══ KPI CARDS ══ */
 .kpi{background:#fff;border-radius:18px;padding:1.2rem 1rem;
-  border:1px solid rgba(15,53,32,.1);box-shadow:0 4px 14px rgba(6,25,18,.05);
+  border:1px solid rgba(15,53,32,.12);box-shadow:0 4px 14px rgba(6,25,18,.07);
   text-align:center;transition:all .25s;height:100%;}
-.kpi:hover{transform:translateY(-4px);box-shadow:0 10px 28px rgba(6,25,18,.12);}
+.kpi:hover{transform:translateY(-4px);box-shadow:0 10px 28px rgba(6,25,18,.14);}
 .kpi-v{font-size:1.75rem;font-weight:700;color:#0f3520;line-height:1.1;}
-.kpi-l{font-size:.6rem;color:#7a8c7e;text-transform:uppercase;letter-spacing:.09em;margin-top:.3rem;}
+.kpi-l{font-size:.6rem;color:#4a5e4e;text-transform:uppercase;letter-spacing:.09em;margin-top:.3rem;}
 .kpi-s{font-size:.76rem;color:#1a6b3a;font-weight:600;margin-top:.15rem;}
+
+/* ══ SEZIONI ══ */
 .sec{font-family:'DM Serif Display',serif;font-size:1.2rem;color:#061912;
   border-left:5px solid #c9963a;padding-left:.7rem;margin:2.2rem 0 1rem;}
+
+/* ══ AZIONI ══ */
 .action{background:#fff;border-radius:13px;padding:.9rem 1.15rem;margin:.4rem 0;
-  border:1px solid rgba(15,53,32,.1);transition:box-shadow .2s;}
-.action:hover{box-shadow:0 4px 14px rgba(6,25,18,.08);}
-.act-h{border-left:4px solid #ef4444;}
-.act-m{border-left:4px solid #c9963a;}
-.act-l{border-left:4px solid #1a6b3a;}
-.risk{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.7rem;font-weight:600;margin:3px;}
-.r-alto{background:#fee2e2;color:#991b1b;}
-.r-medio{background:#fef3c7;color:#92400e;}
-.r-basso{background:#d1fae5;color:#065f46;}
-.cert-box{border-radius:11px;padding:.85rem 1rem;margin:.3rem 0;border:1px solid rgba(15,53,32,.12);}
-.cert-on{background:#f0fdf4;border-color:#1a6b3a;}
-.cert-off{background:#fafaf9;}
-.sc-card{border-radius:14px;padding:1.3rem 1.5rem;margin:.4rem 0;}
-.sc-base{background:#f0fdf4;border:2px dashed #1a6b3a;}
-.sc-opt{background:#fffbeb;border:2px dashed #c9963a;}
-.sc-tech{background:#eff6ff;border:2px dashed #3b82f6;}
-.sc-row{display:flex;justify-content:space-between;font-size:.8rem;padding:2px 0;line-height:1.8;}
+  border:1px solid rgba(15,53,32,.12);transition:box-shadow .2s;}
+.action:hover{box-shadow:0 4px 14px rgba(6,25,18,.10);}
+.act-h{border-left:4px solid #b91c1c;}
+.act-m{border-left:4px solid #b45309;}
+.act-l{border-left:4px solid #166534;}
+
+/* ══ RISCHI — testo scuro leggibile ══ */
+.risk{display:inline-block;padding:5px 13px;border-radius:20px;
+  font-size:.72rem;font-weight:700;margin:3px;border:1px solid transparent;}
+.r-alto  {background:#fee2e2;color:#7f1d1d;border-color:#fca5a5;}
+.r-medio {background:#fef3c7;color:#78350f;border-color:#fcd34d;}
+.r-basso {background:#dcfce7;color:#14532d;border-color:#86efac;}
+
+/* ══ CERTIFICAZIONI ══ */
+.cert-box{border-radius:11px;padding:.85rem 1rem;margin:.3rem 0;
+  border:1px solid rgba(15,53,32,.15);}
+.cert-on {background:#f0fdf4;border-left:4px solid #166534;}
+.cert-off {background:#f9fafb;border-left:4px solid #d1d5db;color:#374151;}
+
+/* ══ SCENARIO CARDS — testo sempre scuro ══ */
+.sc-card {border-radius:14px;padding:1.3rem 1.5rem;margin:.4rem 0;}
+.sc-base {background:#f0fdf4;border:2px dashed #166534;}
+.sc-opt  {background:#fffbeb;border:2px dashed #b45309;}
+.sc-tech {background:#eff6ff;border:2px dashed #1d4ed8;}
+.sc-row  {display:flex;justify-content:space-between;font-size:.82rem;
+  padding:3px 0;line-height:1.9;color:#1c1c1c;}
+.sc-row b{color:#061912;}
+
+/* ══ SCOPE BOXES — testo scuro su sfondo pastello ══ */
 .scope-box{border-radius:12px;padding:1rem 1.2rem;margin:.4rem 0;}
-.scope1{background:#fff0f0;border:1px solid #fca5a5;}
-.scope2{background:#fff7ed;border:1px solid #fdba74;}
-.scope3{background:#f0fdf4;border:1px solid #86efac;}
-.waste-box{background:#fff;border-radius:12px;padding:1rem 1.2rem;border:1px solid rgba(15,53,32,.1);}
+.scope1{background:#fef2f2;border:1.5px solid #fca5a5;color:#450a0a;}
+.scope1 b{color:#7f1d1d;}
+.scope2{background:#fffbeb;border:1.5px solid #fcd34d;color:#451a03;}
+.scope2 b{color:#78350f;}
+.scope3{background:#f0fdf4;border:1.5px solid #86efac;color:#052e16;}
+.scope3 b{color:#14532d;}
+
+/* ══ RIEPILOGO GHG sidebar box ══ */
+.ghg-box{background:#fff;border-radius:14px;padding:1.2rem 1.4rem;
+  border:1.5px solid rgba(15,53,32,.15);}
+.ghg-box td{font-size:.79rem;padding:4px 0;color:#1c1c1c;}
+.ghg-box .lbl{color:#4a5e4e;}
+.ghg-box .pos{color:#14532d;font-weight:700;}
+.ghg-box .neg{color:#7f1d1d;font-weight:700;}
+.ghg-box .tot{color:#061912;font-weight:800;font-size:.95rem;}
+
+/* ══ BENCHMARK / INFO BOXES ══ */
+.info-box{background:#fff;border-radius:12px;padding:.75rem 1.1rem;
+  border:1px solid rgba(15,53,32,.13);margin-top:.5rem;font-size:.8rem;color:#1c1c1c;}
+.info-box b{color:#061912;}
+
+/* ══ MAPPA LEGENDA ══ */
+.map-legend{background:#fff;border-radius:12px;padding:1rem;
+  border:1.5px solid rgba(15,53,32,.15);font-size:.8rem;color:#1c1c1c;}
+.map-legend b{color:#061912;}
+
+/* ══ RothC sidebar ══ */
+.rothc-card{background:#fff;border-radius:12px;padding:.9rem 1rem;
+  border:1.5px solid rgba(15,53,32,.15);font-size:.78rem;color:#1c1c1c;}
+.rothc-card b{color:#061912;}
+
+/* ══ N2O info strip ══ */
+.n2o-strip{background:#fff;border-radius:12px;padding:.75rem 1.2rem;
+  border:1.5px solid rgba(201,150,58,.4);font-size:.79rem;
+  color:#1c1c1c;margin:.5rem 0;}
+.n2o-strip b{color:#061912;}
+
+/* ══ STORICO METEO info strip ══ */
+.meteo-strip{background:#fff;border-radius:12px;padding:.8rem 1.1rem;
+  border:1px solid rgba(15,53,32,.13);font-size:.79rem;color:#1c1c1c;margin-top:-.5rem;}
+.meteo-strip b{color:#061912;}
+
+/* ══ PAC banner ══ */
+.pac-banner{background:linear-gradient(90deg,#061912,#0f3520);color:#f0e6cc;
+  border-radius:12px;padding:.9rem 1.4rem;margin-top:.5rem;font-size:.82rem;}
+.pac-banner b{color:#c9963a;}
+
+/* ══ SIDEBAR ══ */
 div[data-testid="stSidebar"]{background:#061912;}
-div[data-testid="stSidebar"] *{color:rgba(255,255,255,.85)!important;}
+div[data-testid="stSidebar"] *{color:rgba(255,255,255,.88)!important;}
 div[data-testid="stSidebar"] h2,div[data-testid="stSidebar"] h3{
   font-family:'DM Serif Display',serif!important;color:#fff!important;}
 div[data-testid="stSidebar"] label{
   font-size:.7rem!important;text-transform:uppercase;
-  letter-spacing:.05em;color:rgba(255,255,255,.48)!important;}
+  letter-spacing:.05em;color:rgba(255,255,255,.50)!important;}
+
+/* ══ BUTTONS ══ */
 .stButton>button{background:#0f3520!important;color:#fff!important;
   border:none!important;border-radius:10px!important;
   font-weight:600!important;font-size:.9rem!important;padding:.6rem 1.8rem!important;}
 .stButton>button:hover{background:#061912!important;}
-.footer{font-size:.67rem;color:#9aab9e;text-align:center;margin-top:2.5rem;
-  padding-top:1rem;border-top:1px solid rgba(15,53,32,.12);}
 
-/* ══ Tabelle st.expander (metodologia) ══ */
+/* ══ FOOTER ══ */
+.footer{font-size:.67rem;color:#4a5e4e;text-align:center;margin-top:2.5rem;
+  padding-top:1rem;border-top:1px solid rgba(15,53,32,.14);}
+
+/* ══ EXPANDER TABELLE (metodologia) ══ */
 [data-testid="stExpander"] table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: .78rem;
-    background: #0f3520;
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1.5px solid #c9963a;
+    width:100%; border-collapse:collapse; font-size:.78rem;
+    border:1.5px solid #c9963a; border-radius:10px; overflow:hidden;
 }
 [data-testid="stExpander"] table th {
-    background: #061912 !important;
-    color: #c9963a !important;
-    padding: 8px 12px !important;
-    font-weight: 700 !important;
-    border-bottom: 2px solid #c9963a !important;
+    background:#0f3520 !important; color:#f0e6cc !important;
+    padding:8px 12px !important; font-weight:700 !important;
+    border-bottom:2px solid #c9963a !important;
 }
 [data-testid="stExpander"] table td {
-    padding: 6px 12px !important;
-    color: #d4edda !important;
-    border-bottom: 1px solid rgba(201,150,58,.2) !important;
+    padding:6px 12px !important; color:#061912 !important;
+    border-bottom:1px solid rgba(15,53,32,.10) !important;
 }
-[data-testid="stExpander"] table tr:nth-child(odd) td {
-    background: #0d2b1a !important;
-}
-[data-testid="stExpander"] table tr:nth-child(even) td {
-    background: #132f1e !important;
-}
-[data-testid="stExpander"] table tr:hover td {
-    background: #1a6b3a !important;
-    color: #fff !important;
-}
+[data-testid="stExpander"] table tr:nth-child(odd)  td { background:#f4f1ea !important; }
+[data-testid="stExpander"] table tr:nth-child(even) td { background:#ffffff !important; }
+[data-testid="stExpander"] table tr:hover           td {
+    background:#e8f5e9 !important; color:#061912 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -561,7 +578,7 @@ for col,(v,l,s),clr in zip(wc,wcols,["#0f3520"]*5+[sc]):
     with col:
         st.markdown(f'<div class="kpi"><div class="kpi-v" style="font-size:1.3rem;color:{clr}">{v}</div>'
                     f'<div class="kpi-l">{l}</div>'
-                    f'<div class="kpi-s" style="color:#9aab9e;font-size:.68rem">{s}</div></div>',
+                    f'<div class="kpi-s" style="color:#4a5e4e;font-size:.68rem">{s}</div></div>',
                     unsafe_allow_html=True)
 
 if stress_idx>.4:
@@ -627,12 +644,11 @@ with mr2:
         mese_secco      = mesi_fmt[piogge_ann.index(min(piogge_ann))]
         mese_piovoso    = mesi_fmt[piogge_ann.index(max(piogge_ann))]
         st.markdown(f"""
-        <div style="background:#0f3520;border-radius:12px;padding:.8rem 1.1rem;
-             border:1px solid rgba(201,150,58,.3);font-size:.79rem;margin-top:-.5rem;color:#d4edda">
-          📊 <b style="color:#c9963a">Media annua:</b> {round(tot_pioggia_ann)}mm pioggia · {round(tot_et0_ann)}mm ET₀ ·
-          Bilancio <b style="color:{'#6ee7b7' if bilancio_ann>=0 else '#fca5a5'}">
+        <div class="meteo-strip">
+          📊 <b>Media annua:</b> {round(tot_pioggia_ann)}mm pioggia · {round(tot_et0_ann)}mm ET₀ ·
+          Bilancio <b style="color:{'#155724' if bilancio_ann>=0 else '#7f1d1d'}">
           {"+" if bilancio_ann>=0 else ""}{round(bilancio_ann)}mm</b> ·
-          Mese più secco: <b style="color:#c9963a">{mese_secco}</b> · Mese più piovoso: <b style="color:#c9963a">{mese_piovoso}</b>
+          Mese più secco: <b style="color:#78450a">{mese_secco}</b> · Mese più piovoso: <b style="color:#155724">{mese_piovoso}</b>
         </div>""", unsafe_allow_html=True)
     else:
         st.info("Dati storici annuali non disponibili momentaneamente.")
@@ -797,9 +813,8 @@ if FOLIUM_OK:
         st_folium(m, width=None, height=480, returned_objects=[])
     with info_col:
         st.markdown("""
-        <div style="background:#0f3520;border-radius:12px;padding:1rem;
-             border:1px solid rgba(201,150,58,.3);font-size:.8rem;color:#d4edda">
-          <b style="color:#c9963a">Legenda marker</b>
+        <div class="map-legend">
+          <b>Legenda marker</b>
           <div style="margin-top:.6rem;line-height:2">
             🟢 <b>Verde</b> — Score ≥70 (A/B)<br>
             🟡 <b>Arancione</b> — Score 48-69 (C)<br>
@@ -807,8 +822,8 @@ if FOLIUM_OK:
             🔵 <b>Blu</b> — Stazione meteo<br>
           </div>
           <hr style="border:none;border-top:1px solid rgba(201,150,58,.3);margin:.6rem 0">
-          <b style="color:#c9963a">Come usarla</b>
-          <div style="margin-top:.4rem;color:#9aab9e;line-height:1.6">
+          <b>Come usarla</b>
+          <div style="margin-top:.4rem;color:#4a5e4e;line-height:1.6">
             Clicca un marker<br>per i dettagli.<br><br>
             Cambia vista con<br>il selettore layer<br>in alto a destra.
           </div>
@@ -887,12 +902,11 @@ co2_fert_totale = co2_fert_prod + co2_fert_n2o + co2_fito_s3
 pct_org = round(co2_n2o_org / max(co2_fert_n2o, 0.001) * 100, 0)
 bene_org = pct_org >= 50
 st.markdown(f"""
-<div style="background:#0f3520;border-radius:12px;padding:.75rem 1.2rem;
-  border:1px solid rgba(201,150,58,.3);font-size:.79rem;margin:.5rem 0;color:#d4edda">
-  🌿 <b style="color:#c9963a">N₂O: Organico vs Minerale —</b>&nbsp;
-  EF organici (0.004-0.006): <b style="color:#6ee7b7">{round(co2_n2o_org,2)} tCO₂eq</b> &nbsp;·&nbsp;
-  EF minerali (0.010-0.013): <b style="color:#fca5a5">{round(co2_n2o_min,2)} tCO₂eq</b> &nbsp;·&nbsp;
-  Quota organica: <b style="color:#c9963a">{pct_org:.0f}%</b>
+<div class="n2o-strip">
+  🌿 <b>N₂O: Organico vs Minerale —</b>&nbsp;
+  EF organici (0.004-0.006): <b style="color:#14532d">{round(co2_n2o_org,2)} tCO₂eq</b> &nbsp;·&nbsp;
+  EF minerali (0.010-0.013): <b style="color:#7f1d1d">{round(co2_n2o_min,2)} tCO₂eq</b> &nbsp;·&nbsp;
+  Quota organica: <b style="color:#78450a">{pct_org:.0f}%</b>
   {"&nbsp;✅ buona pratica" if bene_org else "&nbsp;⚠️ aumenta quota organica per ridurre N₂O del 40-60%"}
 </div>""", unsafe_allow_html=True)
 
@@ -1045,7 +1059,7 @@ scope3_total = co2_fert_prod + co2_fito_s3 + co2_materie + co2_trasporti + abs(m
 with sb1:
     st.markdown(f"""
     <div class="scope-box scope1">
-      <div style="font-size:.85rem;font-weight:700;color:#991b1b;margin-bottom:.5rem">
+      <div style="font-size:.85rem;font-weight:700;color:#7f1d1d;margin-bottom:.5rem">
         🔴 Scope 1 — Emissioni Dirette</div>
       <div style="font-size:.78rem;line-height:1.9">
         Gasolio macchine: <b>{round(S('diesel_co2'),2)} tCO₂</b><br>
@@ -1059,11 +1073,11 @@ with sb1:
 with sb2:
     st.markdown(f"""
     <div class="scope-box scope2">
-      <div style="font-size:.85rem;font-weight:700;color:#92400e;margin-bottom:.5rem">
+      <div style="font-size:.85rem;font-weight:700;color:#78350f;margin-bottom:.5rem">
         🟡 Scope 2 — Emissioni Indirette Energia</div>
       <div style="font-size:.78rem;line-height:1.9">
         Elettricità acquistata: <b>0 tCO₂</b><br>
-        <span style="color:#9ca3af;font-size:.72rem">(Aggiungi pompe irrigazione,<br>celle frigorifere, impianti)</span><br>
+        <span style="color:#78350f;font-size:.72rem">(Aggiungi pompe irrigazione,<br>celle frigorifere, impianti)</span><br>
         <hr style="border:none;border-top:1px solid #fdba74;margin:.4rem 0">
         <b>Totale Scope 2: {round(scope2_total,2)} tCO₂eq/anno</b>
       </div>
@@ -1072,7 +1086,7 @@ with sb2:
 with sb3:
     st.markdown(f"""
     <div class="scope-box scope3">
-      <div style="font-size:.85rem;font-weight:700;color:#065f46;margin-bottom:.5rem">
+      <div style="font-size:.85rem;font-weight:700;color:#14532d;margin-bottom:.5rem">
         🟢 Scope 3 — Catena del valore (upstream)</div>
       <div style="font-size:.78rem;line-height:1.9">
         Produzione fertilizzanti: <b>{round(co2_fert_prod,2)} tCO₂eq</b><br>
@@ -1115,32 +1129,31 @@ with bal_col1:
 with bal_col2:
     col_netto = "#065f46" if tot_netto>=0 else "#991b1b"
     st.markdown(f"""
-    <div style="background:#0f3520;border-radius:14px;padding:1.2rem 1.4rem;
-         border:1px solid rgba(201,150,58,.3);margin-top:.3rem">
-      <div style="font-family:'DM Serif Display',serif;font-size:1rem;color:#c9963a;margin-bottom:.8rem">
+    <div class="ghg-box" style="margin-top:.3rem">
+      <div style="font-family:'DM Serif Display',serif;font-size:1rem;color:#061912;margin-bottom:.8rem">
         📊 Riepilogo GHG</div>
       <table style="width:100%;font-size:.78rem;border-collapse:collapse">
-        <tr><td style="padding:4px 0;color:#9aab9e">Sequestro suolo</td>
-            <td style="text-align:right;color:#6ee7b7;font-weight:600">+{round(tot_seq,1)} t</td></tr>
-        <tr><td style="padding:4px 0;color:#9aab9e">Scarti virtuosi</td>
-            <td style="text-align:right;color:#6ee7b7;font-weight:600">+{round(abs(min(0,co2_scarti)),1)} t</td></tr>
-        <tr style="border-top:1px solid rgba(201,150,58,.2)"><td style="padding:4px 0;color:#9aab9e">Gasolio (Sc.1)</td>
-            <td style="text-align:right;color:#fca5a5;font-weight:600">-{round(S('diesel_co2'),1)} t</td></tr>
-        <tr><td style="padding:4px 0;color:#9aab9e">N₂O (Sc.1)</td>
-            <td style="text-align:right;color:#fca5a5;font-weight:600">-{round(S('n2o')+co2_fert_n2o,1)} t</td></tr>
-        <tr><td style="padding:4px 0;color:#9aab9e">Fertilizz. (Sc.3)</td>
-            <td style="text-align:right;color:#fca5a5;font-weight:600">-{round(co2_fert_prod+co2_fito_s3,1)} t</td></tr>
-        <tr><td style="padding:4px 0;color:#9aab9e">Materie prime (Sc.3)</td>
-            <td style="text-align:right;color:#fca5a5;font-weight:600">-{round(co2_materie,1)} t</td></tr>
-        <tr><td style="padding:4px 0;color:#9aab9e">Trasporti (Sc.3)</td>
-            <td style="text-align:right;color:#fca5a5;font-weight:600">-{round(co2_trasporti,1)} t</td></tr>
-        <tr><td style="padding:4px 0;color:#9aab9e">Scarti emissivi</td>
-            <td style="text-align:right;color:#fca5a5;font-weight:600">-{round(max(0,co2_scarti),1)} t</td></tr>
-        <tr style="border-top:2px solid #c9963a"><td style="padding:6px 0;font-weight:700;color:#fff">Bilancio NETTO</td>
-            <td style="text-align:right;font-weight:700;font-size:.95rem;color:{'#6ee7b7' if tot_netto>=0 else '#fca5a5'}">
+        <tr><td style="padding:4px 0;color:#4a5e4e">Sequestro suolo</td>
+            <td style="text-align:right;color:#14532d;font-weight:600">+{round(tot_seq,1)} t</td></tr>
+        <tr><td style="padding:4px 0;color:#4a5e4e">Scarti virtuosi</td>
+            <td style="text-align:right;color:#14532d;font-weight:600">+{round(abs(min(0,co2_scarti)),1)} t</td></tr>
+        <tr style="border-top:1px solid rgba(201,150,58,.2)"><td style="padding:4px 0;color:#4a5e4e">Gasolio (Sc.1)</td>
+            <td style="text-align:right;color:#7f1d1d;font-weight:600">-{round(S('diesel_co2'),1)} t</td></tr>
+        <tr><td style="padding:4px 0;color:#4a5e4e">N₂O (Sc.1)</td>
+            <td style="text-align:right;color:#7f1d1d;font-weight:600">-{round(S('n2o')+co2_fert_n2o,1)} t</td></tr>
+        <tr><td style="padding:4px 0;color:#4a5e4e">Fertilizz. (Sc.3)</td>
+            <td style="text-align:right;color:#7f1d1d;font-weight:600">-{round(co2_fert_prod+co2_fito_s3,1)} t</td></tr>
+        <tr><td style="padding:4px 0;color:#4a5e4e">Materie prime (Sc.3)</td>
+            <td style="text-align:right;color:#7f1d1d;font-weight:600">-{round(co2_materie,1)} t</td></tr>
+        <tr><td style="padding:4px 0;color:#4a5e4e">Trasporti (Sc.3)</td>
+            <td style="text-align:right;color:#7f1d1d;font-weight:600">-{round(co2_trasporti,1)} t</td></tr>
+        <tr><td style="padding:4px 0;color:#4a5e4e">Scarti emissivi</td>
+            <td style="text-align:right;color:#7f1d1d;font-weight:600">-{round(max(0,co2_scarti),1)} t</td></tr>
+        <tr style="border-top:2px solid #c9963a;background:#f0fdf4"><td style="padding:6px 0;font-weight:700;color:#fff">Bilancio NETTO</td>
+            <td style="text-align:right;font-weight:700;font-size:.95rem;color:{'#14532d' if tot_netto>=0 else '#7f1d1d'}">
             {"+" if tot_netto>=0 else ""}{round(tot_netto,1)} t</td></tr>
-        <tr><td style="padding:4px 0;color:#9aab9e">Valore crediti</td>
-            <td style="text-align:right;color:#6ee7b7;font-weight:600">€{int(val_cred):,}</td></tr>
+        <tr><td style="padding:4px 0;color:#4a5e4e">Valore crediti</td>
+            <td style="text-align:right;color:#14532d;font-weight:600">€{int(val_cred):,}</td></tr>
       </table>
     </div>""", unsafe_allow_html=True)
 
@@ -1171,21 +1184,19 @@ delta_c = round(tot_seq/tot_ha - bm["co2_ha"], 2)
 delta_m = round(marg_pct - bm["margine_pct"], 1)
 bm1,bm2=st.columns(2)
 with bm1:
-    clr_s="#1a6b3a" if delta_s>=0 else "#c9963a"
-    clr_c="#1a6b3a" if delta_c>=0 else "#c9963a"
-    st.markdown(f"""<div style="background:#0f3520;border-radius:12px;padding:.75rem 1.1rem;
-      border:1px solid rgba(201,150,58,.3);margin-top:.5rem;font-size:.79rem;color:#d4edda">
-      📊 <b style="color:#c9963a">Benchmark {bm["label"]} — CREA-AA 2025:</b>&nbsp;
+    clr_s="#14532d" if delta_s>=0 else "#78450a"
+    clr_c="#14532d" if delta_c>=0 else "#78450a"
+    st.markdown(f"""<div class="info-box" style="margin-top:.5rem">
+      📊 <b>Benchmark {bm["label"]} — CREA-AA 2025:</b>&nbsp;
       Score <b style="color:{clr_s}">{"+" if delta_s>=0 else ""}{delta_s} pt</b> vs media {bm["score"]}/100&nbsp;·&nbsp;
       CO₂/ha <b style="color:{clr_c}">{"+" if delta_c>=0 else ""}{delta_c} t</b> vs media {bm["co2_ha"]} t/ha
     </div>""",unsafe_allow_html=True)
 with bm2:
     pct=max(5,min(95,100-int((score-30)/0.7)))
-    clr_m="#1a6b3a" if delta_m>=0 else "#ef4444"
-    st.markdown(f"""<div style="background:#0f3520;border-radius:12px;padding:.75rem 1.1rem;
-      border:1px solid rgba(201,150,58,.3);margin-top:.5rem;font-size:.79rem;color:#d4edda">
-      🏆 <b style="color:#c9963a">Posizionamento settore {bm["label"]}:</b>&nbsp;
-      Top <b style="color:#6ee7b7">{pct}%</b>&nbsp;·&nbsp;
+    clr_m="#14532d" if delta_m>=0 else "#7f1d1d"
+    st.markdown(f"""<div class="info-box" style="margin-top:.5rem">
+      🏆 <b>Posizionamento settore {bm["label"]}:</b>&nbsp;
+      Top <b style="color:#14532d">{pct}%</b>&nbsp;·&nbsp;
       Margine medio settore <b style="color:#c9963a">{bm["margine_pct"]}%</b> — tuo: <b style="color:{clr_m}">{"+" if delta_m>=0 else ""}{delta_m}%</b>
     </div>""",unsafe_allow_html=True)
 
@@ -1312,20 +1323,19 @@ with rc1:
     st.plotly_chart(fig_rc, use_container_width=True)
 
 with rc2:
-    st.markdown("""<div style="background:#0f3520;border-radius:12px;padding:.9rem 1rem;
-        border:1px solid rgba(201,150,58,.3);font-size:.78rem;color:#d4edda">
-        <b style="color:#c9963a">Impatto a 5 e 10 anni</b>""", unsafe_allow_html=True)
+    st.markdown("""<div class="rothc-card">
+        <b>Impatto a 5 e 10 anni</b>""", unsafe_allow_html=True)
     for _, _r in df_edit.iterrows():
         so0  = max(0.1, float(_r.get("SO %", 1.5)))
         prot = str(_r.get("Protocollo", "Intermedio"))
         nome = str(_r.get("Campo", ""))
         _, d5, d10, k = rothc_proiezione(so0, prot, 10)
-        clr5  = "#6ee7b7" if d5  >= 0 else "#fca5a5"
-        clr10 = "#6ee7b7" if d10 >= 0 else "#fca5a5"
+        clr5  = "#14532d" if d5  >= 0 else "#7f1d1d"
+        clr10 = "#14532d" if d10 >= 0 else "#7f1d1d"
         st.markdown(f"""<div style="border-left:3px solid {col_prot.get(prot,'#94a3b8')};
-            padding:.4rem .6rem;margin:.3rem 0;background:rgba(255,255,255,.05);border-radius:0 8px 8px 0">
-            <b style="font-size:.8rem;color:#fff">{nome}</b><br>
-            <span style="color:#9aab9e;font-size:.72rem">{prot[:12]}…</span><br>
+            padding:.4rem .6rem;margin:.3rem 0;background:#f4f1ea;border-radius:0 8px 8px 0">
+            <b style="font-size:.8rem;color:#061912">{nome}</b><br>
+            <span style="color:#4a5e4e;font-size:.72rem">{prot[:12]}…</span><br>
             5a: <b style="color:{clr5}">{"+" if d5>=0 else ""}{d5}%</b> &nbsp;
             10a: <b style="color:{clr10}">{"+" if d10>=0 else ""}{d10}%</b>
         </div>""", unsafe_allow_html=True)
@@ -1348,7 +1358,7 @@ if campi_rischio_som:
 # ══════════════════════════════════════════════════════════════════════
 st.markdown('<div class="sec">🚀 Business Case & ROI Sostenibilità</div>',unsafe_allow_html=True)
 s1,s2,s3=st.columns(3)
-def row(l,v): return f'<div class="sc-row"><span style="color:#9aab9e">{l}</span><b style="color:#fff">{v}</b></div>'
+def row(l,v): return f'<div class="sc-row"><span>{l}</span><b>{v}</b></div>'
 with s1:
     st.markdown(f"""<div class="sc-card sc-base">
     <div style="font-size:.92rem;font-weight:700;color:#1a6b3a;margin-bottom:.6rem">📍 Stato Attuale</div>
@@ -1427,8 +1437,8 @@ for i, p in enumerate(pac_items):
         st.markdown(f"""<div style="background:{bg};border-radius:11px;padding:.85rem 1rem;
           margin:.3rem 0;border:1px solid rgba(15,53,32,.12);{brd}">
           <b style="font-size:.83rem;color:{color}">{ico} {p["nome"]}</b><br>
-          <span style="font-size:.7rem;color:#7a8c7e">{p["motivo"]}</span><br>
-          {"<b style='color:#1a6b3a;font-size:.82rem'>€"+f"{int(importo):,}/anno</b> ({p['ha']:.0f} ha × €{p['pag_ha']}/ha)" if p["ok"] else f"<span style='color:#c9963a;font-size:.72rem'>💡 {p['azione']}</span>"}
+          <span style="font-size:.7rem;color:#374151">{p["motivo"]}</span><br>
+          {"<b style='color:#1a6b3a;font-size:.82rem'>€"+f"{int(importo):,}/anno</b> ({p['ha']:.0f} ha × €{p['pag_ha']}/ha)" if p["ok"] else f"<span style='color:#78450a;font-size:.72rem'>💡 {p['azione']}</span>"}
         </div>""", unsafe_allow_html=True)
 
 st.markdown(f"""
@@ -1459,7 +1469,7 @@ for i,(nome,att,punti,tempo,val,colore) in enumerate(certs):
         brd=f"border-left:4px solid {colore};" if att else ""
         st.markdown(f"""<div class="cert-box {cls}" style="{brd}">
           <b style="font-size:.83rem">{ico} {nome}</b><br>
-          <span style="font-size:.7rem;color:#7a8c7e">
+          <span style="font-size:.7rem;color:#374151">
           <b style="color:{colore}">{punti} ESG</b> · {tempo} · 💶 {val}</span>
         </div>""",unsafe_allow_html=True)
 
@@ -1502,9 +1512,9 @@ for i,az in enumerate(azioni[:6],1):
     cls,ico=pm[az["p"]]
     st.markdown(f"""<div class="action {cls}">
       <div style="font-size:.88rem;font-weight:600">{ico} {i}. {az['t']}</div>
-      <div style="margin-top:.25rem;font-size:.78rem;color:#7a8c7e">📊 {az['i']}</div>
+      <div style="margin-top:.25rem;font-size:.78rem;color:#374151">📊 {az['i']}</div>
       <div style="font-size:.78rem;color:#1a6b3a">💶 {az['e']}
-      <span style="color:#9ca3af"> · 📜 {az['c']}</span></div>
+      <span style="color:#374151"> · 📜 {az['c']}</span></div>
     </div>""",unsafe_allow_html=True)
 
 # RISCHI
@@ -2029,7 +2039,7 @@ tr:nth-child(odd) td{{background:#0d2b1a}}
 tr:nth-child(even) td{{background:#132f1e}}
 tr:hover td{{background:#1a6b3a;color:#fff}}
 tfoot tr td{{background:#1a3d28 !important;color:#c9963a;font-weight:700;
-   border-top:2px solid #c9963a}}
+   border-top:2px solid #c9963a;background:#f0fdf4}}
 .meteo{{background:linear-gradient(90deg,#0a2d4a,#0f3520);color:#d4edda;
   border-radius:9px;padding:.65rem 1.1rem;margin:.4rem 0;font-size:.78rem;line-height:2;
   border:1px solid rgba(201,150,58,.3)}}
@@ -2176,7 +2186,7 @@ Trasporti: <b>{round(co2_trasporti,2)} tCO₂eq</b><br>
 <p style="font-size:.82rem;color:#d4edda">Attive: <b style="color:#c9963a">{cert_att}</b></p></div>
 
 <div class="sec"><div class="st">Nota Metodologica</div>
-<p style="font-size:.75rem;color:#9aab9e;line-height:1.65">
+<p style="font-size:.75rem;color:#4a5e4e;line-height:1.65">
 <b style="color:#c9963a">Carbonio suolo:</b> IPCC 2006 Vol.4 Tier 1, AR5 GWP.
 <b style="color:#c9963a">Fertilizzanti (Scope 1+3):</b> ecoinvent 3.9.
 <b style="color:#c9963a">Scarti:</b> IPCC 2006 Vol.5.
