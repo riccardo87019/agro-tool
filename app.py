@@ -25,84 +25,80 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap');
 html,body,[class*="css"]{font-family:'Lexend',sans-serif;}
-.stApp{background:#f4f1ea;}
+.stApp{background:#f4f1ea !important;}
 
-/* ══════════════════════════════════════════════════════════
-   DATA EDITOR — bordo + label visibili (il canvas è WebGL,
-   non modificabile via CSS — colori celle gestiti dal tema)
-   ══════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════
+   FORZA TEMA CHIARO SU TUTTO — override dark mode
+   ══════════════════════════════════════════════════════ */
+
+/* Contenitore principale e tutti i testi */
+.main, .block-container, [data-testid="stAppViewContainer"],
+[data-testid="stVerticalBlock"], section.main {
+    background: #f4f1ea !important;
+    color: #061912 !important;
+}
+
+/* Tutti i testi markdown/caption/label nell'area principale */
+.stMarkdown, .stMarkdown p, .stMarkdown span,
+.stMarkdown label, .stCaption, p, span,
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] span {
+    color: #061912 !important;
+}
+
+/* Label bold sopra i data_editor (es. "Fertilizzanti", "Fitofarmaci") */
+.stMarkdown strong, .stMarkdown b,
+[data-testid="stMarkdownContainer"] strong,
+[data-testid="stMarkdownContainer"] b {
+    color: #061912 !important;
+    font-weight: 700 !important;
+}
+
+/* Caption testo grigio leggibile */
+[data-testid="stCaptionContainer"] p,
+.stCaption p {
+    color: #374151 !important;
+}
+
+/* ══ DATA EDITOR — forza sfondo bianco + testo scuro ══ */
+/* Contenitore */
 [data-testid="stDataEditor"] {
     border: 2px solid #c9963a !important;
     border-radius: 12px !important;
     overflow: hidden !important;
     box-shadow: 0 4px 16px rgba(6,25,18,.10) !important;
+    background: #ffffff !important;
 }
-/* Label sopra ogni data_editor */
-[data-testid="stDataEditor"] > label {
+
+/* Canvas WebGL wrapper — forza bg bianco */
+[data-testid="stDataEditor"] > div,
+[data-testid="stDataEditor"] > div > div,
+[data-testid="stDataEditor"] canvas {
+    background: #ffffff !important;
+}
+
+/* Celle visibili tramite DOM (fallback non-WebGL) */
+[data-testid="stDataEditor"] [role="gridcell"],
+[data-testid="stDataEditor"] [role="columnheader"],
+[data-testid="stDataEditor"] td,
+[data-testid="stDataEditor"] th {
+    background: #ffffff !important;
     color: #061912 !important;
-    font-weight: 700 !important;
-    font-size: .82rem !important;
 }
 
-/* ══════════════════════════════════════════════════════════
-   TABELLE HTML custom (riepilogo GHG, metodologia, ecc.)
-   Sfondo bianco, testo scuro — massimo contrasto
-   ══════════════════════════════════════════════════════════ */
-.tbl-agro {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: .79rem;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1.5px solid #c9963a;
-    background: #fff;
-}
-.tbl-agro thead th {
-    background: #0f3520;
-    color: #f0e6cc;
-    font-weight: 700;
-    padding: 9px 12px;
-    text-align: left;
-    border-bottom: 2px solid #c9963a;
-    letter-spacing: .04em;
-    font-size: .76rem;
-    text-transform: uppercase;
-}
-.tbl-agro tbody tr:nth-child(odd)  td { background: #f4f1ea; color: #061912; }
-.tbl-agro tbody tr:nth-child(even) td { background: #ffffff; color: #061912; }
-.tbl-agro tbody td {
-    padding: 7px 12px;
-    border-bottom: 1px solid rgba(15,53,32,.10);
-    color: #061912;
-    vertical-align: middle;
-}
-.tbl-agro tbody tr:hover td { background: #e8f5e9; color: #061912; }
-.tbl-agro tfoot td {
-    background: #0f3520;
-    color: #f0e6cc;
-    font-weight: 700;
-    padding: 8px 12px;
-    border-top: 2px solid #c9963a;
-}
-.tbl-agro .pos { color: #155724; font-weight: 700; }
-.tbl-agro .neg { color: #7f1d1d; font-weight: 700; }
-.tbl-agro .gold{ color: #78450a; font-weight: 700; }
-
-/* ══════════════════════════════════════════════════════════
-   HERO
-   ══════════════════════════════════════════════════════════ */
+/* ══ HERO ══ */
 .hero{background:linear-gradient(135deg,#061912 0%,#0f3520 45%,#1a6b3a 100%);
   padding:2.4rem 3rem 2rem;border-radius:22px;margin-bottom:2rem;
   box-shadow:0 14px 44px rgba(6,25,18,.24);border-bottom:4px solid #c9963a;
   position:relative;overflow:hidden;}
 .hero::after{content:'🌿';position:absolute;right:2.5rem;top:50%;
   transform:translateY(-50%);font-size:6rem;opacity:.07;pointer-events:none;}
-.hero h1{font-family:'DM Serif Display',serif;color:#fff;font-size:2rem;margin:.3rem 0 .1rem;}
-.hero p{color:rgba(255,255,255,.6);font-size:.86rem;margin:0;}
+.hero h1{font-family:'DM Serif Display',serif;color:#fff !important;font-size:2rem;margin:.3rem 0 .1rem;}
+.hero p{color:rgba(255,255,255,.7) !important;font-size:.86rem;margin:0;}
 .hero-meta{display:flex;gap:1rem;margin-top:.8rem;flex-wrap:wrap;}
-.hero-meta span{background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);
-  font-size:.7rem;padding:3px 11px;border-radius:20px;border:1px solid rgba(255,255,255,.15);}
-.hero-badge{background:#c9963a;color:#061912;font-size:.62rem;font-weight:700;
+.hero-meta span{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9) !important;
+  font-size:.7rem;padding:3px 11px;border-radius:20px;border:1px solid rgba(255,255,255,.2);}
+.hero-badge{background:#c9963a;color:#061912 !important;font-size:.62rem;font-weight:700;
   letter-spacing:.12em;text-transform:uppercase;padding:3px 12px;
   border-radius:20px;margin-bottom:.6rem;display:inline-block;}
 
@@ -111,12 +107,12 @@ html,body,[class*="css"]{font-family:'Lexend',sans-serif;}
   border:1px solid rgba(15,53,32,.12);box-shadow:0 4px 14px rgba(6,25,18,.07);
   text-align:center;transition:all .25s;height:100%;}
 .kpi:hover{transform:translateY(-4px);box-shadow:0 10px 28px rgba(6,25,18,.14);}
-.kpi-v{font-size:1.75rem;font-weight:700;color:#0f3520;line-height:1.1;}
-.kpi-l{font-size:.6rem;color:#4a5e4e;text-transform:uppercase;letter-spacing:.09em;margin-top:.3rem;}
-.kpi-s{font-size:.76rem;color:#1a6b3a;font-weight:600;margin-top:.15rem;}
+.kpi-v{font-size:1.75rem;font-weight:700;color:#0f3520 !important;line-height:1.1;}
+.kpi-l{font-size:.6rem;color:#374151 !important;text-transform:uppercase;letter-spacing:.09em;margin-top:.3rem;}
+.kpi-s{font-size:.76rem;color:#166534 !important;font-weight:600;margin-top:.15rem;}
 
-/* ══ SEZIONI ══ */
-.sec{font-family:'DM Serif Display',serif;font-size:1.2rem;color:#061912;
+/* ══ SEZIONI TITOLI ══ */
+.sec{font-family:'DM Serif Display',serif;font-size:1.2rem;color:#061912 !important;
   border-left:5px solid #c9963a;padding-left:.7rem;margin:2.2rem 0 1rem;}
 
 /* ══ AZIONI ══ */
@@ -127,114 +123,144 @@ html,body,[class*="css"]{font-family:'Lexend',sans-serif;}
 .act-m{border-left:4px solid #b45309;}
 .act-l{border-left:4px solid #166534;}
 
-/* ══ RISCHI — testo scuro leggibile ══ */
+/* ══ RISCHI ══ */
 .risk{display:inline-block;padding:5px 13px;border-radius:20px;
   font-size:.72rem;font-weight:700;margin:3px;border:1px solid transparent;}
-.r-alto  {background:#fee2e2;color:#7f1d1d;border-color:#fca5a5;}
-.r-medio {background:#fef3c7;color:#78350f;border-color:#fcd34d;}
-.r-basso {background:#dcfce7;color:#14532d;border-color:#86efac;}
+.r-alto  {background:#fee2e2;color:#7f1d1d !important;border-color:#fca5a5;}
+.r-medio {background:#fef3c7;color:#78350f !important;border-color:#fcd34d;}
+.r-basso {background:#dcfce7;color:#14532d !important;border-color:#86efac;}
 
 /* ══ CERTIFICAZIONI ══ */
 .cert-box{border-radius:11px;padding:.85rem 1rem;margin:.3rem 0;
   border:1px solid rgba(15,53,32,.15);}
 .cert-on {background:#f0fdf4;border-left:4px solid #166534;}
-.cert-off {background:#f9fafb;border-left:4px solid #d1d5db;color:#374151;}
+.cert-off {background:#f9fafb;border-left:4px solid #d1d5db;}
+.cert-box b, .cert-box span { color: #1c1c1c !important; }
 
-/* ══ SCENARIO CARDS — testo sempre scuro ══ */
+/* ══ SCENARIO CARDS ══ */
 .sc-card {border-radius:14px;padding:1.3rem 1.5rem;margin:.4rem 0;}
 .sc-base {background:#f0fdf4;border:2px dashed #166534;}
 .sc-opt  {background:#fffbeb;border:2px dashed #b45309;}
 .sc-tech {background:#eff6ff;border:2px dashed #1d4ed8;}
 .sc-row  {display:flex;justify-content:space-between;font-size:.82rem;
-  padding:3px 0;line-height:1.9;color:#1c1c1c;}
-.sc-row b{color:#061912;}
+  padding:3px 0;line-height:1.9;color:#1c1c1c !important;}
+.sc-row b{color:#061912 !important;}
+.sc-row span{color:#374151 !important;}
 
-/* ══ SCOPE BOXES — testo scuro su sfondo pastello ══ */
+/* ══ SCOPE BOXES ══ */
 .scope-box{border-radius:12px;padding:1rem 1.2rem;margin:.4rem 0;}
-.scope1{background:#fef2f2;border:1.5px solid #fca5a5;color:#450a0a;}
-.scope1 b{color:#7f1d1d;}
-.scope2{background:#fffbeb;border:1.5px solid #fcd34d;color:#451a03;}
-.scope2 b{color:#78350f;}
-.scope3{background:#f0fdf4;border:1.5px solid #86efac;color:#052e16;}
-.scope3 b{color:#14532d;}
+.scope1{background:#fef2f2;border:1.5px solid #fca5a5;}
+.scope1, .scope1 * {color:#450a0a !important;}
+.scope1 b{color:#7f1d1d !important;}
+.scope2{background:#fffbeb;border:1.5px solid #fcd34d;}
+.scope2, .scope2 * {color:#451a03 !important;}
+.scope2 b{color:#78350f !important;}
+.scope3{background:#f0fdf4;border:1.5px solid #86efac;}
+.scope3, .scope3 * {color:#052e16 !important;}
+.scope3 b{color:#14532d !important;}
 
-/* ══ RIEPILOGO GHG sidebar box ══ */
+/* ══ INFO / RIEPILOGO BOXES (sfondo bianco) ══ */
 .ghg-box{background:#fff;border-radius:14px;padding:1.2rem 1.4rem;
   border:1.5px solid rgba(15,53,32,.15);}
-.ghg-box td{font-size:.79rem;padding:4px 0;color:#1c1c1c;}
-.ghg-box .lbl{color:#4a5e4e;}
-.ghg-box .pos{color:#14532d;font-weight:700;}
-.ghg-box .neg{color:#7f1d1d;font-weight:700;}
-.ghg-box .tot{color:#061912;font-weight:800;font-size:.95rem;}
+.ghg-box, .ghg-box * {color:#1c1c1c !important;}
+.ghg-box .pos{color:#14532d !important;font-weight:700;}
+.ghg-box .neg{color:#7f1d1d !important;font-weight:700;}
 
-/* ══ BENCHMARK / INFO BOXES ══ */
 .info-box{background:#fff;border-radius:12px;padding:.75rem 1.1rem;
-  border:1px solid rgba(15,53,32,.13);margin-top:.5rem;font-size:.8rem;color:#1c1c1c;}
-.info-box b{color:#061912;}
+  border:1px solid rgba(15,53,32,.13);margin-top:.5rem;font-size:.8rem;}
+.info-box, .info-box * {color:#1c1c1c !important;}
+.info-box b{color:#061912 !important;}
 
-/* ══ MAPPA LEGENDA ══ */
-.map-legend{background:#fff;border-radius:12px;padding:1rem;
-  border:1.5px solid rgba(15,53,32,.15);font-size:.8rem;color:#1c1c1c;}
-.map-legend b{color:#061912;}
-
-/* ══ RothC sidebar ══ */
-.rothc-card{background:#fff;border-radius:12px;padding:.9rem 1rem;
-  border:1.5px solid rgba(15,53,32,.15);font-size:.78rem;color:#1c1c1c;}
-.rothc-card b{color:#061912;}
-
-/* ══ N2O info strip ══ */
-.n2o-strip{background:#fff;border-radius:12px;padding:.75rem 1.2rem;
-  border:1.5px solid rgba(201,150,58,.4);font-size:.79rem;
-  color:#1c1c1c;margin:.5rem 0;}
-.n2o-strip b{color:#061912;}
-
-/* ══ STORICO METEO info strip ══ */
 .meteo-strip{background:#fff;border-radius:12px;padding:.8rem 1.1rem;
-  border:1px solid rgba(15,53,32,.13);font-size:.79rem;color:#1c1c1c;margin-top:-.5rem;}
-.meteo-strip b{color:#061912;}
+  border:1px solid rgba(15,53,32,.13);font-size:.79rem;margin-top:-.5rem;}
+.meteo-strip, .meteo-strip * {color:#1c1c1c !important;}
 
-/* ══ PAC banner ══ */
-.pac-banner{background:linear-gradient(90deg,#061912,#0f3520);color:#f0e6cc;
+.n2o-strip{background:#fff;border-radius:12px;padding:.75rem 1.2rem;
+  border:1.5px solid rgba(201,150,58,.4);font-size:.79rem;margin:.5rem 0;}
+.n2o-strip, .n2o-strip * {color:#1c1c1c !important;}
+
+.rothc-card{background:#fff;border-radius:12px;padding:.9rem 1rem;
+  border:1.5px solid rgba(15,53,32,.15);font-size:.78rem;}
+.rothc-card, .rothc-card * {color:#1c1c1c !important;}
+.rothc-card b{color:#061912 !important;}
+
+.map-legend{background:#fff;border-radius:12px;padding:1rem;
+  border:1.5px solid rgba(15,53,32,.15);font-size:.8rem;}
+.map-legend, .map-legend * {color:#1c1c1c !important;}
+.map-legend b{color:#061912 !important;}
+
+/* ══ PAC BANNER (sfondo scuro — testo chiaro OK) ══ */
+.pac-banner{background:linear-gradient(90deg,#061912,#0f3520);
   border-radius:12px;padding:.9rem 1.4rem;margin-top:.5rem;font-size:.82rem;}
-.pac-banner b{color:#c9963a;}
+.pac-banner, .pac-banner * {color:#f0e6cc !important;}
+.pac-banner b{color:#c9963a !important;}
 
 /* ══ SIDEBAR ══ */
-div[data-testid="stSidebar"]{background:#061912;}
-div[data-testid="stSidebar"] *{color:rgba(255,255,255,.88)!important;}
+div[data-testid="stSidebar"]{background:#061912 !important;}
+div[data-testid="stSidebar"], div[data-testid="stSidebar"] * {
+    color:rgba(255,255,255,.88) !important;
+}
 div[data-testid="stSidebar"] h2,div[data-testid="stSidebar"] h3{
-  font-family:'DM Serif Display',serif!important;color:#fff!important;}
+  font-family:'DM Serif Display',serif !important;color:#fff !important;}
 div[data-testid="stSidebar"] label{
-  font-size:.7rem!important;text-transform:uppercase;
-  letter-spacing:.05em;color:rgba(255,255,255,.50)!important;}
+  font-size:.7rem !important;text-transform:uppercase;
+  letter-spacing:.05em;color:rgba(255,255,255,.55) !important;}
+div[data-testid="stSidebar"] input,
+div[data-testid="stSidebar"] select {
+  background: #0f3520 !important;
+  color: #fff !important;
+  border-color: rgba(201,150,58,.4) !important;
+}
 
 /* ══ BUTTONS ══ */
-.stButton>button{background:#0f3520!important;color:#fff!important;
-  border:none!important;border-radius:10px!important;
-  font-weight:600!important;font-size:.9rem!important;padding:.6rem 1.8rem!important;}
-.stButton>button:hover{background:#061912!important;}
+.stButton>button{background:#0f3520 !important;color:#fff !important;
+  border:none !important;border-radius:10px !important;
+  font-weight:600 !important;font-size:.9rem !important;padding:.6rem 1.8rem !important;}
+.stButton>button:hover{background:#061912 !important;}
 
 /* ══ FOOTER ══ */
-.footer{font-size:.67rem;color:#4a5e4e;text-align:center;margin-top:2.5rem;
+.footer{font-size:.67rem;color:#374151;text-align:center;margin-top:2.5rem;
   padding-top:1rem;border-top:1px solid rgba(15,53,32,.14);}
 
-/* ══ EXPANDER TABELLE (metodologia) ══ */
+/* ══ EXPANDER TABELLE ══ */
 [data-testid="stExpander"] table {
-    width:100%; border-collapse:collapse; font-size:.78rem;
-    border:1.5px solid #c9963a; border-radius:10px; overflow:hidden;
+    width:100%;border-collapse:collapse;font-size:.78rem;
+    border:1.5px solid #c9963a;border-radius:10px;overflow:hidden;
 }
 [data-testid="stExpander"] table th {
-    background:#0f3520 !important; color:#f0e6cc !important;
-    padding:8px 12px !important; font-weight:700 !important;
+    background:#0f3520 !important;color:#f0e6cc !important;
+    padding:8px 12px !important;font-weight:700 !important;
     border-bottom:2px solid #c9963a !important;
 }
 [data-testid="stExpander"] table td {
-    padding:6px 12px !important; color:#061912 !important;
+    padding:6px 12px !important;color:#061912 !important;
     border-bottom:1px solid rgba(15,53,32,.10) !important;
 }
-[data-testid="stExpander"] table tr:nth-child(odd)  td { background:#f4f1ea !important; }
-[data-testid="stExpander"] table tr:nth-child(even) td { background:#ffffff !important; }
-[data-testid="stExpander"] table tr:hover           td {
-    background:#e8f5e9 !important; color:#061912 !important; }
+[data-testid="stExpander"] table tr:nth-child(odd)  td {background:#f4f1ea !important;}
+[data-testid="stExpander"] table tr:nth-child(even) td {background:#ffffff !important;}
+[data-testid="stExpander"] table tr:hover td {background:#e8f5e9 !important;color:#061912 !important;}
+
+/* ══ TABELLE HTML .tbl-agro ══ */
+.tbl-agro {
+    width:100%;border-collapse:collapse;font-size:.79rem;
+    border-radius:12px;overflow:hidden;border:1.5px solid #c9963a;background:#fff;
+}
+.tbl-agro thead th {
+    background:#0f3520;color:#f0e6cc !important;font-weight:700;
+    padding:9px 12px;text-align:left;border-bottom:2px solid #c9963a;
+    letter-spacing:.04em;font-size:.76rem;text-transform:uppercase;
+}
+.tbl-agro tbody tr:nth-child(odd)  td {background:#f4f1ea;color:#061912 !important;}
+.tbl-agro tbody tr:nth-child(even) td {background:#ffffff;color:#061912 !important;}
+.tbl-agro tbody td {padding:7px 12px;border-bottom:1px solid rgba(15,53,32,.10);vertical-align:middle;}
+.tbl-agro tbody tr:hover td {background:#e8f5e9;color:#061912 !important;}
+.tbl-agro tfoot td {
+    background:#0f3520;color:#f0e6cc !important;font-weight:700;
+    padding:8px 12px;border-top:2px solid #c9963a;
+}
+.tbl-agro .pos {color:#155724 !important;font-weight:700;}
+.tbl-agro .neg {color:#7f1d1d !important;font-weight:700;}
+.tbl-agro .gold{color:#78450a !important;font-weight:700;}
 </style>
 """, unsafe_allow_html=True)
 
