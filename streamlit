@@ -1,1 +1,17 @@
+[theme]
+base = "light"
 
+# Sfondo principale — crema carta
+backgroundColor          = "#f4f1ea"
+
+# Sfondo secondario (sidebar, cards, data_editor) — bianco caldo
+secondaryBackgroundColor  = "#ffffff"
+
+# Colore testo principale — verde scurissimo, alto contrasto su sfondo chiaro
+textColor                 = "#061912"
+
+# Colore accent — oro AgroLog
+primaryColor              = "#c9963a"
+
+# Font
+font                      = "sans serif"
