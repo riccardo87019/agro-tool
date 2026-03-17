@@ -1880,7 +1880,7 @@ SITUAZIONE ECONOMICA:
 - Fatturato: €{fatturato:,}/anno
 - Margine netto: {marg_pct}%
 - Costo gasolio annuo: €{int(tot_c_die):,}
-- PAC Eco-Scheme accessibili ora: €{int(pac_totale):,}/anno
+- PAC Eco-Scheme accessibili ora: (calcolato nella sezione PAC)
 
 CERTIFICAZIONI ATTIVE: {", ".join([c for c,v in [("Biologico",cert_bio),("SQnpi",cert_sqnpi),("GlobalG.A.P.",cert_gap),("VIVA",cert_viva),("ISO 14064",cert_iso),("CSRD",cert_csrd)] if v]) or "Nessuna"}
 """
