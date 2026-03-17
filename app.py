@@ -26,275 +26,351 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap');
 
 /* ══════════════════════════════════════════════════════
-   PALETTE
-   Sfondo:  verde salvia chiaro  #e8f0e9 / #d6e8d7
-   Testo:   blu-viola scuro      #1e1b4b / #312e81
-   Accent:  viola medio          #6d28d9
-   Gold:    ambra                #b45309
+   PALETTE DARK — Nero & Verde
+   Sfondo:       #0a0a0a / #111411 / #0d1a0d
+   Card:         #161c16 / #1a221a
+   Bordi:        #22c55e (verde brillante)
+   Testo:        #e8f5e9 / #a3d9a5
+   Accent:       #22c55e / #16a34a
    ══════════════════════════════════════════════════════ */
 
-html, body, [class*="css"] { font-family:'Lexend',sans-serif; }
+html, body, [class*="css"] {
+    font-family: 'Lexend', sans-serif;
+}
 
-/* ── Background generale ── */
+/* ── Background app ── */
 .stApp,
 .main,
 .block-container,
 [data-testid="stAppViewContainer"],
 [data-testid="stVerticalBlock"],
 section.main {
-    background: #e8f0e9 !important;
-    color: #1e1b4b !important;
+    background: #0d110d !important;
+    color: #e8f5e9 !important;
 }
 
-/* ── Tutti i testi ── */
+/* ── Testi generali ── */
 .stMarkdown, .stMarkdown p, .stMarkdown span,
 [data-testid="stMarkdownContainer"] p,
 [data-testid="stMarkdownContainer"] span,
-p, span, label {
-    color: #1e1b4b !important;
+p, span {
+    color: #e8f5e9 !important;
 }
 .stMarkdown strong, .stMarkdown b,
 [data-testid="stMarkdownContainer"] strong,
 [data-testid="stMarkdownContainer"] b {
-    color: #1e1b4b !important;
+    color: #ffffff !important;
     font-weight: 700 !important;
 }
 [data-testid="stCaptionContainer"] p,
 .stCaption p {
-    color: #4338ca !important;
+    color: #86efac !important;
 }
 
-/* ── Data editor bordo e sfondo ── */
+/* ── Alerts ── */
+[data-testid="stAlert"] {
+    background: #161c16 !important;
+    border-color: #22c55e !important;
+    color: #e8f5e9 !important;
+}
+
+/* ── Data editor ── */
 [data-testid="stDataEditor"] {
-    border: 2px solid #6d28d9 !important;
+    border: 2px solid #22c55e !important;
     border-radius: 12px !important;
     overflow: hidden !important;
-    box-shadow: 0 4px 16px rgba(30,27,75,.12) !important;
-    background: #f0f7f0 !important;
+    box-shadow: 0 0 24px rgba(34,197,94,.15) !important;
+    background: #161c16 !important;
 }
 [data-testid="stDataEditor"] > div,
 [data-testid="stDataEditor"] > div > div,
 [data-testid="stDataEditor"] canvas {
-    background: #f0f7f0 !important;
+    background: #161c16 !important;
 }
 [data-testid="stDataEditor"] [role="gridcell"],
 [data-testid="stDataEditor"] [role="columnheader"],
 [data-testid="stDataEditor"] td,
 [data-testid="stDataEditor"] th {
-    background: #f0f7f0 !important;
-    color: #1e1b4b !important;
+    background: #161c16 !important;
+    color: #e8f5e9 !important;
 }
 
 /* ══ HERO ══ */
 .hero {
-    background: linear-gradient(135deg,#1e1b4b 0%,#312e81 45%,#4c1d95 100%);
-    padding:2.4rem 3rem 2rem; border-radius:22px; margin-bottom:2rem;
-    box-shadow:0 14px 44px rgba(30,27,75,.28); border-bottom:4px solid #7c3aed;
-    position:relative; overflow:hidden;
+    background: linear-gradient(135deg,#000000 0%,#0d1a0d 40%,#052e16 100%);
+    padding: 2.4rem 3rem 2rem; border-radius: 22px; margin-bottom: 2rem;
+    box-shadow: 0 0 60px rgba(34,197,94,.12), 0 14px 44px rgba(0,0,0,.5);
+    border-bottom: 3px solid #22c55e;
+    position: relative; overflow: hidden;
+}
+.hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 80% 50%, rgba(34,197,94,.08) 0%, transparent 65%);
+    pointer-events: none;
 }
 .hero::after {
-    content:'🌿'; position:absolute; right:2.5rem; top:50%;
-    transform:translateY(-50%); font-size:6rem; opacity:.07; pointer-events:none;
+    content: '🌿'; position: absolute; right: 2.5rem; top: 50%;
+    transform: translateY(-50%); font-size: 6rem; opacity: .06; pointer-events: none;
 }
-.hero h1 { font-family:'DM Serif Display',serif; color:#fff !important; font-size:2rem; margin:.3rem 0 .1rem; }
-.hero p  { color:rgba(255,255,255,.7) !important; font-size:.86rem; margin:0; }
-.hero-meta { display:flex; gap:1rem; margin-top:.8rem; flex-wrap:wrap; }
+.hero h1 {
+    font-family: 'DM Serif Display', serif; color: #ffffff !important;
+    font-size: 2rem; margin: .3rem 0 .1rem;
+    text-shadow: 0 0 40px rgba(34,197,94,.3);
+}
+.hero p { color: rgba(255,255,255,.6) !important; font-size: .86rem; margin: 0; }
+.hero-meta { display: flex; gap: 1rem; margin-top: .8rem; flex-wrap: wrap; }
 .hero-meta span {
-    background:rgba(255,255,255,.12); color:rgba(255,255,255,.92) !important;
-    font-size:.7rem; padding:3px 11px; border-radius:20px; border:1px solid rgba(255,255,255,.2);
+    background: rgba(34,197,94,.1); color: #86efac !important;
+    font-size: .7rem; padding: 3px 11px; border-radius: 20px;
+    border: 1px solid rgba(34,197,94,.25);
 }
 .hero-badge {
-    background:#7c3aed; color:#fff !important; font-size:.62rem; font-weight:700;
-    letter-spacing:.12em; text-transform:uppercase; padding:3px 12px;
-    border-radius:20px; margin-bottom:.6rem; display:inline-block;
+    background: #16a34a; color: #000 !important; font-size: .62rem; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase; padding: 3px 12px;
+    border-radius: 20px; margin-bottom: .6rem; display: inline-block;
 }
 
 /* ══ KPI CARDS ══ */
 .kpi {
-    background:#fff; border-radius:18px; padding:1.2rem 1rem;
-    border:1px solid rgba(109,40,217,.18);
-    box-shadow:0 4px 14px rgba(30,27,75,.08);
-    text-align:center; transition:all .25s; height:100%;
+    background: #161c16; border-radius: 18px; padding: 1.2rem 1rem;
+    border: 1px solid rgba(34,197,94,.2);
+    box-shadow: 0 4px 20px rgba(0,0,0,.3), 0 0 0 1px rgba(34,197,94,.05);
+    text-align: center; transition: all .25s; height: 100%;
 }
-.kpi:hover { transform:translateY(-4px); box-shadow:0 10px 28px rgba(30,27,75,.16); }
-.kpi-v { font-size:1.75rem; font-weight:700; color:#312e81 !important; line-height:1.1; }
-.kpi-l { font-size:.6rem; color:#4338ca !important; text-transform:uppercase; letter-spacing:.09em; margin-top:.3rem; }
-.kpi-s { font-size:.76rem; color:#6d28d9 !important; font-weight:600; margin-top:.15rem; }
+.kpi:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0,0,0,.4), 0 0 20px rgba(34,197,94,.15);
+    border-color: rgba(34,197,94,.5);
+}
+.kpi-v { font-size: 1.75rem; font-weight: 700; color: #ffffff !important; line-height: 1.1; }
+.kpi-l { font-size: .6rem; color: #4ade80 !important; text-transform: uppercase; letter-spacing: .09em; margin-top: .3rem; }
+.kpi-s { font-size: .76rem; color: #86efac !important; font-weight: 600; margin-top: .15rem; }
 
-/* ══ SEZIONI TITOLI ══ */
+/* ══ SEZIONI ══ */
 .sec {
-    font-family:'DM Serif Display',serif; font-size:1.2rem; color:#1e1b4b !important;
-    border-left:5px solid #7c3aed; padding-left:.7rem; margin:2.2rem 0 1rem;
+    font-family: 'DM Serif Display', serif; font-size: 1.2rem;
+    color: #ffffff !important;
+    border-left: 5px solid #22c55e; padding-left: .7rem; margin: 2.2rem 0 1rem;
+    text-shadow: 0 0 20px rgba(34,197,94,.2);
 }
 
 /* ══ AZIONI ══ */
 .action {
-    background:#fff; border-radius:13px; padding:.9rem 1.15rem; margin:.4rem 0;
-    border:1px solid rgba(109,40,217,.15); transition:box-shadow .2s;
+    background: #161c16; border-radius: 13px; padding: .9rem 1.15rem; margin: .4rem 0;
+    border: 1px solid rgba(34,197,94,.15); transition: all .2s;
 }
-.action:hover { box-shadow:0 4px 14px rgba(30,27,75,.12); }
-.act-h { border-left:4px solid #b91c1c; }
-.act-m { border-left:4px solid #b45309; }
-.act-l { border-left:4px solid #166534; }
-.action div { color:#1e1b4b !important; }
+.action:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,.3), 0 0 15px rgba(34,197,94,.1);
+    border-color: rgba(34,197,94,.35);
+}
+.action div { color: #e8f5e9 !important; }
+.act-h { border-left: 4px solid #ef4444; }
+.act-m { border-left: 4px solid #f59e0b; }
+.act-l { border-left: 4px solid #22c55e; }
 
 /* ══ RISCHI ══ */
 .risk {
-    display:inline-block; padding:5px 13px; border-radius:20px;
-    font-size:.72rem; font-weight:700; margin:3px; border:1px solid transparent;
+    display: inline-block; padding: 5px 13px; border-radius: 20px;
+    font-size: .72rem; font-weight: 700; margin: 3px;
 }
-.r-alto  { background:#fee2e2; color:#7f1d1d !important; border-color:#fca5a5; }
-.r-medio { background:#fef3c7; color:#78350f !important; border-color:#fcd34d; }
-.r-basso { background:#dcfce7; color:#14532d !important; border-color:#86efac; }
+.r-alto  { background: rgba(239,68,68,.15);  color: #fca5a5 !important; border: 1px solid rgba(239,68,68,.4); }
+.r-medio { background: rgba(245,158,11,.12); color: #fcd34d !important; border: 1px solid rgba(245,158,11,.4); }
+.r-basso { background: rgba(34,197,94,.12);  color: #86efac !important; border: 1px solid rgba(34,197,94,.35); }
 
 /* ══ CERTIFICAZIONI ══ */
 .cert-box {
-    border-radius:11px; padding:.85rem 1rem; margin:.3rem 0;
-    border:1px solid rgba(109,40,217,.18);
+    border-radius: 11px; padding: .85rem 1rem; margin: .3rem 0;
+    border: 1px solid rgba(34,197,94,.15);
 }
-.cert-on  { background:#f5f3ff; border-left:4px solid #6d28d9; }
-.cert-off { background:#f9fafb; border-left:4px solid #c4b5fd; }
-.cert-box *, .cert-box b, .cert-box span { color:#1e1b4b !important; }
+.cert-on  { background: rgba(34,197,94,.08); border-left: 4px solid #22c55e; }
+.cert-off { background: #161c16; border-left: 4px solid #374151; }
+.cert-box *, .cert-box b, .cert-box span { color: #e8f5e9 !important; }
 
 /* ══ SCENARIO CARDS ══ */
-.sc-card { border-radius:14px; padding:1.3rem 1.5rem; margin:.4rem 0; }
-.sc-base { background:#f0fdf4; border:2px dashed #16a34a; }
-.sc-opt  { background:#faf5ff; border:2px dashed #7c3aed; }
-.sc-tech { background:#eff6ff; border:2px dashed #1d4ed8; }
-.sc-row  { display:flex; justify-content:space-between; font-size:.82rem; padding:3px 0; line-height:1.9; }
-.sc-row, .sc-row span { color:#312e81 !important; }
-.sc-row b { color:#1e1b4b !important; }
+.sc-card { border-radius: 14px; padding: 1.3rem 1.5rem; margin: .4rem 0; }
+.sc-base { background: rgba(34,197,94,.08); border: 2px dashed rgba(34,197,94,.4); }
+.sc-opt  { background: rgba(245,158,11,.07); border: 2px dashed rgba(245,158,11,.4); }
+.sc-tech { background: rgba(59,130,246,.07); border: 2px dashed rgba(59,130,246,.4); }
+.sc-row  { display: flex; justify-content: space-between; font-size: .82rem; padding: 3px 0; line-height: 1.9; }
+.sc-row, .sc-row span { color: #a3d9a5 !important; }
+.sc-row b { color: #ffffff !important; }
 
 /* ══ SCOPE BOXES ══ */
-.scope-box { border-radius:12px; padding:1rem 1.2rem; margin:.4rem 0; }
-.scope1 { background:#fff1f2; border:1.5px solid #fda4af; }
-.scope1, .scope1 * { color:#881337 !important; }
-.scope1 b { color:#9f1239 !important; font-weight:700; }
-.scope2 { background:#fffbeb; border:1.5px solid #fcd34d; }
-.scope2, .scope2 * { color:#78350f !important; }
-.scope2 b { color:#92400e !important; font-weight:700; }
-.scope3 { background:#f0fdf4; border:1.5px solid #86efac; }
-.scope3, .scope3 * { color:#14532d !important; }
-.scope3 b { color:#166534 !important; font-weight:700; }
+.scope-box { border-radius: 12px; padding: 1rem 1.2rem; margin: .4rem 0; }
+.scope1 { background: rgba(239,68,68,.1); border: 1.5px solid rgba(239,68,68,.35); }
+.scope1, .scope1 * { color: #fca5a5 !important; }
+.scope1 b { color: #fca5a5 !important; font-weight: 700; }
+.scope2 { background: rgba(245,158,11,.1); border: 1.5px solid rgba(245,158,11,.35); }
+.scope2, .scope2 * { color: #fcd34d !important; }
+.scope2 b { color: #fde68a !important; font-weight: 700; }
+.scope3 { background: rgba(34,197,94,.1); border: 1.5px solid rgba(34,197,94,.35); }
+.scope3, .scope3 * { color: #86efac !important; }
+.scope3 b { color: #4ade80 !important; font-weight: 700; }
 
 /* ══ INFO / RIEPILOGO BOXES ══ */
 .ghg-box {
-    background:#fff; border-radius:14px; padding:1.2rem 1.4rem;
-    border:1.5px solid rgba(109,40,217,.2);
+    background: #161c16; border-radius: 14px; padding: 1.2rem 1.4rem;
+    border: 1.5px solid rgba(34,197,94,.2);
 }
-.ghg-box, .ghg-box * { color:#1e1b4b !important; }
-.ghg-box .pos { color:#166534 !important; font-weight:700; }
-.ghg-box .neg { color:#9f1239 !important; font-weight:700; }
+.ghg-box, .ghg-box * { color: #e8f5e9 !important; }
+.ghg-box .pos { color: #4ade80 !important; font-weight: 700; }
+.ghg-box .neg { color: #f87171 !important; font-weight: 700; }
 
 .info-box {
-    background:#fff; border-radius:12px; padding:.75rem 1.1rem;
-    border:1px solid rgba(109,40,217,.16); margin-top:.5rem; font-size:.8rem;
+    background: #161c16; border-radius: 12px; padding: .75rem 1.1rem;
+    border: 1px solid rgba(34,197,94,.18); margin-top: .5rem; font-size: .8rem;
 }
-.info-box, .info-box * { color:#1e1b4b !important; }
+.info-box, .info-box * { color: #e8f5e9 !important; }
 
 .meteo-strip {
-    background:#fff; border-radius:12px; padding:.8rem 1.1rem;
-    border:1px solid rgba(109,40,217,.15); font-size:.79rem; margin-top:-.5rem;
+    background: #161c16; border-radius: 12px; padding: .8rem 1.1rem;
+    border: 1px solid rgba(34,197,94,.18); font-size: .79rem; margin-top: -.5rem;
 }
-.meteo-strip, .meteo-strip * { color:#1e1b4b !important; }
+.meteo-strip, .meteo-strip * { color: #e8f5e9 !important; }
 
 .n2o-strip {
-    background:#fff; border-radius:12px; padding:.75rem 1.2rem;
-    border:1.5px solid #c4b5fd; font-size:.79rem; margin:.5rem 0;
+    background: #161c16; border-radius: 12px; padding: .75rem 1.2rem;
+    border: 1.5px solid rgba(34,197,94,.25); font-size: .79rem; margin: .5rem 0;
 }
-.n2o-strip, .n2o-strip * { color:#1e1b4b !important; }
+.n2o-strip, .n2o-strip * { color: #e8f5e9 !important; }
 
 .rothc-card {
-    background:#fff; border-radius:12px; padding:.9rem 1rem;
-    border:1.5px solid rgba(109,40,217,.2); font-size:.78rem;
+    background: #161c16; border-radius: 12px; padding: .9rem 1rem;
+    border: 1.5px solid rgba(34,197,94,.2); font-size: .78rem;
 }
-.rothc-card, .rothc-card * { color:#1e1b4b !important; }
+.rothc-card, .rothc-card * { color: #e8f5e9 !important; }
 
 .map-legend {
-    background:#fff; border-radius:12px; padding:1rem;
-    border:1.5px solid rgba(109,40,217,.2); font-size:.8rem;
+    background: #161c16; border-radius: 12px; padding: 1rem;
+    border: 1.5px solid rgba(34,197,94,.2); font-size: .8rem;
 }
-.map-legend, .map-legend * { color:#1e1b4b !important; }
+.map-legend, .map-legend * { color: #e8f5e9 !important; }
 
 /* ══ PAC BANNER ══ */
 .pac-banner {
-    background:linear-gradient(90deg,#1e1b4b,#312e81);
-    border-radius:12px; padding:.9rem 1.4rem; margin-top:.5rem; font-size:.82rem;
+    background: linear-gradient(90deg,#000000,#052e16);
+    border-radius: 12px; padding: .9rem 1.4rem; margin-top: .5rem;
+    font-size: .82rem; border: 1px solid rgba(34,197,94,.25);
 }
-.pac-banner, .pac-banner * { color:#e0e7ff !important; }
-.pac-banner b { color:#c4b5fd !important; }
+.pac-banner, .pac-banner * { color: #e8f5e9 !important; }
+.pac-banner b { color: #4ade80 !important; }
 
 /* ══ SIDEBAR ══ */
-div[data-testid="stSidebar"] { background:#1e1b4b !important; }
+div[data-testid="stSidebar"] { background: #080d08 !important; }
 div[data-testid="stSidebar"],
-div[data-testid="stSidebar"] * { color:rgba(255,255,255,.88) !important; }
+div[data-testid="stSidebar"] * { color: rgba(255,255,255,.88) !important; }
 div[data-testid="stSidebar"] h2,
 div[data-testid="stSidebar"] h3 {
-    font-family:'DM Serif Display',serif !important; color:#fff !important;
+    font-family: 'DM Serif Display', serif !important;
+    color: #4ade80 !important;
 }
 div[data-testid="stSidebar"] label {
-    font-size:.7rem !important; text-transform:uppercase;
-    letter-spacing:.05em; color:rgba(255,255,255,.55) !important;
+    font-size: .7rem !important; text-transform: uppercase;
+    letter-spacing: .05em; color: rgba(74,222,128,.6) !important;
 }
 div[data-testid="stSidebar"] input,
 div[data-testid="stSidebar"] select {
-    background:#312e81 !important; color:#fff !important;
-    border-color:rgba(196,181,253,.4) !important;
+    background: #161c16 !important; color: #e8f5e9 !important;
+    border: 1px solid rgba(34,197,94,.35) !important;
+}
+div[data-testid="stSidebar"] hr {
+    border-color: rgba(34,197,94,.2) !important;
 }
 
 /* ══ BUTTONS ══ */
-.stButton>button {
-    background:#312e81 !important; color:#fff !important;
-    border:none !important; border-radius:10px !important;
-    font-weight:600 !important; font-size:.9rem !important; padding:.6rem 1.8rem !important;
+.stButton > button {
+    background: #16a34a !important; color: #000 !important;
+    border: none !important; border-radius: 10px !important;
+    font-weight: 700 !important; font-size: .9rem !important;
+    padding: .6rem 1.8rem !important;
+    box-shadow: 0 0 20px rgba(34,197,94,.25) !important;
+    transition: all .2s !important;
 }
-.stButton>button:hover { background:#1e1b4b !important; }
+.stButton > button:hover {
+    background: #22c55e !important;
+    box-shadow: 0 0 30px rgba(34,197,94,.4) !important;
+}
+
+/* ══ SELECTBOX / INPUT / SLIDER ══ */
+[data-testid="stSelectbox"] > div,
+[data-baseweb="select"] > div {
+    background: #161c16 !important;
+    border-color: rgba(34,197,94,.3) !important;
+    color: #e8f5e9 !important;
+}
+[data-testid="stNumberInput"] input,
+[data-testid="stTextInput"] input {
+    background: #161c16 !important;
+    border-color: rgba(34,197,94,.3) !important;
+    color: #e8f5e9 !important;
+}
+[data-testid="stSlider"] [data-baseweb="slider"] div {
+    background: #22c55e !important;
+}
 
 /* ══ FOOTER ══ */
 .footer {
-    font-size:.67rem; color:#4338ca; text-align:center; margin-top:2.5rem;
-    padding-top:1rem; border-top:1px solid rgba(109,40,217,.2);
+    font-size: .67rem; color: #4ade80; text-align: center; margin-top: 2.5rem;
+    padding-top: 1rem; border-top: 1px solid rgba(34,197,94,.15);
 }
 
-/* ══ EXPANDER TABELLE ══ */
+/* ══ EXPANDER ══ */
+[data-testid="stExpander"] {
+    background: #161c16 !important;
+    border: 1px solid rgba(34,197,94,.2) !important;
+    border-radius: 12px !important;
+}
+[data-testid="stExpander"] summary,
+[data-testid="stExpander"] summary p {
+    color: #4ade80 !important;
+}
 [data-testid="stExpander"] table {
-    width:100%; border-collapse:collapse; font-size:.78rem;
-    border:1.5px solid #7c3aed; border-radius:10px; overflow:hidden;
+    width: 100%; border-collapse: collapse; font-size: .78rem;
+    border: 1.5px solid rgba(34,197,94,.35); border-radius: 10px; overflow: hidden;
 }
 [data-testid="stExpander"] table th {
-    background:#312e81 !important; color:#e0e7ff !important;
-    padding:8px 12px !important; font-weight:700 !important;
-    border-bottom:2px solid #7c3aed !important;
+    background: #052e16 !important; color: #4ade80 !important;
+    padding: 8px 12px !important; font-weight: 700 !important;
+    border-bottom: 2px solid #22c55e !important;
 }
 [data-testid="stExpander"] table td {
-    padding:6px 12px !important; color:#1e1b4b !important;
-    border-bottom:1px solid rgba(109,40,217,.10) !important;
+    padding: 6px 12px !important; color: #e8f5e9 !important;
+    border-bottom: 1px solid rgba(34,197,94,.1) !important;
 }
-[data-testid="stExpander"] table tr:nth-child(odd)  td { background:#f5f3ff !important; }
-[data-testid="stExpander"] table tr:nth-child(even) td { background:#ffffff !important; }
-[data-testid="stExpander"] table tr:hover td { background:#ede9fe !important; color:#1e1b4b !important; }
+[data-testid="stExpander"] table tr:nth-child(odd)  td { background: #0d1a0d !important; }
+[data-testid="stExpander"] table tr:nth-child(even) td { background: #161c16 !important; }
+[data-testid="stExpander"] table tr:hover td {
+    background: #052e16 !important; color: #4ade80 !important;
+}
 
-/* ══ TABELLE HTML .tbl-agro ══ */
+/* ══ TABELLE .tbl-agro ══ */
 .tbl-agro {
-    width:100%; border-collapse:collapse; font-size:.79rem;
-    border-radius:12px; overflow:hidden; border:1.5px solid #7c3aed; background:#fff;
+    width: 100%; border-collapse: collapse; font-size: .79rem;
+    border-radius: 12px; overflow: hidden;
+    border: 1.5px solid rgba(34,197,94,.35); background: #161c16;
 }
 .tbl-agro thead th {
-    background:#312e81; color:#e0e7ff !important; font-weight:700;
-    padding:9px 12px; text-align:left; border-bottom:2px solid #7c3aed;
-    letter-spacing:.04em; font-size:.76rem; text-transform:uppercase;
+    background: #052e16; color: #4ade80 !important; font-weight: 700;
+    padding: 9px 12px; text-align: left; border-bottom: 2px solid #22c55e;
+    letter-spacing: .04em; font-size: .76rem; text-transform: uppercase;
 }
-.tbl-agro tbody tr:nth-child(odd)  td { background:#f5f3ff; color:#1e1b4b !important; }
-.tbl-agro tbody tr:nth-child(even) td { background:#ffffff; color:#1e1b4b !important; }
-.tbl-agro tbody td { padding:7px 12px; border-bottom:1px solid rgba(109,40,217,.10); vertical-align:middle; }
-.tbl-agro tbody tr:hover td { background:#ede9fe; color:#1e1b4b !important; }
+.tbl-agro tbody tr:nth-child(odd)  td { background: #0d1a0d; color: #e8f5e9 !important; }
+.tbl-agro tbody tr:nth-child(even) td { background: #161c16; color: #e8f5e9 !important; }
+.tbl-agro tbody td { padding: 7px 12px; border-bottom: 1px solid rgba(34,197,94,.08); vertical-align: middle; }
+.tbl-agro tbody tr:hover td { background: #052e16; color: #4ade80 !important; }
 .tbl-agro tfoot td {
-    background:#312e81; color:#e0e7ff !important; font-weight:700;
-    padding:8px 12px; border-top:2px solid #7c3aed;
+    background: #052e16; color: #4ade80 !important; font-weight: 700;
+    padding: 8px 12px; border-top: 2px solid #22c55e;
 }
-.tbl-agro .pos  { color:#166534 !important; font-weight:700; }
-.tbl-agro .neg  { color:#9f1239 !important; font-weight:700; }
-.tbl-agro .gold { color:#92400e !important; font-weight:700; }
+.tbl-agro .pos  { color: #4ade80 !important; font-weight: 700; }
+.tbl-agro .neg  { color: #f87171 !important; font-weight: 700; }
+.tbl-agro .gold { color: #fde68a !important; font-weight: 700; }
+
+/* ══ SCROLLBAR ══ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0d110d; }
+::-webkit-scrollbar-thumb { background: #22c55e; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #4ade80; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -633,12 +709,12 @@ wcols=[
     (f"{MS['et0_30g']} mm","ET₀ 30gg","storico reale"),
     (f"{round(stress_idx*100):.0f}%","Stress Idrico","indice corrente"),
 ]
-sc = "#9f1239" if stress_idx>.5 else "#92400e" if stress_idx>.25 else "#166534"
-for col,(v,l,s),clr in zip(wc,wcols,["#312e81"]*5+[sc]):
+sc = "#ef4444" if stress_idx>.5 else "#f59e0b" if stress_idx>.25 else "#22c55e"
+for col,(v,l,s),clr in zip(wc,wcols,["#ffffff"]*5+[sc]):
     with col:
         st.markdown(f'<div class="kpi"><div class="kpi-v" style="font-size:1.3rem;color:{clr}">{v}</div>'
                     f'<div class="kpi-l">{l}</div>'
-                    f'<div class="kpi-s" style="color:#4a5e4e;font-size:.68rem">{s}</div></div>',
+                    f'<div class="kpi-s" style="color:#86efac;font-size:.68rem">{s}</div></div>',
                     unsafe_allow_html=True)
 
 if stress_idx>.4:
@@ -706,9 +782,9 @@ with mr2:
         st.markdown(f"""
         <div class="meteo-strip">
           📊 <b>Media annua:</b> {round(tot_pioggia_ann)}mm pioggia · {round(tot_et0_ann)}mm ET₀ ·
-          Bilancio <b style="color:{'#155724' if bilancio_ann>=0 else '#7f1d1d'}">
+          Bilancio <b style="color:{'#4ade80' if bilancio_ann>=0 else '#f87171'}">
           {"+" if bilancio_ann>=0 else ""}{round(bilancio_ann)}mm</b> ·
-          Mese più secco: <b style="color:#78450a">{mese_secco}</b> · Mese più piovoso: <b style="color:#155724">{mese_piovoso}</b>
+          Mese più secco: <b style="color:#fde68a">{mese_secco}</b> · Mese più piovoso: <b style="color:#4ade80">{mese_piovoso}</b>
         </div>""", unsafe_allow_html=True)
     else:
         st.info("Dati storici annuali non disponibili momentaneamente.")
@@ -964,9 +1040,9 @@ bene_org = pct_org >= 50
 st.markdown(f"""
 <div class="n2o-strip">
   🌿 <b>N₂O: Organico vs Minerale —</b>&nbsp;
-  EF organici (0.004-0.006): <b style="color:#14532d">{round(co2_n2o_org,2)} tCO₂eq</b> &nbsp;·&nbsp;
-  EF minerali (0.010-0.013): <b style="color:#7f1d1d">{round(co2_n2o_min,2)} tCO₂eq</b> &nbsp;·&nbsp;
-  Quota organica: <b style="color:#78450a">{pct_org:.0f}%</b>
+  EF organici (0.004-0.006): <b style="color:#4ade80">{round(co2_n2o_org,2)} tCO₂eq</b> &nbsp;·&nbsp;
+  EF minerali (0.010-0.013): <b style="color:#f87171">{round(co2_n2o_min,2)} tCO₂eq</b> &nbsp;·&nbsp;
+  Quota organica: <b style="color:#fde68a">{pct_org:.0f}%</b>
   {"&nbsp;✅ buona pratica" if bene_org else "&nbsp;⚠️ aumenta quota organica per ridurre N₂O del 40-60%"}
 </div>""", unsafe_allow_html=True)
 
@@ -1097,10 +1173,10 @@ n_scarti_virtuosi = sum(1 for _,sr in df_scarti.iterrows() if EF_SCARTI.get(str(
 score += min(8, n_scarti_virtuosi*3)
 score = min(100, score)
 
-if score>=80:   rating,rcls,rcol,rbg = "A — Eccellente","A","#166534","#dcfce7"
-elif score>=65: rating,rcls,rcol,rbg = "B — Conforme ESG","B","#1e40af","#ede9fe"
-elif score>=48: rating,rcls,rcol,rbg = "C — Sviluppabile","C","#92400e","#fef3c7"
-else:           rating,rcls,rcol,rbg = "D — Critico","D","#9f1239","#fee2e2"
+if score>=80:   rating,rcls,rcol,rbg = "A — Eccellente","A","#4ade80","rgba(34,197,94,.15)"
+elif score>=65: rating,rcls,rcol,rbg = "B — Conforme ESG","B","#60a5fa","rgba(59,130,246,.15)"
+elif score>=48: rating,rcls,rcol,rbg = "C — Sviluppabile","C","#fcd34d","rgba(245,158,11,.15)"
+else:           rating,rcls,rcol,rbg = "D — Critico","D","#f87171","rgba(239,68,68,.15)"
 
 coltura_principale = df_edit["Coltura"].mode()[0] if len(df_edit)>0 else "Misto"
 bm = BM_COLTURA.get(coltura_principale, BM_COLTURA["Misto"])
@@ -1119,7 +1195,7 @@ scope3_total = co2_fert_prod + co2_fito_s3 + co2_materie + co2_trasporti + abs(m
 with sb1:
     st.markdown(f"""
     <div class="scope-box scope1">
-      <div style="font-size:.85rem;font-weight:700;color:#7f1d1d;margin-bottom:.5rem">
+      <div style="font-size:.85rem;font-weight:700;color:#fca5a5;margin-bottom:.5rem">
         🔴 Scope 1 — Emissioni Dirette</div>
       <div style="font-size:.78rem;line-height:1.9">
         Gasolio macchine: <b>{round(S('diesel_co2'),2)} tCO₂</b><br>
@@ -1133,11 +1209,11 @@ with sb1:
 with sb2:
     st.markdown(f"""
     <div class="scope-box scope2">
-      <div style="font-size:.85rem;font-weight:700;color:#78350f;margin-bottom:.5rem">
+      <div style="font-size:.85rem;font-weight:700;color:#fcd34d;margin-bottom:.5rem">
         🟡 Scope 2 — Emissioni Indirette Energia</div>
       <div style="font-size:.78rem;line-height:1.9">
         Elettricità acquistata: <b>0 tCO₂</b><br>
-        <span style="color:#78350f;font-size:.72rem">(Aggiungi pompe irrigazione,<br>celle frigorifere, impianti)</span><br>
+        <span style="color:#fde68a;font-size:.72rem">(Aggiungi pompe irrigazione,<br>celle frigorifere, impianti)</span><br>
         <hr style="border:none;border-top:1px solid #fdba74;margin:.4rem 0">
         <b>Totale Scope 2: {round(scope2_total,2)} tCO₂eq/anno</b>
       </div>
@@ -1146,7 +1222,7 @@ with sb2:
 with sb3:
     st.markdown(f"""
     <div class="scope-box scope3">
-      <div style="font-size:.85rem;font-weight:700;color:#14532d;margin-bottom:.5rem">
+      <div style="font-size:.85rem;font-weight:700;color:#4ade80;margin-bottom:.5rem">
         🟢 Scope 3 — Catena del valore (upstream)</div>
       <div style="font-size:.78rem;line-height:1.9">
         Produzione fertilizzanti: <b>{round(co2_fert_prod,2)} tCO₂eq</b><br>
@@ -1193,27 +1269,27 @@ with bal_col2:
       <div style="font-family:'DM Serif Display',serif;font-size:1rem;color:#061912;margin-bottom:.8rem">
         📊 Riepilogo GHG</div>
       <table style="width:100%;font-size:.78rem;border-collapse:collapse">
-        <tr><td style="padding:4px 0;color:#4a5e4e">Sequestro suolo</td>
-            <td style="text-align:right;color:#14532d;font-weight:600">+{round(tot_seq,1)} t</td></tr>
-        <tr><td style="padding:4px 0;color:#4a5e4e">Scarti virtuosi</td>
-            <td style="text-align:right;color:#14532d;font-weight:600">+{round(abs(min(0,co2_scarti)),1)} t</td></tr>
-        <tr style="border-top:1px solid rgba(201,150,58,.2)"><td style="padding:4px 0;color:#4a5e4e">Gasolio (Sc.1)</td>
-            <td style="text-align:right;color:#7f1d1d;font-weight:600">-{round(S('diesel_co2'),1)} t</td></tr>
-        <tr><td style="padding:4px 0;color:#4a5e4e">N₂O (Sc.1)</td>
-            <td style="text-align:right;color:#7f1d1d;font-weight:600">-{round(S('n2o')+co2_fert_n2o,1)} t</td></tr>
-        <tr><td style="padding:4px 0;color:#4a5e4e">Fertilizz. (Sc.3)</td>
-            <td style="text-align:right;color:#7f1d1d;font-weight:600">-{round(co2_fert_prod+co2_fito_s3,1)} t</td></tr>
-        <tr><td style="padding:4px 0;color:#4a5e4e">Materie prime (Sc.3)</td>
-            <td style="text-align:right;color:#7f1d1d;font-weight:600">-{round(co2_materie,1)} t</td></tr>
-        <tr><td style="padding:4px 0;color:#4a5e4e">Trasporti (Sc.3)</td>
-            <td style="text-align:right;color:#7f1d1d;font-weight:600">-{round(co2_trasporti,1)} t</td></tr>
-        <tr><td style="padding:4px 0;color:#4a5e4e">Scarti emissivi</td>
-            <td style="text-align:right;color:#7f1d1d;font-weight:600">-{round(max(0,co2_scarti),1)} t</td></tr>
-        <tr style="border-top:2px solid #c9963a;background:#f0fdf4"><td style="padding:6px 0;font-weight:700;color:#fff">Bilancio NETTO</td>
-            <td style="text-align:right;font-weight:700;font-size:.95rem;color:{'#14532d' if tot_netto>=0 else '#7f1d1d'}">
+        <tr><td style="padding:4px 0;color:#86efac">Sequestro suolo</td>
+            <td style="text-align:right;color:#4ade80;font-weight:600">+{round(tot_seq,1)} t</td></tr>
+        <tr><td style="padding:4px 0;color:#86efac">Scarti virtuosi</td>
+            <td style="text-align:right;color:#4ade80;font-weight:600">+{round(abs(min(0,co2_scarti)),1)} t</td></tr>
+        <tr style="border-top:1px solid rgba(201,150,58,.2)"><td style="padding:4px 0;color:#86efac">Gasolio (Sc.1)</td>
+            <td style="text-align:right;color:#f87171;font-weight:600">-{round(S('diesel_co2'),1)} t</td></tr>
+        <tr><td style="padding:4px 0;color:#86efac">N₂O (Sc.1)</td>
+            <td style="text-align:right;color:#f87171;font-weight:600">-{round(S('n2o')+co2_fert_n2o,1)} t</td></tr>
+        <tr><td style="padding:4px 0;color:#86efac">Fertilizz. (Sc.3)</td>
+            <td style="text-align:right;color:#f87171;font-weight:600">-{round(co2_fert_prod+co2_fito_s3,1)} t</td></tr>
+        <tr><td style="padding:4px 0;color:#86efac">Materie prime (Sc.3)</td>
+            <td style="text-align:right;color:#f87171;font-weight:600">-{round(co2_materie,1)} t</td></tr>
+        <tr><td style="padding:4px 0;color:#86efac">Trasporti (Sc.3)</td>
+            <td style="text-align:right;color:#f87171;font-weight:600">-{round(co2_trasporti,1)} t</td></tr>
+        <tr><td style="padding:4px 0;color:#86efac">Scarti emissivi</td>
+            <td style="text-align:right;color:#f87171;font-weight:600">-{round(max(0,co2_scarti),1)} t</td></tr>
+        <tr style="border-top:2px solid #22c55e;background:#052e16"><td style="padding:6px 0;font-weight:700;color:#fff">Bilancio NETTO</td>
+            <td style="text-align:right;font-weight:700;font-size:.95rem;color:{'#4ade80' if tot_netto>=0 else '#f87171'}">
             {"+" if tot_netto>=0 else ""}{round(tot_netto,1)} t</td></tr>
-        <tr><td style="padding:4px 0;color:#4a5e4e">Valore crediti</td>
-            <td style="text-align:right;color:#14532d;font-weight:600">€{int(val_cred):,}</td></tr>
+        <tr><td style="padding:4px 0;color:#86efac">Valore crediti</td>
+            <td style="text-align:right;color:#4ade80;font-weight:600">€{int(val_cred):,}</td></tr>
       </table>
     </div>""", unsafe_allow_html=True)
 
@@ -1244,8 +1320,8 @@ delta_c = round(tot_seq/tot_ha - bm["co2_ha"], 2)
 delta_m = round(marg_pct - bm["margine_pct"], 1)
 bm1,bm2=st.columns(2)
 with bm1:
-    clr_s="#14532d" if delta_s>=0 else "#78450a"
-    clr_c="#14532d" if delta_c>=0 else "#78450a"
+    clr_s="#22c55e" if delta_s>=0 else "#f59e0b"
+    clr_c="#22c55e" if delta_c>=0 else "#f59e0b"
     st.markdown(f"""<div class="info-box" style="margin-top:.5rem">
       📊 <b>Benchmark {bm["label"]} — CREA-AA 2025:</b>&nbsp;
       Score <b style="color:{clr_s}">{"+" if delta_s>=0 else ""}{delta_s} pt</b> vs media {bm["score"]}/100&nbsp;·&nbsp;
@@ -1253,10 +1329,10 @@ with bm1:
     </div>""",unsafe_allow_html=True)
 with bm2:
     pct=max(5,min(95,100-int((score-30)/0.7)))
-    clr_m="#14532d" if delta_m>=0 else "#7f1d1d"
+    clr_m="#22c55e" if delta_m>=0 else "#ef4444"
     st.markdown(f"""<div class="info-box" style="margin-top:.5rem">
       🏆 <b>Posizionamento settore {bm["label"]}:</b>&nbsp;
-      Top <b style="color:#14532d">{pct}%</b>&nbsp;·&nbsp;
+      Top <b style="color:#4ade80">{pct}%</b>&nbsp;·&nbsp;
       Margine medio settore <b style="color:#c9963a">{bm["margine_pct"]}%</b> — tuo: <b style="color:{clr_m}">{"+" if delta_m>=0 else ""}{delta_m}%</b>
     </div>""",unsafe_allow_html=True)
 
@@ -1353,7 +1429,7 @@ st.markdown('<div class="sec">🌱 Proiezione Sostanza Organica — Modello Roth
 st.caption("RothC semplificato (Coleman & Jenkinson 1996). Convenzionale: -3.8%/anno · Intermedio: -1.0%/anno · Rigenerativo: +1.5%/anno")
 
 anni_proj = list(range(date.today().year, date.today().year + 11))
-col_prot  = {"Convenzionale":"#dc2626","Intermedio":"#b45309","Rigenerativo Full":"#16a34a"}
+col_prot  = {"Convenzionale":"#ef4444","Intermedio":"#f59e0b","Rigenerativo Full":"#22c55e"}
 
 rc1, rc2 = st.columns([3, 1])
 with rc1:
@@ -1390,12 +1466,12 @@ with rc2:
         prot = str(_r.get("Protocollo", "Intermedio"))
         nome = str(_r.get("Campo", ""))
         _, d5, d10, k = rothc_proiezione(so0, prot, 10)
-        clr5  = "#14532d" if d5  >= 0 else "#7f1d1d"
-        clr10 = "#14532d" if d10 >= 0 else "#7f1d1d"
+        clr5  = "#4ade80" if d5  >= 0 else "#f87171"
+        clr10 = "#4ade80" if d10 >= 0 else "#f87171"
         st.markdown(f"""<div style="border-left:3px solid {col_prot.get(prot,'#94a3b8')};
             padding:.4rem .6rem;margin:.3rem 0;background:#f4f1ea;border-radius:0 8px 8px 0">
-            <b style="font-size:.8rem;color:#061912">{nome}</b><br>
-            <span style="color:#4a5e4e;font-size:.72rem">{prot[:12]}…</span><br>
+            <b style="font-size:.8rem;color:#ffffff">{nome}</b><br>
+            <span style="color:#86efac;font-size:.72rem">{prot[:12]}…</span><br>
             5a: <b style="color:{clr5}">{"+" if d5>=0 else ""}{d5}%</b> &nbsp;
             10a: <b style="color:{clr10}">{"+" if d10>=0 else ""}{d10}%</b>
         </div>""", unsafe_allow_html=True)
@@ -1497,12 +1573,12 @@ for i, p in enumerate(pac_items):
         st.markdown(f"""<div style="background:{bg};border-radius:11px;padding:.85rem 1rem;
           margin:.3rem 0;border:1px solid rgba(15,53,32,.12);{brd}">
           <b style="font-size:.83rem;color:{color}">{ico} {p["nome"]}</b><br>
-          <span style="font-size:.7rem;color:#374151">{p["motivo"]}</span><br>
-          {"<b style='color:#1a6b3a;font-size:.82rem'>€"+f"{int(importo):,}/anno</b> ({p['ha']:.0f} ha × €{p['pag_ha']}/ha)" if p["ok"] else f"<span style='color:#78450a;font-size:.72rem'>💡 {p['azione']}</span>"}
+          <span style="font-size:.7rem;color:#86efac">{p["motivo"]}</span><br>
+          {"<b style='color:#1a6b3a;font-size:.82rem'>€"+f"{int(importo):,}/anno</b> ({p['ha']:.0f} ha × €{p['pag_ha']}/ha)" if p["ok"] else f"<span style='color:#fde68a;font-size:.72rem'>💡 {p['azione']}</span>"}
         </div>""", unsafe_allow_html=True)
 
 st.markdown(f"""
-<div style="background:linear-gradient(90deg,#061912,#0f3520);color:#fff;
+<div style="background:linear-gradient(90deg,#000000,#052e16);color:#fff;
   border-radius:12px;padding:.9rem 1.4rem;margin-top:.5rem;font-size:.82rem">
   🇪🇺 <b>Pagamenti PAC Eco-Scheme stimati:</b>&nbsp;
   Accessibili ora: <b style="color:#c9963a">€{int(pac_totale):,}/anno</b> &nbsp;·&nbsp;
@@ -1529,7 +1605,7 @@ for i,(nome,att,punti,tempo,val,colore) in enumerate(certs):
         brd=f"border-left:4px solid {colore};" if att else ""
         st.markdown(f"""<div class="cert-box {cls}" style="{brd}">
           <b style="font-size:.83rem">{ico} {nome}</b><br>
-          <span style="font-size:.7rem;color:#374151">
+          <span style="font-size:.7rem;color:#86efac">
           <b style="color:{colore}">{punti} ESG</b> · {tempo} · 💶 {val}</span>
         </div>""",unsafe_allow_html=True)
 
@@ -1572,9 +1648,9 @@ for i,az in enumerate(azioni[:6],1):
     cls,ico=pm[az["p"]]
     st.markdown(f"""<div class="action {cls}">
       <div style="font-size:.88rem;font-weight:600">{ico} {i}. {az['t']}</div>
-      <div style="margin-top:.25rem;font-size:.78rem;color:#374151">📊 {az['i']}</div>
+      <div style="margin-top:.25rem;font-size:.78rem;color:#a3d9a5">📊 {az['i']}</div>
       <div style="font-size:.78rem;color:#1a6b3a">💶 {az['e']}
-      <span style="color:#374151"> · 📜 {az['c']}</span></div>
+      <span style="color:#86efac"> · 📜 {az['c']}</span></div>
     </div>""",unsafe_allow_html=True)
 
 # RISCHI
@@ -2099,7 +2175,7 @@ tr:nth-child(odd) td{{background:#0d2b1a}}
 tr:nth-child(even) td{{background:#132f1e}}
 tr:hover td{{background:#1a6b3a;color:#fff}}
 tfoot tr td{{background:#1a3d28 !important;color:#c9963a;font-weight:700;
-   border-top:2px solid #c9963a;background:#f0fdf4}}
+   border-top:2px solid #22c55e;background:#052e16}}
 .meteo{{background:linear-gradient(90deg,#0a2d4a,#0f3520);color:#d4edda;
   border-radius:9px;padding:.65rem 1.1rem;margin:.4rem 0;font-size:.78rem;line-height:2;
   border:1px solid rgba(201,150,58,.3)}}
