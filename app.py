@@ -424,8 +424,8 @@ with mr1:
         title="🌦️ Meteo Radar — Previsione 7 giorni",
         margin=dict(t=44,b=28,l=28,r=60),
         legend=dict(orientation="h",y=-0.22,font=dict(size=9)),
-        yaxis=dict(title="Pioggia (mm)", titlefont=dict(size=10)),
-        yaxis2=dict(title="°C", titlefont=dict(size=10),
+        yaxis=dict(title="Pioggia (mm)"),
+        yaxis2=dict(title="°C",
                     overlaying="y", side="right", showgrid=False),
         barmode="overlay"
     )
@@ -456,9 +456,8 @@ with mr2:
             title="📊 Storico Pluviometrico — Ultimi 12 mesi (Open-Meteo ERA5)",
             margin=dict(t=44,b=28,l=28,r=60),
             legend=dict(orientation="h",y=-0.22,font=dict(size=9)),
-            yaxis=dict(title="mm", titlefont=dict(size=10)),
-            yaxis2=dict(title="°C",overlaying="y",side="right",showgrid=False,
-                        titlefont=dict(size=10)),
+            yaxis=dict(title="mm"),
+            yaxis2=dict(title="°C",overlaying="y",side="right",showgrid=False)
         )
         st.plotly_chart(fig_ann, use_container_width=True)
 
@@ -910,7 +909,7 @@ with g4:
     z=np.array([[s*(1+a/100)*PROT["Rigenerativo Full"]["co2c"]*3.667 for s in sx] for a in ay])
     fig_h=go.Figure(go.Heatmap(z=z,x=sx,y=ay,
         colorscale=[[0,"#d8f3dc"],[0.5,"#1a6b3a"],[1,"#061912"]],
-        colorbar=dict(title="tCO₂/ha",titlefont=dict(size=11))))
+        colorbar=dict(title="tCO₂/ha")))
     fig_h.add_trace(go.Scatter(x=df_edit["SO %"].tolist(),y=df_edit["Argilla %"].tolist(),
         mode="markers+text",marker=dict(color="#c9963a",size=14,symbol="x",line=dict(width=2.5)),
         text=df_edit["Campo"].tolist(),textposition="top center",name="Campi"))
