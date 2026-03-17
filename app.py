@@ -108,14 +108,17 @@ KC = {"Cereali":1.15,"Vite (DOC/IGT)":0.70,"Olivo":0.65,"Nocciolo":0.80,
       "Frutteto":1.10,"Orticole":1.20,"Foraggere":1.00,"Misto":0.90}
 
 # Fattori emissione fertilizzanti (kgCO₂eq/kg prodotto) — fonte: IPCC + ecoinvent 3.9
+# EF fertilizzanti — campo "tipo" differenzia organico (EF N₂O 0.004-0.006) vs minerale (0.010-0.013)
+# Fonte: IPCC 2006 Vol.4 Cap.11 + ecoinvent 3.9
 EF_FERT = {
-    "Urea (46% N)":          {"ef_prod":2.10, "ef_n2o":0.013, "desc":"Alta emissione produzione + N₂O idrolisi"},
-    "Nitrato ammoniacale (34% N)":{"ef_prod":5.70,"ef_n2o":0.010,"desc":"Alta emissione produzione, N₂O standard"},
-    "Solfato ammonico (21% N)":{"ef_prod":1.45,"ef_n2o":0.010,"desc":"Sottoprodotto industria, emissione produzione moderata"},
-    "Ammonio fosfato (18N-46P)":{"ef_prod":2.90,"ef_n2o":0.010,"desc":"Include emissione produzione fosfato"},
-    "Concime organico pellettato":{"ef_prod":0.35,"ef_n2o":0.006,"desc":"Bassa emissione produzione, N₂O ridotto"},
-    "Letame bovino fresco":   {"ef_prod":0.10,"ef_n2o":0.005,"desc":"Emissione produzione quasi nulla, stabilizzante SOM"},
-    "Compost maturo":         {"ef_prod":0.08,"ef_n2o":0.004,"desc":"Carbonio stabile, emissioni minime"},
+    "Urea (46% N)":               {"ef_prod":2.10,"ef_n2o":0.013,"tipo":"minerale","desc":"Alta emissione prod. + N₂O idrolisi (EF 0.013)"},
+    "Nitrato ammoniacale (34% N)":{"ef_prod":5.70,"ef_n2o":0.010,"tipo":"minerale","desc":"Alta emissione prod., EF N₂O standard 0.010"},
+    "Solfato ammonico (21% N)":   {"ef_prod":1.45,"ef_n2o":0.010,"tipo":"minerale","desc":"Sottoprodotto industria, EF N₂O 0.010"},
+    "Ammonio fosfato (18N-46P)":  {"ef_prod":2.90,"ef_n2o":0.010,"tipo":"minerale","desc":"Include emissione fosfato, EF N₂O 0.010"},
+    "Concime organico pellettato":{"ef_prod":0.35,"ef_n2o":0.006,"tipo":"organico","desc":"N₂O ridotto EF 0.006 (-40% vs minerale)"},
+    "Letame bovino fresco":       {"ef_prod":0.10,"ef_n2o":0.005,"tipo":"organico","desc":"EF N₂O 0.005 (-50% vs minerale), stabilizza SOM"},
+    "Compost maturo":             {"ef_prod":0.08,"ef_n2o":0.004,"tipo":"organico","desc":"Carbonio stabile, EF N₂O minimo 0.004 (-60%)"},
+    "Digestato zootecnico":       {"ef_prod":0.05,"ef_n2o":0.004,"tipo":"organico","desc":"Sottoprodotto biogas, EF N₂O 0.004 (-60%)"},
 }
 
 # Fattori emissione fitofarmaci (kgCO₂eq/kg p.a.) — fonte: ecoinvent 3.9
@@ -336,13 +339,15 @@ def calcola(row, boost=False):
     die_co2= diesel * 2.68 / 1000
     co2_emit = n2o + die_co2
 
-    kc       = KC.get(col, 1.0)
-    et0_ann  = M["et0"] * 365
-    pioggia_e= MS["pioggia_30g"] * 12 * 0.85
-    fabb_irr = max(0, (et0_ann*kc - pioggia_e) * 10 * ha)
-    irr_tot  = irr * ha
-    spreco   = max(0, irr_tot - fabb_irr)
-    ret_h2o  = max(0, (so-1.0)*1.5*3*10*ha)
+    kc        = KC.get(col, 1.0)
+    et0_ann   = M["et0"] * 365
+    pioggia_e = MS["pioggia_30g"] * 12 * 0.85
+    fabb_raw  = max(0, (et0_ann*kc - pioggia_e) * 10 * ha)
+    # Micro-irrigazione (drip) riduce il fabbisogno del 35% — ASAE EP458 + FAO-56 Cap.6
+    fabb_irr  = fabb_raw * (0.65 if inv_drip else 1.0)
+    irr_tot   = irr * ha
+    spreco    = max(0, irr_tot - fabb_irr)
+    ret_h2o   = max(0, (so-1.0)*1.5*3*10*ha)
 
     return {
         "co2_seq":   round(co2_seq,3), "co2_emit":  round(co2_emit,3),
@@ -725,16 +730,23 @@ with fc2:
 # Calcolo emissioni fertilizzanti
 co2_fert_prod = 0.0   # Scope 3 — produzione industriale
 co2_fert_n2o  = 0.0   # Scope 1 — N₂O in campo
+co2_n2o_org   = 0.0   # N₂O da fertilizzanti organici (EF 0.004-0.006)
+co2_n2o_min   = 0.0   # N₂O da fertilizzanti minerali (EF 0.010-0.013)
 fert_detail   = []
 for _, fr in df_fert.iterrows():
     prod = str(fr.get("Prodotto",""))
     qty  = max(0.0, float(fr.get("Quantità (kg/anno)",0)))
-    ef   = EF_FERT.get(prod, {"ef_prod":0,"ef_n2o":0.01,"desc":""})
-    s3   = qty * ef["ef_prod"] / 1000  # tCO₂eq
-    s1   = qty * ef["ef_n2o"] * (44/28) * 265 / 1000
+    ef   = EF_FERT.get(prod, {"ef_prod":0,"ef_n2o":0.01,"tipo":"minerale","desc":""})
+    s3   = qty * ef["ef_prod"] / 1000  # tCO₂eq Scope 3
+    s1   = qty * ef["ef_n2o"] * (44/28) * 265 / 1000  # tCO₂eq Scope 1
     co2_fert_prod += s3
     co2_fert_n2o  += s1
-    fert_detail.append({"prod":prod,"qty":qty,"s3":round(s3,3),"s1":round(s1,3),"ef":ef})
+    # Separazione organico vs minerale per reportistica
+    if ef.get("tipo","minerale") == "organico":
+        co2_n2o_org += s1
+    else:
+        co2_n2o_min += s1
+    fert_detail.append({"prod":prod,"qty":qty,"s3":round(s3,3),"s1":round(s1,3),"ef":ef,"tipo":ef.get("tipo","minerale")})
 
 co2_fito_s3 = 0.0
 for _, ft in df_fito.iterrows():
@@ -743,6 +755,19 @@ for _, ft in df_fito.iterrows():
     co2_fito_s3 += qty * EF_FITO.get(prod, 0) / 1000
 
 co2_fert_totale = co2_fert_prod + co2_fert_n2o + co2_fito_s3
+
+# Riepilogo organico vs minerale
+pct_org = round(co2_n2o_org / max(co2_fert_n2o, 0.001) * 100, 0)
+bene_org = pct_org >= 50
+st.markdown(f"""
+<div style="background:#fff;border-radius:12px;padding:.75rem 1.2rem;
+  border:1px solid rgba(15,53,32,.1);font-size:.79rem;margin:.5rem 0">
+  🌿 <b>N₂O: Organico vs Minerale —</b>&nbsp;
+  EF organici (0.004-0.006): <b style="color:#065f46">{round(co2_n2o_org,2)} tCO₂eq</b> &nbsp;·&nbsp;
+  EF minerali (0.010-0.013): <b style="color:#991b1b">{round(co2_n2o_min,2)} tCO₂eq</b> &nbsp;·&nbsp;
+  Quota organica: <b>{pct_org:.0f}%</b>
+  {"&nbsp;✅ buona pratica" if bene_org else "&nbsp;⚠️ aumenta quota organica per ridurre N₂O del 40-60%"}
+</div>""", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════
 #  MODULO SCARTI E MATERIE PRIME — Scope 1 + Scope 3
@@ -990,7 +1015,7 @@ kpis = [
     (f'{"+" if tot_netto>=0 else ""}{round(tot_netto,1)} t',
      "Bilancio GHG Netto (Sc.1+3)","✅ Carbon Positive" if tot_netto>=0 else "⚠️ Emittente"),
     (f"€{int(val_cred):,}","Valore Crediti CO₂",f"@ €{prezzo_co2}/tCO₂"),
-    (f"{int(tot_fabb):,} m³","Fabbisogno Idrico",f"Spreco {int(tot_spreco):,} m³"),
+    (f"{int(tot_fabb):,} m³","Fabbisogno Idrico",f"Spreco {int(tot_spreco):,} m³" + (" 💧-35% drip" if inv_drip else "")),
     (f"€{int(tot_vf):,}","Valore Fondo Stimato",f"{int(tot_ha)} ha · CREA-AA"),
     (f"{marg_pct}%","Margine Netto",f"€{margine:,}/anno"),
 ]
