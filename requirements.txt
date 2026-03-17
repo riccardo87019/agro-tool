@@ -2,7 +2,4 @@ streamlit
 pandas
 numpy
 plotly
-fpdf
-folium
-streamlit-folium
-geopandas
+requests
