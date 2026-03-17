@@ -1743,7 +1743,7 @@ with bal_col1:
         font=dict(family="Lexend",color="#061912"),
         title="Bilancio GHG Waterfall — tCO₂eq/anno",
         margin=dict(t=44,b=28,l=28,r=16),
-        yaxis_title="tCO₂eq/anno", showlegend=False
+        yaxis_title="tCO2eq/anno", showlegend=False
     )
     st.plotly_chart(fig_wf, use_container_width=True)
 
@@ -1998,7 +1998,7 @@ with g1:
                  -co2_fert_prod, -co2_fito_s3, -co2_materie, -co2_scarti]
     colori    = ["#1a6b3a" if v>0 else "#ef4444" for v in valori]
     fig_br = go.Figure(go.Bar(x=categorie, y=valori, marker_color=colori, opacity=.88))
-    fig_br.update_layout(**PLT, title="Breakdown emissioni/sequestro (t/anno)", yaxis_title="tCO₂eq/anno")
+    fig_br.update_layout(**PLT, title="Breakdown emissioni/sequestro (t/anno)", yaxis_title="tCO2eq/anno")
     st.plotly_chart(fig_br, use_container_width=True)
 
 with g2:
@@ -2526,7 +2526,7 @@ with csrd_col1:
          border-radius:12px;padding:1rem;font-size:.78rem;color:#86efac">
       <b style="color:#4ade80;font-size:.85rem">📋 Datapoint inclusi</b><br><br>
       <b style="color:#fff">ESRS E1 — Clima</b><br>
-      · Scope 1+2+3 GHG (tCO₂eq)<br>
+      · Scope 1+2+3 GHG (tCO2eq)<br>
       · Sequestro netto carbonio<br>
       · Intensità emissiva (t/ha)<br>
       · Piano transizione<br><br>
@@ -2713,26 +2713,26 @@ if RL_OK and gen_csrd:
         [cell("Disclosure", bold=True), cell("Indicatore ESRS", bold=True),
          cell("Valore", bold=True), cell("Unità", bold=True), cell("Metodo", bold=True)],
         [cell("E1-6"), cell("Gross Scope 1 GHG emissions"),
-         cell(f"{round(scope1_total,2)}", bold=True, c=RED_C), cell("tCO₂eq/anno"),
+         cell(f"{round(scope1_total,2)}", bold=True, c=RED_C), cell("tCO2eq/anno"),
          cell("IPCC Tier 1 + DEFRA 2024")],
         [cell("E1-6"), cell("Gross Scope 2 GHG emissions"),
-         cell(f"{round(scope2_total,2)}"), cell("tCO₂eq/anno"),
+         cell(f"{round(scope2_total,2)}"), cell("tCO2eq/anno"),
          cell("Market-based method")],
         [cell("E1-6"), cell("Gross Scope 3 GHG emissions"),
-         cell(f"{round(scope3_total,2)}", bold=True, c=GOLD_C), cell("tCO₂eq/anno"),
+         cell(f"{round(scope3_total,2)}", bold=True, c=GOLD_C), cell("tCO2eq/anno"),
          cell("ecoinvent 3.9 + DEFRA 2024")],
         [cell("E1-6"), cell("Net GHG removals and sequestration"),
-         cell(f"+{round(tot_seq,2)}", bold=True, c=MED_GRN), cell("tCO₂eq/anno"),
+         cell(f"+{round(tot_seq,2)}", bold=True, c=MED_GRN), cell("tCO2eq/anno"),
          cell("IPCC 2006 Vol.4 Tier 1 — SOC")],
         [cell("E1-6"), cell("Bilancio GHG netto (Scope 1+3 − sequestro)"),
          cell(f'{"+" if tot_netto>=0 else ""}{round(tot_netto,2)}',
-              bold=True, c=MED_GRN if tot_netto>=0 else RED_C), cell("tCO₂eq/anno"),
+              bold=True, c=MED_GRN if tot_netto>=0 else RED_C), cell("tCO2eq/anno"),
          cell("GHG Protocol")],
         [cell("E1-6"), cell("GHG emission intensity (per ettaro)"),
-         cell(f"{round(tot_emit/max(tot_ha,1),2)}"), cell("tCO₂eq/ha"),
+         cell(f"{round(tot_emit/max(tot_ha,1),2)}"), cell("tCO2eq/ha"),
          cell("Dato aziendale")],
         [cell("E1-6"), cell("Carbon sequestration intensity"),
-         cell(f"{round(tot_seq/max(tot_ha,1),2)}", c=MED_GRN), cell("tCO₂eq/ha"),
+         cell(f"{round(tot_seq/max(tot_ha,1),2)}", c=MED_GRN), cell("tCO2eq/ha"),
          cell("IPCC Tier 1 — SOC stock")],
     ]
     t_ghg = Table(ghg_rows, colWidths=[W*0.10, W*0.38, W*0.16, W*0.16, W*0.20])
@@ -2762,8 +2762,8 @@ if RL_OK and gen_csrd:
     # Dettaglio fertilizzanti (Scope 3 upstream)
     story.append(Paragraph("E1-6: Dettaglio Scope 3 — Fertilizzanti e Input", S_h3))
     fert_rows = [[cell("Prodotto",bold=True), cell("Quantità",bold=True),
-                  cell("N₂O Sc.1",bold=True), cell("Prod. Sc.3",bold=True),
-                  cell("EF N₂O",bold=True)]]
+                  cell("N2O Sc.1",bold=True), cell("Prod. Sc.3",bold=True),
+                  cell("EF N2O",bold=True)]]
     for fd in fert_detail:
         fert_rows.append([
             cell(fd["prod"]), cell(f'{int(fd["qty"]):,} kg'),
@@ -2795,7 +2795,7 @@ if RL_OK and gen_csrd:
         [cell("E3-1"), cell("Water consumption intensity"),
          cell(f"{round(tot_irr/max(tot_ha,1),0):.0f}"), cell("m³/ha"),
          cell("Normalizzato per superficie")],
-        [cell("E3-1"), cell("Water deficit (ET₀ − precipitazioni 30gg)"),
+        [cell("E3-1"), cell("Water deficit (ET0 − precipitazioni 30gg)"),
          cell(f"{round(deficit)} mm", c=RED_C if stress_idx>0.4 else GOLD_C if stress_idx>0.2 else MED_GRN),
          cell("mm"), cell("Open-Meteo ERA5 live")],
         [cell("E3-1"), cell("Water stress index"),
@@ -2836,7 +2836,7 @@ if RL_OK and gen_csrd:
          cell(f"{round(float(df_edit['SO %'].mean()),2)}%"), cell("%"),
          cell("Media SO% da analisi suolo")],
         [cell("E4-1"), cell("Soil Organic Matter — obiettivo 4‰ (2.5%)"),
-         cell("✓" if float(df_edit["SO %"].mean()) >= 2.5 else "✗",
+         cell("Si" if float(df_edit["SO %"].mean()) >= 2.5 else "No",
               c=MED_GRN if float(df_edit["SO %"].mean()) >= 2.5 else RED_C),
          cell("—"), cell("Iniziativa EU 4 per mille")],
         [cell("E4-2"), cell("Certificazioni di sostenibilità attive"),
@@ -2847,7 +2847,7 @@ if RL_OK and gen_csrd:
         [cell("E4-2"), cell("PAC Eco-Scheme attivi"),
          cell(f"€{int(pac_totale):,}/anno", c=MED_GRN if pac_totale>0 else GRAY_C),
          cell("€"), cell("AGEA 2024 — pagamenti aggiuntivi")],
-        [cell("E4-3"), cell("N₂O da fertilizzanti organici vs minerali"),
+        [cell("E4-3"), cell("N2O da fertilizzanti organici vs minerali"),
          cell(f"{round(pct_org):.0f}% organici",
               c=MED_GRN if pct_org>=50 else GOLD_C), cell("%"),
          cell("EF organici 40-60% inferiori")],
@@ -2875,13 +2875,13 @@ if RL_OK and gen_csrd:
          cell(f"{bm['margine_pct']}% media settore"),
          cell("Sopra media" if marg_pct >= bm["margine_pct"] else "Sotto media",
               c=MED_GRN if marg_pct >= bm["margine_pct"] else GOLD_C)],
-        [cell("Valore crediti CO₂ potenziali"),
+        [cell("Valore crediti CO2 potenziali"),
          cell(f"€{int(val_cred):,}/anno", c=MED_GRN if val_cred>0 else GRAY_C),
-         cell(f"@ €{prezzo_co2}/tCO₂ (Xpansiv CBL)"),
+         cell(f"@ EUR{prezzo_co2}/tCO2 (Xpansiv CBL)"),
          cell("Certificabile ISO 14064")],
         [cell("Conformità PAC Eco-Scheme"),
          cell(f"€{int(pac_totale):,}/anno accessibili"),
-         cell("AGEA 2024"), cell("✓ Conforme" if pac_totale>0 else "○ Da attivare",
+         cell("AGEA 2024"), cell("Conforme" if pac_totale>0 else "Da attivare",
               c=MED_GRN if pac_totale>0 else GOLD_C)],
     ]
     t_gov = Table(gov_rows, colWidths=[W*0.30, W*0.23, W*0.28, W*0.19])
@@ -2894,8 +2894,8 @@ if RL_OK and gen_csrd:
     story.append(Spacer(1, 3*mm))
     field_rows = [[cell("Campo",bold=True), cell("ha",bold=True),
                    cell("Coltura",bold=True), cell("Protocollo",bold=True),
-                   cell("SO%",bold=True), cell("Seq. tCO₂",bold=True),
-                   cell("Emit. tCO₂",bold=True), cell("Netto",bold=True)]]
+                   cell("SO%",bold=True), cell("Seq. tCO2",bold=True),
+                   cell("Emit. tCO2",bold=True), cell("Netto",bold=True)]]
     for i,(_,rr) in enumerate(df_edit.iterrows()):
         rc = res_att[i]
         field_rows.append([
@@ -3083,7 +3083,7 @@ if RL_OK and gen_pdf:
     # KPI
     story.append(Paragraph("Indicatori Chiave", S_h2))
     kpi_data = [
-        [th("Score ESG"), th("CO₂ Sequestrata"), th("Bilancio GHG"), th("Crediti CO₂/anno")],
+        [th("Score ESG"), th("CO2 Sequestrata"), th("Bilancio GHG"), th("Crediti CO2/anno")],
         [td(f"{score}/100 — {rcls}", bold=True),
          td(f"{round(tot_seq,1)} t  ({round(tot_seq/tot_ha,2)} t/ha)"),
          td(f'{"+" if tot_netto>=0 else ""}{round(tot_netto,1)} t', bold=True,
@@ -3106,12 +3106,12 @@ if RL_OK and gen_pdf:
     story.append(Paragraph("Meteo Live &amp; Storico", S_h2))
     story.append(Paragraph(
         f"🌡️ {M['tmax']}°/{M['tmin']}°C  |  🌧️ Pioggia 7gg: {M['pioggia_7g']} mm  |  "
-        f"💧 ET₀: {M['et0']} mm/g  |  📊 Pioggia 30gg: {MS['pioggia_30g']} mm  |  "
+        f"💧 ET0: {M['et0']} mm/g  |  📊 Pioggia 30gg: {MS['pioggia_30g']} mm  |  "
         f"⚡ Deficit: {round(deficit)} mm  |  🔥 Stress: {round(stress_idx*100):.0f}%", S_body))
     if MA:
         mesi_nomi_pdf={"01":"Gen","02":"Feb","03":"Mar","04":"Apr","05":"Mag","06":"Giu",
                        "07":"Lug","08":"Ago","09":"Set","10":"Ott","11":"Nov","12":"Dic"}
-        hdr_m = [th("Mese"), th("Pioggia"), th("ET₀"), th("Bilancio"), th("Temp.")]
+        hdr_m = [th("Mese"), th("Pioggia"), th("ET0"), th("Bilancio"), th("Temp.")]
         rows_m = []
         for mm_d in MA:
             mn  = mesi_nomi_pdf.get(mm_d["mese"][5:], mm_d["mese"][5:])
@@ -3130,12 +3130,12 @@ if RL_OK and gen_pdf:
     # BILANCIO GHG
     story.append(Paragraph("Bilancio GHG — Scope 1 + 2 + 3 (GHG Protocol)", S_h2))
     ghg_data = [
-        [th("Voce"), th("Scope"), th("tCO₂eq/anno"), th("Note")],
+        [th("Voce"), th("Scope"), th("tCO2eq/anno"), th("Note")],
         [td("Sequestro suolo"), td("Credito"),
          td(f"+{round(tot_seq,2)}", bold=True, color=colors.HexColor("#6ee7b7")), td("IPCC Tier 1")],
         [td("Gasolio macchine"), td("Sc.1"),
          td(f"-{round(S('diesel_co2'),2)}", color=C_RED), td("DEFRA 2024")],
-        [td("N₂O fertilizzanti"), td("Sc.1"),
+        [td("N2O fertilizzanti"), td("Sc.1"),
          td(f"-{round(S('n2o')+co2_fert_n2o,2)}", color=C_RED),
          td(f"min {round(co2_n2o_min,2)} / org {round(co2_n2o_org,2)} t")],
         [td("Scarti emissivi"), td("Sc.1"),
@@ -3175,7 +3175,7 @@ if RL_OK and gen_pdf:
             td(str(rr.get("Protocollo",""))[:12]),
             td(f"{rr.get('SO %','')}%"),
             td(f"{rr.get('Argilla %','')}%/{rr.get('Limo %','')}%"),
-            td("✓" if rr.get("Cover crops",False) else "—"),
+            td("Si" if rr.get("Cover crops",False) else "—"),
             td(str(rc["co2_seq"]), color=colors.HexColor("#6ee7b7")),
             td(str(rc["co2_emit"]), color=C_RED),
             td(f'{"+" if rc["co2_netto"]>=0 else ""}{rc["co2_netto"]}', bold=True,
@@ -3218,7 +3218,7 @@ if RL_OK and gen_pdf:
 
     # FERTILIZZANTI
     story.append(Paragraph("Fertilizzanti &amp; Fitofarmaci — Scope 1 + 3", S_h2))
-    hdr_f = [th("Prodotto"), th("Tipo"), th("Quantità"), th("N₂O Sc.1 (t)"), th("Prod. Sc.3 (t)"), th("EF N₂O")]
+    hdr_f = [th("Prodotto"), th("Tipo"), th("Quantità"), th("N2O Sc.1 (t)"), th("Prod. Sc.3 (t)"), th("EF N2O")]
     rows_f = [[td(fd["prod"]), td(fd["tipo"].capitalize()), td(f'{int(fd["qty"]):,} kg'),
                td(str(fd["s1"]), color=C_RED),
                td(str(fd["s3"]), color=C_GOLD),
@@ -3236,7 +3236,7 @@ if RL_OK and gen_pdf:
         imp = round(pp["ha"]*pp["pag_ha"],0) if pp["ok"] else 0
         rows_p.append([
             td(pp["nome"]),
-            td("✅ Sì" if pp["ok"] else "○ No",
+            td("✅ Sì" if pp["ok"] else "o No",
                color=colors.HexColor("#6ee7b7") if pp["ok"] else C_GRAY),
             td(f'{pp["ha"]:.1f}'),
             td(f'€{pp["pag_ha"]}'),
@@ -3255,11 +3255,11 @@ if RL_OK and gen_pdf:
     story.append(Paragraph("Scenari Economici", S_h2))
     sc_data = [
         [th("Voce"), th("Stato Attuale"), th("Scenario Rigenerativo"), th("Δ annuo")],
-        [td("CO₂ netta Sc.1+3"),
+        [td("CO2 netta Sc.1+3"),
          td(f'{"+" if tot_netto>=0 else ""}{round(tot_netto,1)} t'),
          td(f'{"+" if pot_netto>=0 else ""}{round(pot_netto,1)} t'),
          td(f'+{round(pot_netto-tot_netto,1)} t', color=colors.HexColor("#6ee7b7"))],
-        [td("Crediti CO₂"), td(f"€{int(val_cred):,}"), td(f"€{int(pot_cred):,}"),
+        [td("Crediti CO2"), td(f"€{int(val_cred):,}"), td(f"€{int(pot_cred):,}"),
          td(f"+€{int(pot_cred-val_cred):,}", color=colors.HexColor("#6ee7b7"))],
         [td("Risparmio gasolio"), td("—"), td(f"+€{int(risp_die):,}"),
          td(f"+€{int(risp_die):,}", color=colors.HexColor("#6ee7b7"))],
@@ -3287,7 +3287,7 @@ if RL_OK and gen_pdf:
     story.append(Paragraph("Nota Metodologica", S_h2))
     story.append(Paragraph(
         "Carbonio suolo: IPCC 2006 Vol.4 Tier 1, AR5 GWP.  "
-        "Fertilizzanti Scope 1+3: ecoinvent 3.9, N₂O per tipo.  "
+        "Fertilizzanti Scope 1+3: ecoinvent 3.9, N2O per tipo.  "
         "Trasporti Scope 3: DEFRA 2024.  Acqua: FAO Penman-Monteith.  "
         "RothC: Coleman &amp; Jenkinson 1996.  PAC: AGEA 2024.  "
         "Meteo: Open-Meteo ECMWF+ERA5 1km.  Valore fondiario: CREA-AA 2025.  "
@@ -3337,7 +3337,7 @@ if gen_html:
           <td>{row_.get("Protocollo","")}</td>
           <td>{row_.get("SO %","")}%</td>
           <td>{row_.get("Argilla %","")}%/{row_.get("Limo %","")}%</td>
-          <td>{"✓" if row_.get("Cover crops",False) else "—"}</td>
+          <td>{"Si" if row_.get("Cover crops",False) else "—"}</td>
           <td style="color:#6ee7b7"><b>{r["co2_seq"]}</b></td>
           <td style="color:#fca5a5">{r["co2_emit"]}</td>
           <td style="color:{nc}"><b>{"+" if r["co2_netto"]>=0 else ""}{r["co2_netto"]}</b></td>
@@ -3359,7 +3359,7 @@ if gen_html:
         segno="+" if sd["ef"]>0 else ""
         righe_scarti+=f"""<tr>
           <td>{sd['scarto']}</td><td>{sd['qty']} t/anno</td>
-          <td style="color:{col}"><b>{segno}{sd['co2']} tCO₂eq</b></td>
+          <td style="color:{col}"><b>{segno}{sd['co2']} tCO2eq</b></td>
         </tr>"""
 
     storico_html=""
@@ -3478,9 +3478,9 @@ tfoot tr td{{background:#1a3d28 !important;color:#c9963a;font-weight:700;
 <div class="sec"><div class="st">Indicatori Chiave</div>
 <div class="kg">
   <div class="k"><div class="kv">{score}/100</div><div class="kl">Score ESG — {rcls}</div></div>
-  <div class="k"><div class="kv">{round(tot_seq,1)} t</div><div class="kl">CO₂ Sequestrata/anno</div></div>
+  <div class="k"><div class="kv">{round(tot_seq,1)} t</div><div class="kl">CO2 Sequestrata/anno</div></div>
   <div class="k"><div class="kv">{"+" if tot_netto>=0 else ""}{round(tot_netto,1)} t</div><div class="kl">Bilancio GHG Netto Sc.1+3</div></div>
-  <div class="k"><div class="kv">€{int(val_cred):,}</div><div class="kl">Valore Crediti CO₂/anno</div></div>
+  <div class="k"><div class="kv">€{int(val_cred):,}</div><div class="kl">Valore Crediti CO2/anno</div></div>
   <div class="k"><div class="kv">{round(co2_fert_totale,1)} t</div><div class="kl">Emissioni Fertilizzanti</div></div>
   <div class="k"><div class="kv">{round(co2_scarti,1)} t</div><div class="kl">Emissioni/Crediti Scarti</div></div>
   <div class="k"><div class="kv">{int(tot_fabb):,} m³</div><div class="kl">Fabbisogno Idrico/anno</div></div>
@@ -3491,21 +3491,21 @@ tfoot tr td{{background:#1a3d28 !important;color:#c9963a;font-weight:700;
 <div class="meteo">
 🌡️ {M["tmax"]}°/{M["tmin"]}°C &nbsp;|&nbsp;
 🌧️ Pioggia 7gg: {M["pioggia_7g"]} mm &nbsp;|&nbsp;
-💧 ET₀: {M["et0"]} mm/g &nbsp;|&nbsp;
+💧 ET0: {M["et0"]} mm/g &nbsp;|&nbsp;
 📊 Pioggia 30gg: {MS["pioggia_30g"]} mm &nbsp;|&nbsp;
 ⚡ Deficit: {round(deficit)} mm &nbsp;|&nbsp;
 🔥 Stress: {round(stress_idx*100):.0f}%
 </div>
-{"<table><thead><tr><th>Mese</th><th>Pioggia</th><th>ET₀</th><th>Bilancio</th><th>Temp. media</th></tr></thead><tbody>"+storico_html+"</tbody></table>" if storico_html else "<p style='font-size:.78rem;color:#9aab9e'>Dati storici non disponibili</p>"}
+{"<table><thead><tr><th>Mese</th><th>Pioggia</th><th>ET0</th><th>Bilancio</th><th>Temp. media</th></tr></thead><tbody>"+storico_html+"</tbody></table>" if storico_html else "<p style='font-size:.78rem;color:#9aab9e'>Dati storici non disponibili</p>"}
 </div>
 
 <div class="sec"><div class="st">Bilancio GHG — Scope 1 + Scope 2 + Scope 3 (GHG Protocol)</div>
 <div class="scope-grid">
 <div class="sc1"><b style="font-size:.85rem">🔴 Scope 1 — Dirette</b>
 <div style="font-size:.78rem;line-height:1.9;margin-top:.4rem">
-Gasolio: <b>{round(S("diesel_co2"),2)} tCO₂</b><br>
-N₂O campo+fertilizz.: <b>{round(S("n2o")+co2_fert_n2o,2)} tCO₂eq</b><br>
-Combustione scarti: <b>{round(max(0,sum(r["qty"]*r["ef"] for r in scarti_detail if r["ef"]>0)),2)} tCO₂</b><br>
+Gasolio: <b>{round(S("diesel_co2"),2)} tCO2</b><br>
+N2O campo+fertilizz.: <b>{round(S("n2o")+co2_fert_n2o,2)} tCO2eq</b><br>
+Combustione scarti: <b>{round(max(0,sum(r["qty"]*r["ef"] for r in scarti_detail if r["ef"]>0)),2)} tCO2</b><br>
 <b>Tot. Sc.1: {round(scope1_total,2)} t</b></div></div>
 <div class="sc2"><b style="font-size:.85rem">🟡 Scope 2 — Energia</b>
 <div style="font-size:.78rem;line-height:1.9;margin-top:.4rem">
@@ -3514,10 +3514,10 @@ Elettricità: <b>0 t</b><br>
 <b>Tot. Sc.2: {round(scope2_total,2)} t</b></div></div>
 <div class="sc3"><b style="font-size:.85rem">🟢 Scope 3 — Catena valore</b>
 <div style="font-size:.78rem;line-height:1.9;margin-top:.4rem">
-Produzione fertilizz.: <b>{round(co2_fert_prod,2)} tCO₂eq</b><br>
-Fitofarmaci: <b>{round(co2_fito_s3,2)} tCO₂eq</b><br>
-Materie prime: <b>{round(co2_materie,2)} tCO₂eq</b><br>
-Trasporti: <b>{round(co2_trasporti,2)} tCO₂eq</b><br>
+Produzione fertilizz.: <b>{round(co2_fert_prod,2)} tCO2eq</b><br>
+Fitofarmaci: <b>{round(co2_fito_s3,2)} tCO2eq</b><br>
+Materie prime: <b>{round(co2_materie,2)} tCO2eq</b><br>
+Trasporti: <b>{round(co2_trasporti,2)} tCO2eq</b><br>
 <b>Tot. Sc.3: {round(scope3_total,2)} t</b></div></div>
 </div></div>
 
@@ -3525,7 +3525,7 @@ Trasporti: <b>{round(co2_trasporti,2)} tCO₂eq</b><br>
 <table><thead><tr>
 <th>Campo</th><th>ha</th><th>Coltura</th><th>Protocollo</th>
 <th>SO%</th><th>Arg/Limo%</th><th>CC</th>
-<th>CO₂ Seq (t)</th><th>CO₂ Emit (t)</th><th>Netto (t)</th><th>Fabb.Irr m³</th>
+<th>CO2 Seq (t)</th><th>CO2 Emit (t)</th><th>Netto (t)</th><th>Fabb.Irr m³</th>
 </tr></thead><tbody>{righe_tab}</tbody>
 <tfoot><tr>
 <td><b>TOTALE</b></td><td>{round(tot_ha,1)} ha</td><td colspan="5"></td>
@@ -3537,34 +3537,34 @@ Trasporti: <b>{round(co2_trasporti,2)} tCO₂eq</b><br>
 
 <div class="sec"><div class="st">Fertilizzanti & Fitofarmaci — emissioni IPCC + ecoinvent 3.9</div>
 <table><thead><tr>
-<th>Prodotto</th><th>Quantità</th><th>N₂O Sc.1 (tCO₂eq)</th><th>Produzione Sc.3 (tCO₂eq)</th><th>Nota</th>
+<th>Prodotto</th><th>Quantità</th><th>N2O Sc.1 (tCO2eq)</th><th>Produzione Sc.3 (tCO2eq)</th><th>Nota</th>
 </tr></thead><tbody>{righe_fert}</tbody>
 <tfoot><tr>
 <td colspan="2"><b>TOTALE fertilizzanti</b></td>
-<td style="color:#fca5a5"><b>{round(co2_fert_n2o,2)} tCO₂eq</b></td>
-<td style="color:#fbbf24"><b>{round(co2_fert_prod,2)} tCO₂eq</b></td>
+<td style="color:#fca5a5"><b>{round(co2_fert_n2o,2)} tCO2eq</b></td>
+<td style="color:#fbbf24"><b>{round(co2_fert_prod,2)} tCO2eq</b></td>
 <td></td></tr></tfoot></table></div>
 
 <div class="sec"><div class="st">Gestione Scarti & Sottoprodotti</div>
-<table><thead><tr><th>Scarto/Sottoprodotto</th><th>Quantità</th><th>CO₂eq (t) — + emissione / - credito</th></tr></thead>
+<table><thead><tr><th>Scarto/Sottoprodotto</th><th>Quantità</th><th>CO2eq (t) — + emissione / - credito</th></tr></thead>
 <tbody>{righe_scarti}</tbody>
 <tfoot><tr><td colspan="2"><b>BILANCIO SCARTI</b></td>
-<td><b style="color:{'#fca5a5' if co2_scarti>0 else '#6ee7b7'}">{"+" if co2_scarti>0 else ""}{round(co2_scarti,2)} tCO₂eq</b></td></tr></tfoot>
+<td><b style="color:{'#fca5a5' if co2_scarti>0 else '#6ee7b7'}">{"+" if co2_scarti>0 else ""}{round(co2_scarti,2)} tCO2eq</b></td></tr></tfoot>
 </table></div>
 
 <div class="sec"><div class="st">Scenari Economici</div>
 <div class="scen">
 <div class="sc sc-b"><b style="color:#6ee7b7;font-size:.87rem">📍 Stato Attuale</b>
 <div style="margin-top:.4rem">
-<div class="sc-r"><span>CO₂ netta Sc.1+3</span><b>{"+" if tot_netto>=0 else ""}{round(tot_netto,1)} t</b></div>
-<div class="sc-r"><span>Crediti CO₂</span><b>€{int(val_cred):,}/anno</b></div>
+<div class="sc-r"><span>CO2 netta Sc.1+3</span><b>{"+" if tot_netto>=0 else ""}{round(tot_netto,1)} t</b></div>
+<div class="sc-r"><span>Crediti CO2</span><b>€{int(val_cred):,}/anno</b></div>
 <div class="sc-r"><span>Em. fertilizzanti</span><b>{round(co2_fert_totale,1)} t</b></div>
 <div class="sc-r"><span>Costo gasolio</span><b>€{int(tot_c_die):,}</b></div>
 <div class="sc-r"><span>Margine</span><b>{marg_pct}%</b></div>
 </div></div>
 <div class="sc sc-o"><b style="color:#fbbf24;font-size:.87rem">⚡ Rigenerativo</b>
 <div style="margin-top:.4rem">
-<div class="sc-r"><span>CO₂ netta</span><b>{round(pot_netto,1)} t</b></div>
+<div class="sc-r"><span>CO2 netta</span><b>{round(pot_netto,1)} t</b></div>
 <div class="sc-r"><span>Crediti</span><b>€{int(pot_cred):,}/anno</b></div>
 <div class="sc-r"><span>Risp. gasolio</span><b style="color:#6ee7b7">€{int(risp_die):,}</b></div>
 <div class="sc-r"><span>Risp. acqua</span><b style="color:#6ee7b7">€{int(risp_h2o):,}</b></div>
@@ -3595,7 +3595,7 @@ Trasporti: <b>{round(co2_trasporti,2)} tCO₂eq</b><br>
 <b style="color:#c9963a">Acqua:</b> FAO Penman-Monteith, Kc da FAO-56.
 <b style="color:#c9963a">Meteo:</b> Open-Meteo ECMWF IFS + ERA5.
 <b style="color:#c9963a">RothC:</b> Coleman & Jenkinson 1996.
-<b style="color:#c9963a">PAC:</b> AGEA 2024. <b style="color:#c9963a">CO₂ prezzi:</b> Xpansiv CBL Q1 2026.
+<b style="color:#c9963a">PAC:</b> AGEA 2024. <b style="color:#c9963a">CO2 prezzi:</b> Xpansiv CBL Q1 2026.
 <i>Report previsionale — verifica Ente Terzo per certificazione ufficiale.</i>
 </p></div>
 
