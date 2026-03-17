@@ -519,6 +519,35 @@ with st.sidebar:
     inv_gps      = st.checkbox("Precision farming GPS (+€8.000)")
     inv_biochar  = st.checkbox("Biochar (+€1.200/ha)")
 
+
+    st.markdown("---")
+    st.markdown("### 💾 Salva / Carica Profilo")
+    
+    # Export JSON
+    profilo_json = esporta_profilo()
+    nome_file = nome_az.replace(" ","_") if nome_az else "AgroLog"
+    st.download_button(
+        label="⬇️ Salva profilo aziendale",
+        data=profilo_json.encode("utf-8"),
+        file_name=f"{nome_file}_profilo.json",
+        mime="application/json",
+        help="Scarica tutti i dati inseriti come file JSON — riaprilo la prossima volta."
+    )
+    
+    # Import JSON
+    uploaded = st.file_uploader(
+        "📂 Carica profilo salvato",
+        type=["json"],
+        help="Carica un profilo .json precedentemente salvato per ripristinare tutti i dati."
+    )
+    if uploaded is not None:
+        ok, msg = importa_profilo(uploaded.read())
+        if ok:
+            st.success(f"✅ {msg}")
+            st.rerun()
+        else:
+            st.error(f"❌ {msg}")
+
 # ══════════════════════════════════════════════════════════════════════
 #  METEO
 # ══════════════════════════════════════════════════════════════════════
@@ -838,6 +867,77 @@ if "Analisi suolo" in df_edit.columns:
             "Dati SO%, Argilla% e Densità potrebbero non riflettere la situazione attuale. "
             "Si consiglia un nuovo prelievo (costo 150-300 euro/campo)."
         )
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  VALIDAZIONE INPUT — Coerenza dati scientifici
+# ══════════════════════════════════════════════════════════════════════
+errori_input = []
+avvisi_input = []
+
+for _, _r in df_edit.iterrows():
+    _campo = str(_r.get("Campo",""))
+    _arg   = float(_r.get("Argilla %", 0))
+    _lim   = float(_r.get("Limo %", 0))
+    _so    = float(_r.get("SO %", 1.5))
+    _den   = float(_r.get("Densità", 1.3))
+    _irr   = float(_r.get("Irrigazione m³/ha", 0))
+    _col   = str(_r.get("Coltura",""))
+    _prot  = str(_r.get("Protocollo",""))
+
+    # Regola 1: Tessitura (Argilla + Limo ≤ 100%)
+    if _arg + _lim > 100:
+        errori_input.append(
+            f"**{_campo}**: Argilla% ({_arg:.0f}) + Limo% ({_lim:.0f}) = {_arg+_lim:.0f}% > 100% — "
+            "valore impossibile. Controlla la tessitura del suolo."
+        )
+
+    # Regola 2: Densità vs SO% (suoli con alta SOM hanno bassa densità)
+    # Densità apparente > 1.6 con SO% > 3% è fisicamente improbabile
+    if _den > 1.6 and _so > 3.0:
+        avvisi_input.append(
+            f"**{_campo}**: Densità {_den} g/cm³ con SO% {_so}% è incoerente — "
+            "suoli ricchi di SOM hanno tipicamente densità < 1.4 g/cm³ (fonte: USDA Soil Science)."
+        )
+    # Densità < 0.9 con SO% < 1.5% è ugualmente improbabile
+    if _den < 0.9 and _so < 1.5:
+        avvisi_input.append(
+            f"**{_campo}**: Densità {_den} g/cm³ molto bassa per SO% {_so}% — "
+            "controlla il valore di densità apparente."
+        )
+
+    # Regola 3: Irrigazione su colture non irrigue
+    colture_non_irrigue = ["Olivo","Nocciolo","Foraggere"]
+    if _irr > 500 and _col in colture_non_irrigue:
+        avvisi_input.append(
+            f"**{_campo}**: Irrigazione {_irr:.0f} m³/ha su {_col} è elevata — "
+            "questa coltura è tipicamente pluviale in Italia. Verifica il dato."
+        )
+
+    # Regola 4: SO% troppo bassa per rigenerativo (incoerenza agronomica)
+    if _prot == "Rigenerativo Full" and _so < 0.8:
+        avvisi_input.append(
+            f"**{_campo}**: SO% {_so}% è molto bassa per protocollo Rigenerativo Full — "
+            "il modello RothC assume accumulo, ma partendo da valori critici "
+            "i calcoli di sequestro potrebbero essere sovrastimati."
+        )
+
+    # Regola 5: Argilla o Limo negativi / fuori range
+    if _arg < 1 or _lim < 1:
+        errori_input.append(
+            f"**{_campo}**: Argilla% o Limo% < 1% — valore improbabile. "
+            "Inserisci la tessitura reale del suolo."
+        )
+
+# Mostra errori e avvisi
+if errori_input:
+    for e in errori_input:
+        st.error(f"🚨 **Errore dati — {e}")
+if avvisi_input:
+    for a in avvisi_input:
+        st.warning(f"⚠️ **Attenzione — {a}")
+if not errori_input and not avvisi_input:
+    st.success("✅ Tutti i dati sono coerenti e nei range scientifici attesi.")
 
 # ══════════════════════════════════════════════════════════════════════
 #  MAPPA
@@ -1337,6 +1437,169 @@ with bm2:
     </div>""",unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════
+#  AGRONOMO VIRTUALE IA — Claude API
+# ══════════════════════════════════════════════════════════════════════
+st.markdown('<div class="sec">🤖 Agronomo Virtuale IA — Analisi Personalizzata</div>', unsafe_allow_html=True)
+st.caption("Powered by Claude AI — Analizza tutti i tuoi dati aziendali e genera un briefing agronomico su misura.")
+
+ai_col1, ai_col2 = st.columns([2, 1])
+with ai_col1:
+    if st.button("🤖 Genera analisi agronomica IA", use_container_width=True):
+        with st.spinner("L'agronomo virtuale sta analizzando la tua azienda..."):
+
+            # Proiezione RothC semplificata per il contesto
+            rothc_5a = []
+            for _, rr in df_edit.iterrows():
+                so0_ia  = max(0.1, float(rr.get("SO %", 1.5)))
+                prot_ia = str(rr.get("Protocollo", "Intermedio"))
+                nome_ia = str(rr.get("Campo", ""))
+                k_ia = {"Convenzionale": -0.038, "Intermedio": -0.010,
+                        "Rigenerativo Full": 0.015}.get(prot_ia, -0.010)
+                so5 = round(so0_ia * ((1 + k_ia) ** 5), 2)
+                rothc_5a.append(f"{nome_ia}: {so0_ia}% → {so5}% ({prot_ia})")
+
+            # Composizione dati azienda per il prompt
+            dati_azienda = f"""
+ANAGRAFICA AZIENDA:
+- Nome: {nome_az} — {regione} / {zona}
+- Superficie totale: {round(tot_ha, 1)} ha
+- Coltura principale: {coltura_principale}
+- Agronomo: {agronomo}
+
+BILANCIO GHG (Scope 1+2+3 — GHG Protocol):
+- Sequestro suolo: +{round(tot_seq, 2)} tCO₂/anno
+- Emissioni totali: -{round(tot_emit, 2)} tCO₂eq/anno
+- Bilancio NETTO: {round(tot_netto, 2)} tCO₂eq/anno ({"Carbon Positive ✅" if tot_netto >= 0 else "Emittente ⚠️"})
+- Valore crediti CO₂ potenziali: €{int(val_cred):,}/anno (@ €{prezzo_co2}/t)
+- Emissioni Scope 3 fertilizzanti: {round(co2_fert_prod, 2)} tCO₂eq
+- Emissioni Scope 3 trasporti: {round(co2_trasporti, 2)} tCO₂eq
+
+SCORE ESG: {score}/100 — Rating {rcls}
+
+CAMPI E PRATICHE:
+{df_edit[["Campo","Ettari","SO %","Protocollo","Coltura","Cover crops","Irrigazione m³/ha"]].to_string(index=False)}
+
+FERTILIZZANTI USATI:
+{df_fert[["Prodotto","Quantità (kg/anno)"]].to_string(index=False) if len(df_fert) > 0 else "Nessuno inserito"}
+
+ACQUA E STRESS IDRICO:
+- Stress idrico attuale: {round(stress_idx * 100):.0f}% ({"CRITICO" if stress_idx > 0.4 else "MODERATO" if stress_idx > 0.2 else "OK"})
+- Deficit ET₀ - pioggia (30gg): {round(deficit)} mm
+- Fabbisogno irriguo totale: {int(tot_fabb):,} m³/anno
+- Spreco irriguo stimato: {int(tot_spreco):,} m³/anno = €{int(tot_spreco * costo_acqua):,}
+
+PROIEZIONE SOM — RothC 5 anni:
+{chr(10).join(rothc_5a)}
+
+SITUAZIONE ECONOMICA:
+- Fatturato: €{fatturato:,}/anno
+- Margine netto: {marg_pct}%
+- Costo gasolio annuo: €{int(tot_c_die):,}
+- PAC Eco-Scheme accessibili ora: €{int(pac_totale):,}/anno
+
+CERTIFICAZIONI ATTIVE: {", ".join([c for c,v in [("Biologico",cert_bio),("SQnpi",cert_sqnpi),("GlobalG.A.P.",cert_gap),("VIVA",cert_viva),("ISO 14064",cert_iso),("CSRD",cert_csrd)] if v]) or "Nessuna"}
+"""
+
+            try:
+                response = requests.post(
+                    "https://api.anthropic.com/v1/messages",
+                    headers={
+                        "Content-Type": "application/json",
+                        "x-api-key": st.secrets.get("ANTHROPIC_API_KEY", ""),
+                        "anthropic-version": "2023-06-01"
+                    },
+                    json={
+                        "model": "claude-sonnet-4-20250514",
+                        "max_tokens": 1500,
+                        "system": """Sei un agronomo esperto specializzato in carbon farming, agricoltura rigenerativa e sostenibilità ESG in Italia.
+Analizza i dati dell'azienda agricola forniti e produci un briefing agronomico professionale in italiano.
+
+Struttura OBBLIGATORIA della risposta:
+
+🔍 DIAGNOSI
+[2-3 righe: situazione attuale, punti di forza concreti, criticità principali con dati numerici]
+
+🎯 TOP 3 AZIONI PRIORITARIE
+1. [Nome azione] — [Cosa fare esattamente] → ROI stimato: €X/anno | Payback: X mesi
+2. [Nome azione] — [Cosa fare esattamente] → ROI stimato: €X/anno | Payback: X mesi  
+3. [Nome azione] — [Cosa fare esattamente] → ROI stimato: €X/anno | Payback: X mesi
+
+⚠️ RISCHI A 5 ANNI
+- [Rischio 1]: probabilità X%, impatto economico stimato €X/anno
+- [Rischio 2]: probabilità X%, impatto economico stimato €X/anno
+
+💡 POTENZIALE
+[Una frase finale che quantifica il potenziale massimo raggiungibile con le azioni consigliate]
+
+Usa sempre dati numerici precisi dai dati forniti. Sii diretto, concreto, mai generico.""",
+                        "messages": [{"role": "user", "content": f"Analizza questa azienda agricola italiana:\n\n{dati_azienda}"}]
+                    },
+                    timeout=30
+                )
+
+                if response.status_code == 200:
+                    analisi = response.json()["content"][0]["text"]
+                    st.session_state["ultima_analisi_ia"] = analisi
+                    st.session_state["ultima_analisi_az"]  = nome_az
+                elif response.status_code == 401:
+                    st.error("❌ API Key non valida o mancante. Aggiungi ANTHROPIC_API_KEY nei secrets di Streamlit Cloud.")
+                    st.session_state["ultima_analisi_ia"] = None
+                else:
+                    st.error(f"❌ Errore API: {response.status_code} — {response.text[:200]}")
+                    st.session_state["ultima_analisi_ia"] = None
+
+            except requests.exceptions.Timeout:
+                st.error("⏱️ Timeout — riprova tra qualche secondo.")
+                st.session_state["ultima_analisi_ia"] = None
+            except Exception as e:
+                st.error(f"❌ Errore connessione: {str(e)}")
+                st.session_state["ultima_analisi_ia"] = None
+
+with ai_col2:
+    st.markdown("""
+    <div style="background:#161c16;border:1px solid rgba(34,197,94,.2);
+         border-radius:12px;padding:1rem;font-size:.78rem;color:#86efac">
+      <b style="color:#4ade80;font-size:.85rem">💡 Come funziona</b><br><br>
+      Il modello legge tutti i dati della tua azienda — campi, fertilizzanti, bilancio GHG, meteo, stress idrico, proiezioni RothC — e genera un briefing come farebbe un consulente agronomo che ha studiato il tuo fascicolo per un'ora.<br><br>
+      <b style="color:#4ade80">Cosa ottieni:</b><br>
+      • Diagnosi situazione attuale<br>
+      • Top 3 azioni con ROI stimato<br>
+      • Rischi a 5 anni con impatto €<br>
+      • Potenziale massimo raggiungibile<br><br>
+      <span style="color:#4ade80;font-size:.7rem">⚡ Richiede ANTHROPIC_API_KEY nei secrets</span>
+    </div>""", unsafe_allow_html=True)
+
+# Mostra analisi se disponibile (persiste tra rerun)
+if st.session_state.get("ultima_analisi_ia"):
+    az_label = st.session_state.get("ultima_analisi_az", nome_az)
+    st.markdown(f"""
+    <div style="background:#0d1a0d;border:1.5px solid #22c55e;border-radius:14px;
+                padding:1.6rem 2rem;margin:1rem 0;
+                box-shadow:0 0 30px rgba(34,197,94,.1)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div style="color:#4ade80;font-weight:700;font-size:1rem">
+          🤖 Analisi Agronomica IA — {az_label}
+        </div>
+        <div style="color:#86efac;font-size:.7rem">
+          Powered by Claude · {datetime.now().strftime("%d/%m/%Y %H:%M")}
+        </div>
+      </div>
+      <div style="color:#e8f5e9;font-size:.85rem;line-height:1.9;
+                  white-space:pre-wrap;font-family:'Lexend',sans-serif">{st.session_state["ultima_analisi_ia"]}</div>
+    </div>""", unsafe_allow_html=True)
+
+    # Bottone esporta analisi
+    if st.button("📋 Copia analisi negli appunti / Salva come testo"):
+        testo_export = f"ANALISI AGRONOMICA IA — {az_label}\n{datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n{st.session_state['ultima_analisi_ia']}"
+        st.download_button(
+            label="⬇️ Scarica analisi .txt",
+            data=testo_export,
+            file_name=f"AnalisiIA_{az_label.replace(' ','_')}_{datetime.now().strftime('%Y%m%d')}.txt",
+            mime="text/plain"
+        )
+
+
+# ══════════════════════════════════════════════════════════════════════
 #  GRAFICI
 # ══════════════════════════════════════════════════════════════════════
 st.markdown('<div class="sec">📈 Analisi Multi-Dimensionale</div>', unsafe_allow_html=True)
@@ -1671,6 +1934,174 @@ rm={"alto":"r-alto","medio":"r-medio","basso":"r-basso"}
 st.markdown('<div style="line-height:3">'+
     " ".join([f'<span class="risk {rm[r["l"]]}">{r["l"].upper()} — {r["t"]}</span>' for r in rischi])+
     "</div>",unsafe_allow_html=True)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  AGRONOMO VIRTUALE IA — Analisi personalizzata con Claude API
+# ══════════════════════════════════════════════════════════════════════
+st.markdown('<div class="sec">🤖 Agronomo Virtuale IA — Analisi Personalizzata</div>', unsafe_allow_html=True)
+st.caption("Powered by Claude (Anthropic) · Analisi basata su tutti i dati inseriti · Aggiornata in tempo reale")
+
+col_ia1, col_ia2 = st.columns([2, 1])
+with col_ia1:
+    st.markdown("""
+    <div class="info-box">
+      <b style="color:#4ade80">Come funziona:</b> il modello legge tutti i tuoi dati aziendali —
+      ogni campo, SO%, protocollo, fertilizzanti, meteo live, proiezione RothC, bilancio GHG —
+      e genera un briefing agronomico personalizzato con diagnosi, azioni prioritarie e stime di ROI.
+      <br><br>
+      <b style="color:#fde68a">⚠️ Richiede variabile d'ambiente ANTHROPIC_API_KEY</b> —
+      aggiungi la chiave in Streamlit Cloud → Settings → Secrets.
+    </div>""", unsafe_allow_html=True)
+
+with col_ia2:
+    livello_analisi = st.selectbox(
+        "Livello di analisi",
+        ["Rapida (500 parole)", "Approfondita (1000 parole)", "Executive (200 parole)"],
+        help="Scegli il livello di dettaglio del briefing agronomico"
+    )
+
+max_tok = {"Rapida (500 parole)": 700, "Approfondita (1000 parole)": 1400, "Executive (200 parole)": 300}
+
+if st.button("🤖 Genera Analisi Agronomica IA", help="Richiede ANTHROPIC_API_KEY configurata"):
+    import os
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        st.error("❌ **ANTHROPIC_API_KEY non trovata.** Aggiungila in Streamlit Cloud → Settings → Secrets come:\n\n`ANTHROPIC_API_KEY = \"sk-ant-...\"` ")
+    else:
+        with st.spinner("🌿 L'agronomo virtuale sta analizzando la tua azienda..."):
+
+            # Proiezioni RothC per tutti i campi
+            rothc_summary = []
+            for _, _r in df_edit.iterrows():
+                so0_ = max(0.1, float(_r.get("SO %", 1.5)))
+                prot_ = str(_r.get("Protocollo", "Intermedio"))
+                nome_ = str(_r.get("Campo", ""))
+                vals_, d5_, d10_, _ = rothc_proiezione(so0_, prot_, 10)
+                rothc_summary.append(f"{nome_}: SO%={so0_} → +5a:{vals_[5]}% (Δ{d5_:+}%) +10a:{vals_[10]}% (Δ{d10_:+}%)")
+
+            # Costruisce il contesto dati completo
+            dati_azienda = f"""
+AZIENDA: {nome_az}
+Regione: {regione} / {zona}
+Agronomo: {agronomo}
+Data: {date.today().strftime("%d/%m/%Y")}
+
+--- INDICATORI STRATEGICI ---
+Score ESG: {score}/100 — Rating {rcls}
+Bilancio GHG Netto (Scope 1+2+3): {round(tot_netto,2)} tCO₂eq/anno
+CO₂ sequestrata: {round(tot_seq,2)} t/anno ({round(tot_seq/tot_ha,2)} t/ha)
+Emissioni Scope 1: {round(scope1_total,2)} tCO₂eq/anno
+Emissioni Scope 3: {round(scope3_total,2)} tCO₂eq/anno
+Valore crediti CO₂: €{int(val_cred):,}/anno (@ €{prezzo_co2}/t)
+Stress idrico: {round(stress_idx*100):.0f}% — deficit {round(deficit)} mm
+Spreco irriguo: {int(tot_spreco):,} m³/anno = €{int(tot_spreco*costo_acqua):,}
+Margine netto: {marg_pct}% (€{margine:,}/anno)
+Valore fondo stimato: €{int(tot_vf):,}
+
+--- CAMPI ---
+{df_edit[['Campo','Ettari','SO %','Argilla %','Limo %','Densità','Protocollo','Coltura','Irrigazione m³/ha','Cover crops']].to_string(index=False)}
+
+--- FERTILIZZANTI ---
+{df_fert.to_string(index=False)}
+Emissioni N₂O Sc.1 fertilizzanti: {round(co2_fert_n2o,2)} tCO₂eq
+Emissioni produzione Sc.3: {round(co2_fert_prod,2)} tCO₂eq
+Quota organici: {pct_org:.0f}%
+
+--- METEO LIVE ---
+Temperatura: {M['tmax']}°/{M['tmin']}°C
+Pioggia 7gg: {M['pioggia_7g']} mm | ET₀: {M['et0']} mm/g
+Pioggia 30gg: {MS['pioggia_30g']} mm | ET₀ 30gg: {MS['et0_30g']} mm
+
+--- PROIEZIONE RothC (5-10 anni) ---
+{chr(10).join(rothc_summary)}
+
+--- CERTIFICAZIONI ATTIVE ---
+Biologico: {"Sì" if cert_bio else "No"} | SQnpi: {"Sì" if cert_sqnpi else "No"} | GlobalG.A.P.: {"Sì" if cert_gap else "No"}
+ISO 14064: {"Sì" if cert_iso else "No"} | CSRD: {"Sì" if cert_csrd else "No"}
+
+--- PAC ECO-SCHEME ---
+Pagamenti accessibili ora: €{int(pac_totale):,}/anno
+"""
+
+            livello_istr = {
+                "Rapida (500 parole)": "Produci un briefing agronomico in circa 500 parole.",
+                "Approfondita (1000 parole)": "Produci un briefing agronomico dettagliato in circa 1000 parole.",
+                "Executive (200 parole)": "Produci un briefing executive sintetico in massimo 200 parole, solo i punti chiave."
+            }[livello_analisi]
+
+            try:
+                import os
+                resp = requests.post(
+                    "https://api.anthropic.com/v1/messages",
+                    headers={
+                        "Content-Type": "application/json",
+                        "x-api-key": api_key,
+                        "anthropic-version": "2023-06-01"
+                    },
+                    json={
+                        "model": "claude-sonnet-4-20250514",
+                        "max_tokens": max_tok[livello_analisi],
+                        "system": """Sei un dottore agronomo esperto in carbon farming, sostenibilità agricola e 
+mercati dei crediti carbonio. Analizza i dati dell'azienda agricola e produci un briefing 
+professionale in italiano strutturato con:
+
+**DIAGNOSI** (2-3 frasi): situazione attuale, punti critici, potenziale.
+
+**TOP 3 AZIONI PRIORITARIE** (per ognuna: cosa fare esattamente, perché è urgente, 
+stima ROI in €/anno con calcolo esplicito, tempo di payback in anni).
+
+**RISCHI A 5 ANNI** (2-3 rischi concreti con probabilità e impatto economico stimato).
+
+**OPPORTUNITÀ NASCOSTE** (1-2 opportunità non sfruttate che emergono dai dati).
+
+**FRASE FINALE**: una frase che sintetizza il potenziale dell'azienda e la direzione strategica.
+
+Usa dati numerici precisi dai dati forniti. Sii diretto e concreto, mai generico.
+Cita i valori esatti dei campi (SO%, protocollo, irrigazione) quando fai raccomandazioni.""",
+                        "messages": [{"role": "user", "content": f"{livello_istr}\n\n{dati_azienda}"}]
+                    },
+                    timeout=45
+                )
+
+                if resp.status_code == 200:
+                    analisi_testo = resp.json()["content"][0]["text"]
+                    st.markdown(f"""
+                    <div style="background:#0d1a0d;border:1.5px solid #22c55e;border-radius:16px;
+                                padding:1.6rem 2rem;margin:1rem 0;
+                                box-shadow:0 0 30px rgba(34,197,94,.12)">
+                      <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:1rem;
+                                  border-bottom:1px solid rgba(34,197,94,.2);padding-bottom:.8rem">
+                        <span style="font-size:1.4rem">🤖</span>
+                        <div>
+                          <div style="color:#4ade80;font-weight:700;font-size:.95rem">
+                            Analisi Agronomica IA — {nome_az}</div>
+                          <div style="color:#86efac;font-size:.72rem">
+                            {livello_analisi} · {date.today().strftime("%d/%m/%Y")} · Claude claude-sonnet-4-20250514</div>
+                        </div>
+                      </div>
+                      <div style="color:#e8f5e9;font-size:.84rem;line-height:1.85;white-space:pre-wrap">{analisi_testo}</div>
+                    </div>""", unsafe_allow_html=True)
+
+                    # Bottone per scaricare l'analisi come testo
+                    st.download_button(
+                        label="⬇️ Scarica analisi IA (.txt)",
+                        data=f"ANALISI AGRONOMICA IA — {nome_az}\n{date.today()}\n\n{analisi_testo}".encode("utf-8"),
+                        file_name=f"Analisi_IA_{nome_az.replace(' ','_')}_{date.today().strftime('%Y%m%d')}.txt",
+                        mime="text/plain"
+                    )
+                elif resp.status_code == 401:
+                    st.error("❌ API Key non valida. Controlla la chiave ANTHROPIC_API_KEY in Streamlit Secrets.")
+                elif resp.status_code == 429:
+                    st.error("❌ Limite richieste API raggiunto. Riprova tra qualche secondo.")
+                else:
+                    st.error(f"❌ Errore API Claude: {resp.status_code} — {resp.text[:200]}")
+
+            except requests.exceptions.Timeout:
+                st.error("❌ Timeout — il server Claude non ha risposto entro 45 secondi. Riprova.")
+            except Exception as e:
+                st.error(f"❌ Errore connessione: {e}")
+
 
 # METODOLOGIA
 with st.expander("🔬 Metodologia Scientifica Completa — IPCC + GHG Protocol + FAO"):
