@@ -811,7 +811,8 @@ mr1, mr2 = st.columns(2)
 with mr1:
     giorni_label = [(date.today()+timedelta(days=i)).strftime("%a %d") for i in range(7)]
     icons = [wcode_icon(c) for c in M["wcode_list"][:7]]
-    labels_fmt = [f"{icons[i]} {giorni_label[i]}" for i in range(min(7,len(giorni_label)))]
+    n_giorni = min(7, len(icons), len(giorni_label))
+    labels_fmt = [f"{icons[i]} {giorni_label[i]}" for i in range(n_giorni)]
     fig_rad = go.Figure()
     fig_rad.add_bar(x=labels_fmt, y=M["pioggia_list"][:7], name="Pioggia (mm)",
                     marker_color="#3b82f6", opacity=0.8)
