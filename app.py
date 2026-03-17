@@ -107,6 +107,28 @@ PROT = {
 KC = {"Cereali":1.15,"Vite (DOC/IGT)":0.70,"Olivo":0.65,"Nocciolo":0.80,
       "Frutteto":1.10,"Orticole":1.20,"Foraggere":1.00,"Misto":0.90}
 
+# Benchmark ESG e CO₂ per coltura — CREA-AA 2025, RICA-Italia, ISPRA GHG 2024
+BM_COLTURA = {
+    "Cereali":         {"score":48, "co2_ha":1.9, "margine_pct":20, "label":"Cereali/Seminativi"},
+    "Vite (DOC/IGT)":  {"score":57, "co2_ha":3.1, "margine_pct":38, "label":"Vitivinicolo DOC"},
+    "Olivo":           {"score":54, "co2_ha":2.7, "margine_pct":40, "label":"Olivicoltura"},
+    "Nocciolo":        {"score":50, "co2_ha":2.3, "margine_pct":30, "label":"Corilicultura"},
+    "Frutteto":        {"score":52, "co2_ha":2.5, "margine_pct":32, "label":"Frutticoltura"},
+    "Orticole":        {"score":55, "co2_ha":2.8, "margine_pct":28, "label":"Orticoltura"},
+    "Foraggere":       {"score":60, "co2_ha":3.8, "margine_pct":18, "label":"Foraggere/Prati"},
+    "Misto":           {"score":52, "co2_ha":2.4, "margine_pct":30, "label":"Misto"},
+}
+
+# PAC Eco-Scheme 2023-2027 — pagamenti aggiuntivi per ettaro (AGEA 2024)
+PAC_ECOSCHEME = {
+    "ES1 — Agricoltura biologica":           {"pagamento_ha":340, "req":"cert_bio",      "colture":"Tutte",             "desc":"Conversione o mantenimento biologico"},
+    "ES2 — Pratiche benefiche per clima":    {"pagamento_ha":110, "req":"cover_crops",   "colture":"Seminativi",        "desc":"Cover crops, no-tillage, gestione suolo"},
+    "ES4 — Impollinatori e biodiversità":    {"pagamento_ha": 90, "req":"cover_crops",   "colture":"Seminativi/Frutteto","desc":"Fasce fiorite, habitat impollinatori"},
+    "ES5 — Gestione risorse idriche":        {"pagamento_ha": 85, "req":"inv_drip",      "colture":"Irrigue",           "desc":"Micro-irrigazione, risparmio idrico"},
+    "Misura agro-climatica — Carbonio suolo":{"pagamento_ha":220, "req":"rigenerativo",  "colture":"Seminativi/Perm.",  "desc":"Pratiche rigenerative, incremento SOM"},
+    "Misura agro-climatica — Biologico+":   {"pagamento_ha":180, "req":"cert_bio_rig",  "colture":"Tutte",             "desc":"Bio + pratiche agro-ambientali avanzate"},
+}
+
 # Fattori emissione fertilizzanti (kgCO₂eq/kg prodotto) — fonte: IPCC + ecoinvent 3.9
 # EF fertilizzanti — campo "tipo" differenzia organico (EF N₂O 0.004-0.006) vs minerale (0.010-0.013)
 # Fonte: IPCC 2006 Vol.4 Cap.11 + ecoinvent 3.9
@@ -152,6 +174,17 @@ EF_MATERIE = {
     "Imballaggi cartone (kg)":     1.10,
     "Lubrificanti macchine (L)":   3.20,
     "Acqua potabile (m³)":         0.30,
+}
+
+# Fattori emissione trasporti Scope 3 (kgCO₂eq/unità) — fonte: DEFRA 2024, ecoinvent 3.9
+EF_TRASPORTI = {
+    "Trasporto prodotti mercato (km·t)":     0.062,  # furgone/camion <3.5t — kgCO₂eq/tkm
+    "Trasporto input agricoli (km·t)":       0.062,
+    "Trasporto latte/prodotti animali (km·t)":0.055,
+    "Volo per fiere/consulenze (km·pass)":   0.180,  # volo breve raggio — kgCO₂eq/km
+    "Auto aziendale diesel (km)":            0.170,  # kgCO₂eq/km
+    "Auto aziendale benzina (km)":           0.192,
+    "Consegna mezzi agricoli (km)":          0.210,  # camion pesante
 }
 
 # ══════════════════════════════════════════════════════════════════════
@@ -786,6 +819,11 @@ if "df_materie" not in st.session_state:
         {"Materia prima":"Sementi convenzionali (kg)","Quantità":350,"Note":""},
         {"Materia prima":"Imballaggi plastica (kg)","Quantità":80,"Note":""},
     ])
+if "df_trasporti" not in st.session_state:
+    st.session_state.df_trasporti = pd.DataFrame([
+        {"Voce trasporto":"Trasporto prodotti mercato (km·t)","Quantità annua":2500,"Note":""},
+        {"Voce trasporto":"Auto aziendale diesel (km)","Quantità annua":8000,"Note":""},
+    ])
 
 with sc1:
     st.markdown("**Scarti e sottoprodotti**")
@@ -809,6 +847,19 @@ with sc2:
     )
     st.session_state.df_materie = df_materie
 
+# Sezione trasporti Scope 3
+st.markdown("**🚚 Trasporti & Mobilità (Scope 3 upstream/downstream)**")
+st.caption("Trasporto prodotti al mercato, input acquistati, spostamenti aziendali. Ogni voce in unità specificate.")
+df_trasporti = st.data_editor(
+    st.session_state.df_trasporti, num_rows="dynamic", use_container_width=True,
+    column_config={
+        "Voce trasporto": st.column_config.SelectboxColumn(options=list(EF_TRASPORTI.keys()),required=True),
+        "Quantità annua": st.column_config.NumberColumn(min_value=0,max_value=10000000,format="%.0f",
+            help="km×t per trasporti merci · km per veicoli · km×passeggero per voli"),
+    }, key="editor_trasporti"
+)
+st.session_state.df_trasporti = df_trasporti
+
 co2_scarti = 0.0
 scarti_detail = []
 for _, sr in df_scarti.iterrows():
@@ -823,9 +874,18 @@ co2_materie = 0.0
 for _, mr in df_materie.iterrows():
     mat = str(mr.get("Materia prima",""))
     qty = max(0.0, float(mr.get("Quantità",0)))
-    # unità variano — convertiamo sempre in unità base (kg o L o m³)
     ef  = EF_MATERIE.get(mat, 0)
     co2_materie += qty * ef / 1000  # → tCO₂eq
+
+co2_trasporti = 0.0
+trasporti_detail = []
+for _, tr in df_trasporti.iterrows():
+    voce = str(tr.get("Voce trasporto",""))
+    qty  = max(0.0, float(tr.get("Quantità annua",0)))
+    ef   = EF_TRASPORTI.get(voce, 0)
+    co2_t = qty * ef / 1000  # → tCO₂eq
+    co2_trasporti += co2_t
+    trasporti_detail.append({"voce":voce,"qty":qty,"co2":round(co2_t,3),"ef":ef})
 
 # ══════════════════════════════════════════════════════════════════════
 #  CALCOLI AGGREGATI
@@ -837,7 +897,7 @@ def S(key,src=None): return sum(r[key] for r in (src or res_att))
 tot_ha      = max(1.0, float(df_edit["Ettari"].sum()))
 tot_seq     = S("co2_seq");   tot_emit_base = S("co2_emit")
 # Emissioni totali includono ora fertilizzanti + scarti + materie prime
-tot_emit    = tot_emit_base + co2_fert_totale + max(0, co2_scarti) + co2_materie
+tot_emit    = tot_emit_base + co2_fert_totale + max(0, co2_scarti) + co2_materie + co2_trasporti
 tot_netto   = tot_seq - tot_emit
 tot_die_l   = S("diesel_l");  tot_fabb    = S("fabb_irr")
 tot_irr     = S("irr_tot");   tot_spreco  = S("spreco")
@@ -880,6 +940,10 @@ elif score>=65: rating,rcls,rcol,rbg = "B — Conforme ESG","B","#1e40af","#dbea
 elif score>=48: rating,rcls,rcol,rbg = "C — Sviluppabile","C","#92400e","#fef3c7"
 else:           rating,rcls,rcol,rbg = "D — Critico","D","#991b1b","#fee2e2"
 
+# Benchmark per coltura principale
+coltura_principale = df_edit["Coltura"].mode()[0] if len(df_edit)>0 else "Misto"
+bm = BM_COLTURA.get(coltura_principale, BM_COLTURA["Misto"])
+
 # ══════════════════════════════════════════════════════════════════════
 #  BILANCIO SCOPE 1-2-3 DETTAGLIATO
 # ══════════════════════════════════════════════════════════════════════
@@ -890,7 +954,7 @@ sb1, sb2, sb3 = st.columns(3)
 scope1_total = tot_emit_base + co2_fert_n2o + max(0, sum(
     r["qty"]*r["ef"] for r in scarti_detail if r["ef"] > 0))
 scope2_total = 0.0  # elettricità non inclusa (estendibile)
-scope3_total = co2_fert_prod + co2_fito_s3 + co2_materie + abs(min(0, co2_scarti))
+scope3_total = co2_fert_prod + co2_fito_s3 + co2_materie + co2_trasporti + abs(min(0, co2_scarti))
 
 with sb1:
     st.markdown(f"""
@@ -928,6 +992,7 @@ with sb3:
         Produzione fertilizzanti: <b>{round(co2_fert_prod,2)} tCO₂eq</b><br>
         Produzione fitofarmaci: <b>{round(co2_fito_s3,2)} tCO₂eq</b><br>
         Materie prime acquistate: <b>{round(co2_materie,2)} tCO₂eq</b><br>
+        Trasporti & mobilità: <b>{round(co2_trasporti,2)} tCO₂eq</b><br>
         <hr style="border:none;border-top:1px solid #86efac;margin:.4rem 0">
         <b>Totale Scope 3: {round(scope3_total,2)} tCO₂eq/anno</b>
       </div>
@@ -940,14 +1005,15 @@ with bal_col1:
     seq_bosco  = sum(r["ret_h2o"] for r in res_att)*0  # placeholder
     fig_wf = go.Figure(go.Waterfall(
         orientation="v",
-        measure=["relative","relative","relative","relative","relative","relative","total"],
+        measure=["relative","relative","relative","relative","relative","relative","relative","total"],
         x=["Sequestro<br>suolo","Scarti<br>virtuosi","Gasolio<br>macchine","N₂O<br>campo",
-           "Fertilizz.<br>Scope3","Scarti<br>emissivi","Bilancio<br>netto"],
+           "Fertilizz.<br>Scope3","Trasporti<br>Scope3","Scarti<br>emissivi","Bilancio<br>netto"],
         y=[tot_seq,
            abs(min(0,co2_scarti)),
            -(S("diesel_co2")),
            -(S("n2o")+co2_fert_n2o),
            -(co2_fert_prod+co2_fito_s3+co2_materie),
+           -(co2_trasporti),
            -(max(0,co2_scarti)),
            0],
         connector={"line":{"color":"rgba(15,53,32,.2)"}},
@@ -959,6 +1025,7 @@ with bal_col1:
               f"-{round(S('diesel_co2'),1)}",
               f"-{round(S('n2o')+co2_fert_n2o,1)}",
               f"-{round(co2_fert_prod+co2_fito_s3+co2_materie,1)}",
+              f"-{round(co2_trasporti,1)}",
               f"-{round(max(0,co2_scarti),1)}",
               f"{round(tot_netto,1)}"],
         textposition="outside",
@@ -993,6 +1060,8 @@ with bal_col2:
             <td style="text-align:right;color:#ef4444;font-weight:600">-{round(co2_fert_prod+co2_fito_s3,1)} t</td></tr>
         <tr><td style="padding:4px 0;color:#7a8c7e">Materie prime (Sc.3)</td>
             <td style="text-align:right;color:#ef4444;font-weight:600">-{round(co2_materie,1)} t</td></tr>
+        <tr><td style="padding:4px 0;color:#7a8c7e">Trasporti (Sc.3)</td>
+            <td style="text-align:right;color:#ef4444;font-weight:600">-{round(co2_trasporti,1)} t</td></tr>
         <tr><td style="padding:4px 0;color:#7a8c7e">Scarti emissivi</td>
             <td style="text-align:right;color:#ef4444;font-weight:600">-{round(max(0,co2_scarti),1)} t</td></tr>
         <tr style="border-top:2px solid #1a6b3a"><td style="padding:6px 0;font-weight:700">Bilancio NETTO</td>
@@ -1025,24 +1094,28 @@ for col,(v,l,s) in zip(kcols,kpis):
                     f'<div class="kpi-l">{l}</div>'
                     f'<div class="kpi-s">{s}</div></div>',unsafe_allow_html=True)
 
-# Benchmark
-delta_s=score-52; delta_c=round(tot_seq/tot_ha-2.4,2)
+# Benchmark per coltura
+delta_s = score - bm["score"]
+delta_c = round(tot_seq/tot_ha - bm["co2_ha"], 2)
+delta_m = round(marg_pct - bm["margine_pct"], 1)
 bm1,bm2=st.columns(2)
 with bm1:
-    clr="#1a6b3a" if delta_s>=0 else "#c9963a"
+    clr_s="#1a6b3a" if delta_s>=0 else "#c9963a"
+    clr_c="#1a6b3a" if delta_c>=0 else "#c9963a"
     st.markdown(f"""<div style="background:#fff;border-radius:12px;padding:.75rem 1.1rem;
       border:1px solid rgba(15,53,32,.1);margin-top:.5rem;font-size:.79rem">
-      📊 <b>Benchmark CREA-AA 2025:</b>&nbsp;
-      Score ESG <b style="color:{clr}">{"+" if delta_s>=0 else ""}{delta_s} pt</b> vs media 52/100&nbsp;·&nbsp;
-      CO₂/ha <b style="color:{clr}">{"+" if delta_c>=0 else ""}{delta_c} t</b> vs media 2.4 t/ha
+      📊 <b>Benchmark {bm["label"]} — CREA-AA 2025:</b>&nbsp;
+      Score <b style="color:{clr_s}">{"+" if delta_s>=0 else ""}{delta_s} pt</b> vs media {bm["score"]}/100&nbsp;·&nbsp;
+      CO₂/ha <b style="color:{clr_c}">{"+" if delta_c>=0 else ""}{delta_c} t</b> vs media {bm["co2_ha"]} t/ha
     </div>""",unsafe_allow_html=True)
 with bm2:
     pct=max(5,min(95,100-int((score-30)/0.7)))
+    clr_m="#1a6b3a" if delta_m>=0 else "#ef4444"
     st.markdown(f"""<div style="background:#fff;border-radius:12px;padding:.75rem 1.1rem;
       border:1px solid rgba(15,53,32,.1);margin-top:.5rem;font-size:.79rem">
-      🏆 <b>Posizionamento:</b>&nbsp;
-      Top <b style="color:#1a6b3a">{pct}%</b> aziende agricole italiane&nbsp;·&nbsp;
-      Potenziale aggiuntivo: <b>+{max(0,80-score)} pt</b> a scenario rigenerativo
+      🏆 <b>Posizionamento settore {bm["label"]}:</b>&nbsp;
+      Top <b style="color:#1a6b3a">{pct}%</b>&nbsp;·&nbsp;
+      Margine medio settore <b>{bm["margine_pct"]}%</b> — tuo: <b style="color:{clr_m}">{"+" if delta_m>=0 else ""}{delta_m}%</b>
     </div>""",unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════
@@ -1175,6 +1248,103 @@ with s3:
     <div style="border-top:1px dashed #3b82f6;margin-top:.5rem;padding-top:.5rem;text-align:right;font-size:.85rem;color:#1e40af">
     <b>Payback: {payback} anni</b></div>
     </div>""",unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════════
+#  PIANO PAC — ECO-SCHEME 2023-2027
+# ══════════════════════════════════════════════════════════════════════
+st.markdown('<div class="sec">🇪🇺 Piano PAC — Eco-Scheme & Pagamenti Aggiuntivi 2023-2027</div>', unsafe_allow_html=True)
+st.caption("Stima dei pagamenti PAC aggiuntivi accessibili in base alle pratiche aziendali adottate. Valori medi nazionali AGEA 2024.")
+
+# Calcola ettari per categoria
+ha_seminativi   = float(df_edit[df_edit["Coltura"].isin(["Cereali","Foraggere","Misto"])]["Ettari"].sum()) if len(df_edit)>0 else 0
+ha_permanenti   = float(df_edit[df_edit["Coltura"].isin(["Vite (DOC/IGT)","Olivo","Nocciolo","Frutteto"])]["Ettari"].sum()) if len(df_edit)>0 else 0
+ha_irrigate     = float(df_edit[df_edit["Irrigazione m³/ha"]>0]["Ettari"].sum()) if len(df_edit)>0 else 0
+ha_rigenerativo = float(df_edit[df_edit["Protocollo"]=="Rigenerativo Full"]["Ettari"].sum()) if len(df_edit)>0 else 0
+ha_cover        = float(df_edit[df_edit["Cover crops"]==True]["Ettari"].sum()) if len(df_edit)>0 else 0
+
+# Valuta accessibilità di ogni eco-scheme
+pac_items = [
+    {
+        "nome":    "ES1 — Agricoltura biologica",
+        "ok":      cert_bio,
+        "ha":      tot_ha,
+        "pag_ha":  340,
+        "motivo":  "Richiede certificazione biologica attiva",
+        "azione":  "Attiva certificazione Bio nella sidebar"
+    },
+    {
+        "nome":    "ES2 — Pratiche benefiche per clima",
+        "ok":      ha_cover > 0,
+        "ha":      ha_cover,
+        "pag_ha":  110,
+        "motivo":  f"Cover crops attive su {ha_cover:.0f} ha",
+        "azione":  "Attiva 'Cover crops' nella tabella appezzamenti"
+    },
+    {
+        "nome":    "ES4 — Impollinatori e biodiversità",
+        "ok":      ha_cover > 0 and (ha_seminativi+ha_permanenti) > 0,
+        "ha":      min(ha_cover, ha_seminativi+ha_permanenti),
+        "pag_ha":  90,
+        "motivo":  "Cover crops su seminativi o permanenti",
+        "azione":  "Attiva cover crops su almeno un campo"
+    },
+    {
+        "nome":    "ES5 — Gestione risorse idriche",
+        "ok":      inv_drip and ha_irrigate > 0,
+        "ha":      ha_irrigate,
+        "pag_ha":  85,
+        "motivo":  f"Micro-irrigazione su {ha_irrigate:.0f} ha irrigati",
+        "azione":  "Seleziona Micro-irrigazione nella sidebar"
+    },
+    {
+        "nome":    "Agro-climatica — Carbonio suolo",
+        "ok":      ha_rigenerativo > 0,
+        "ha":      ha_rigenerativo,
+        "pag_ha":  220,
+        "motivo":  f"Pratiche rigenerative su {ha_rigenerativo:.0f} ha",
+        "azione":  "Imposta protocollo Rigenerativo Full"
+    },
+    {
+        "nome":    "Agro-climatica — Bio + pratiche avanzate",
+        "ok":      cert_bio and ha_rigenerativo > 0,
+        "ha":      min(tot_ha, ha_rigenerativo) if cert_bio else 0,
+        "pag_ha":  180,
+        "motivo":  "Richiede Bio certificato + Rigenerativo",
+        "azione":  "Combina certificazione Bio con protocollo Rigenerativo"
+    },
+]
+
+pac_totale    = sum(p["ha"]*p["pag_ha"] for p in pac_items if p["ok"])
+pac_potenziale= sum(p["ha_pot"]*p["pag_ha"] for p in [
+    {**p, "ha_pot": tot_ha if "bio" in p["nome"].lower() else
+                    ha_cover if "cover" in p["motivo"].lower() else
+                    ha_irrigate if "irrigati" in p["motivo"].lower() else
+                    tot_ha} for p in pac_items])
+
+pac_cols = st.columns(3)
+for i, p in enumerate(pac_items):
+    importo = round(p["ha"]*p["pag_ha"],0) if p["ok"] else 0
+    with pac_cols[i%3]:
+        bg    = "#f0fdf4" if p["ok"] else "#fafaf9"
+        brd   = "border-left:4px solid #1a6b3a;" if p["ok"] else "border-left:4px solid #e5e7eb;"
+        ico   = "✅" if p["ok"] else "○"
+        color = "#065f46" if p["ok"] else "#6b7280"
+        st.markdown(f"""<div style="background:{bg};border-radius:11px;padding:.85rem 1rem;
+          margin:.3rem 0;border:1px solid rgba(15,53,32,.12);{brd}">
+          <b style="font-size:.83rem;color:{color}">{ico} {p["nome"]}</b><br>
+          <span style="font-size:.7rem;color:#7a8c7e">{p["motivo"]}</span><br>
+          {"<b style='color:#1a6b3a;font-size:.82rem'>€"+f"{int(importo):,}/anno</b> ({p['ha']:.0f} ha × €{p['pag_ha']}/ha)" if p["ok"] else f"<span style='color:#c9963a;font-size:.72rem'>💡 {p['azione']}</span>"}
+        </div>""", unsafe_allow_html=True)
+
+# Banner totale PAC
+st.markdown(f"""
+<div style="background:linear-gradient(90deg,#061912,#0f3520);color:#fff;
+  border-radius:12px;padding:.9rem 1.4rem;margin-top:.5rem;font-size:.82rem">
+  🇪🇺 <b>Pagamenti PAC Eco-Scheme stimati:</b>&nbsp;
+  Accessibili ora: <b style="color:#c9963a">€{int(pac_totale):,}/anno</b> &nbsp;·&nbsp;
+  Margine non sfruttato: <b style="color:#fbbf24">€{int(max(0, sum(p["pag_ha"]*tot_ha for p in pac_items if not p["ok"])/len(pac_items) if pac_items else 0)):,}+/anno potenziali</b> &nbsp;·&nbsp;
+  {"✅ Ottimo utilizzo eco-scheme" if pac_totale > 500 else "⚠️ Attiva più misure per massimizzare i pagamenti"}
+</div>""", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════
 #  CERTIFICAZIONI
@@ -1472,6 +1642,7 @@ Elettricità: <b>0 t</b><br>
 Produzione fertilizz.: <b>{round(co2_fert_prod,2)} tCO₂eq</b><br>
 Produzione fitofarmaci: <b>{round(co2_fito_s3,2)} tCO₂eq</b><br>
 Materie prime: <b>{round(co2_materie,2)} tCO₂eq</b><br>
+Trasporti: <b>{round(co2_trasporti,2)} tCO₂eq</b><br>
 <b>Tot. Sc.3: {round(scope3_total,2)} t</b></div></div>
 </div></div>
 
