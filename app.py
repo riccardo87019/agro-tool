@@ -1087,28 +1087,88 @@ function evaluatePixel(s) {
         if resp.status_code != 200:
             return None, f"Errore API Sentinel: {resp.status_code}"
 
-        # Decodifica TIFF in memoria con numpy
-        import io, struct
+        # Decodifica risposta — gestisce sia TIFF float32 che PNG/JPEG
+        import io
         raw = resp.content
-        # Parse TIFF minimale — leggiamo i float32 direttamente
-        # Usiamo PIL se disponibile, altrimenti stima fallback
+
+        # Debug: controlla content-type
+        content_type = resp.headers.get("Content-Type", "")
+
+        import numpy as np_local
+        ndvi_mean = None
+        bsi_mean  = None
+
+        # Prova 1: tifffile (più robusto per TIFF float32 multibanda)
         try:
-            from PIL import Image
-            import numpy as np_local
-            img = Image.open(io.BytesIO(raw))
-            arr = np_local.array(img, dtype=np_local.float32)
-            # arr shape: (H, W, 5) — band 0=NDVI, 1=BSI
-            ndvi_vals = arr[:,:,0].flatten()
-            bsi_vals  = arr[:,:,1].flatten()
-            # Filtra valori no-data (-9999) e outlier
+            import tifffile
+            arr = tifffile.imread(io.BytesIO(raw))
+            if arr.ndim == 3:
+                ndvi_vals = arr[:,:,0].flatten().astype(np_local.float32)
+                bsi_vals  = arr[:,:,1].flatten().astype(np_local.float32)
+            else:
+                ndvi_vals = arr.flatten().astype(np_local.float32)
+                bsi_vals  = np_local.zeros_like(ndvi_vals)
             mask = (ndvi_vals > -1) & (ndvi_vals < 1) & (bsi_vals > -1) & (bsi_vals < 1)
-            if mask.sum() < 5:
-                return None, "Troppo nuvoloso o nessun dato valido nel periodo selezionato"
-            ndvi_mean = float(np_local.nanmedian(ndvi_vals[mask]))
-            bsi_mean  = float(np_local.nanmedian(bsi_vals[mask]))
-        except ImportError:
-            # Fallback: usa solo la dimensione del file come proxy qualità
-            return None, "Libreria PIL non disponibile — aggiungi Pillow al requirements.txt"
+            if mask.sum() >= 5:
+                ndvi_mean = float(np_local.nanmedian(ndvi_vals[mask]))
+                bsi_mean  = float(np_local.nanmedian(bsi_vals[mask]))
+        except Exception:
+            pass
+
+        # Prova 2: PIL/Pillow con libtiff
+        if ndvi_mean is None:
+            try:
+                from PIL import Image
+                Image.MAX_IMAGE_PIXELS = None
+                img = Image.open(io.BytesIO(raw))
+                arr = np_local.array(img, dtype=np_local.float32)
+                if arr.ndim == 3 and arr.shape[2] >= 2:
+                    ndvi_vals = arr[:,:,0].flatten()
+                    bsi_vals  = arr[:,:,1].flatten()
+                elif arr.ndim == 2:
+                    ndvi_vals = arr.flatten()
+                    bsi_vals  = np_local.zeros_like(ndvi_vals)
+                else:
+                    ndvi_vals = arr[:,:,0].flatten()
+                    bsi_vals  = np_local.zeros_like(ndvi_vals)
+                mask = (ndvi_vals > -1) & (ndvi_vals < 1) & (bsi_vals > -1) & (bsi_vals < 1)
+                if mask.sum() >= 5:
+                    ndvi_mean = float(np_local.nanmedian(ndvi_vals[mask]))
+                    bsi_mean  = float(np_local.nanmedian(bsi_vals[mask]))
+            except Exception:
+                pass
+
+        # Prova 3: richiesta PNG invece di TIFF (fallback formato)
+        if ndvi_mean is None:
+            try:
+                payload_png = dict(payload)
+                payload_png["output"]["responses"][0]["format"]["type"] = "image/png"
+                resp2 = requests.post(
+                    "https://sh.dataspace.copernicus.eu/api/v1/process",
+                    headers={"Authorization": f"Bearer {token}",
+                             "Content-Type": "application/json",
+                             "Accept": "image/png"},
+                    json=payload_png, timeout=30
+                )
+                if resp2.status_code == 200:
+                    from PIL import Image
+                    img2 = Image.open(io.BytesIO(resp2.content)).convert("RGBA")
+                    arr2 = np_local.array(img2, dtype=np_local.float32) / 255.0
+                    # In PNG a 8bit: banda R=NDVI normalizzato, G=BSI normalizzato
+                    ndvi_vals = (arr2[:,:,0] * 2 - 1).flatten()  # denormalizza [-1,1]
+                    bsi_vals  = (arr2[:,:,1] * 2 - 1).flatten()
+                    mask = (ndvi_vals > -1) & (ndvi_vals < 1)
+                    if mask.sum() >= 5:
+                        ndvi_mean = float(np_local.nanmedian(ndvi_vals[mask]))
+                        bsi_mean  = float(np_local.nanmedian(bsi_vals[mask]))
+            except Exception:
+                pass
+
+        if ndvi_mean is None:
+            return None, "Impossibile decodificare l'immagine satellitare. Aggiungi 'tifffile' al requirements.txt"
+
+        if abs(ndvi_mean) < 0.001 and abs(bsi_mean) < 0.001:
+            return None, "Troppo nuvoloso o nessun dato valido nel periodo selezionato (120gg)"
 
         # Modello regressione LUCAS (semplificato per suoli mediterranei)
         # BSI basso = suolo ricco di SOM; NDVI alto = buona copertura vegetale
