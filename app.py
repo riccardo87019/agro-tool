@@ -2156,8 +2156,8 @@ temi_materialita = [
         "categoria": "E1",
         "colore": "#22c55e",
         "impatto": min(10, round(3 + _so_media*1.5 + _pct_rig*3, 1)),
-        "finanziario": min(10, round(2 + val_cred/1000 + _pct_rig*3, 1)),
-        "note": f"Sequestro: +{round(tot_seq,1)} tCO2/a · Crediti: €{int(val_cred):,}"
+        "finanziario": min(10, round(2 + max(0, tot_seq - tot_emit) * prezzo_co2 / 1000 + _pct_rig*3, 1)),
+        "note": f"Sequestro: +{round(tot_seq,1)} tCO2/a · Crediti potenziali"
     },
     {
         "tema": "Uso e qualità\ndell'acqua",
@@ -2196,8 +2196,8 @@ temi_materialita = [
         "categoria": "G1",
         "colore": "#1e40af",
         "impatto": min(10, round(2 + (score-28)/10 + (1 if cert_csrd else 0)*1.5, 1)),
-        "finanziario": min(10, round(3 + pac_totale/500 + (1 if cert_iso else 0)*2, 1)),
-        "note": f"Score: {score}/100 · PAC: €{int(pac_totale):,}/a"
+        "finanziario": min(10, round(3 + (cert_bio*340 + (1 if cc_r>0 else 0)*110)/500 + (1 if cert_iso else 0)*2, 1)),
+        "note": f"Score: {score}/100 · PAC stimato"
     },
     {
         "tema": "Catena di fornitura\n(Scope 3 upstream)",
