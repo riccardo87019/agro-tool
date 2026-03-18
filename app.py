@@ -2979,6 +2979,365 @@ with st.expander("📊 Report di Impatto — Monetizzazione e Valore Ecosistemic
         "scc_utilizzato": scc_per_ton, "verifica": ir_verif, "note": ir_note
     }
 
+# ══════════════════════════════════════════════════════════════════════
+#  SEZIONI MANCANTI — Zootecnia · Natura2000 · S1 disc.14 · Welfare
+#  Tracciabilità decisioni · Conflitti interesse · S4 Consumatori
+# ══════════════════════════════════════════════════════════════════════
+
+with st.expander("🐄 E1/E4 — Zootecnia & Emissioni Animali (CH₄, N₂O deiezioni)", expanded=False):
+    st.markdown("""<div style="background:#161c16;border-left:4px solid #f59e0b;
+      border-radius:8px;padding:.7rem 1rem;margin-bottom:.8rem;font-size:.78rem;color:#86efac">
+      <b style="color:#fbbf24">ESRS E1 — Zootecnia</b> — Emissioni da fermentazione enterica (CH₄)
+      e gestione deiezioni (N₂O+CH₄). Obbligatorio se l'azienda alleva animali.
+      Fattori IPCC 2006 Vol.4 Cap.10 + Cap.11.
+    </div>""", unsafe_allow_html=True)
+
+    zoo_c1, zoo_c2, zoo_c3 = st.columns(3)
+    with zoo_c1:
+        st.markdown("**Consistenza allevamento**")
+        zoo_bovini_latte  = st.number_input("Bovini da latte (capi)", 0, 10000, 0, key="zoo_bl")
+        zoo_bovini_carne  = st.number_input("Bovini da carne (capi)", 0, 10000, 0, key="zoo_bc")
+        zoo_suini         = st.number_input("Suini (capi)", 0, 50000, 0, key="zoo_su")
+        zoo_ovicaprini    = st.number_input("Ovini/Caprini (capi)", 0, 10000, 0, key="zoo_oc")
+        zoo_pollame       = st.number_input("Pollame (capi)", 0, 500000, 0, key="zoo_po")
+        zoo_altri         = st.text_input("Altri animali (descrivi)", "", key="zoo_al")
+    with zoo_c2:
+        st.markdown("**Gestione deiezioni**")
+        zoo_gest_deiezioni = st.selectbox("Sistema principale gestione letame/liquame",
+            ["Stabulazione fissa con lettiera","Stabulazione libera con lettiera",
+             "Liquame in vasca (slurry)","Biodigestore anaerobico",
+             "Pascolo estensivo","Letame compostato","Misto"], key="zoo_gd")
+        zoo_giorni_pascolo = st.number_input("Giorni/anno al pascolo (media)", 0, 365, 0, key="zoo_gp")
+        zoo_biogas_zoo     = st.checkbox("Digestore biogas da deiezioni attivo", key="zoo_bg")
+        zoo_piano_nut      = st.selectbox("Piano nutrizione/alimentazione redatto",
+            ["Sì — con nutrizionista","Sì — autonomo","No"], key="zoo_pn")
+    with zoo_c3:
+        st.markdown("**Calcolo emissioni automatico (IPCC Tier 1)**")
+        # EF fermentazione enterica IPCC (kgCH4/capo/anno)
+        ef_ent = {"bovini_latte":117,"bovini_carne":57,"suini":1.5,"ovicaprini":5,"pollame":0}
+        # EF deiezioni CH4 (kgCH4/capo/anno) + N2O (kgN2O/capo/anno)
+        ef_deie_ch4 = {"bovini_latte":16,"bovini_carne":10,"suini":5,"ovicaprini":0.4,"pollame":0.02}
+        ef_deie_n2o = {"bovini_latte":1.5,"bovini_carne":1.0,"suini":0.6,"ovicaprini":0.2,"pollame":0.05}
+        GWP_CH4, GWP_N2O = 28, 265
+
+        ch4_ent = (zoo_bovini_latte*ef_ent["bovini_latte"] +
+                   zoo_bovini_carne*ef_ent["bovini_carne"] +
+                   zoo_suini*ef_ent["suini"] +
+                   zoo_ovicaprini*ef_ent["ovicaprini"] +
+                   zoo_pollame*ef_ent["pollame"]) / 1000  # tCH4
+        ch4_deie = (zoo_bovini_latte*ef_deie_ch4["bovini_latte"] +
+                    zoo_bovini_carne*ef_deie_ch4["bovini_carne"] +
+                    zoo_suini*ef_deie_ch4["suini"] +
+                    zoo_ovicaprini*ef_deie_ch4["ovicaprini"] +
+                    zoo_pollame*ef_deie_ch4["pollame"]) / 1000
+        n2o_deie = (zoo_bovini_latte*ef_deie_n2o["bovini_latte"] +
+                    zoo_bovini_carne*ef_deie_n2o["bovini_carne"] +
+                    zoo_suini*ef_deie_n2o["suini"] +
+                    zoo_ovicaprini*ef_deie_n2o["ovicaprini"] +
+                    zoo_pollame*ef_deie_n2o["pollame"]) / 1000
+        # Se biogas riduce CH4 deiezioni del 70%
+        if zoo_biogas_zoo:
+            ch4_deie *= 0.30
+        co2eq_zoo = ch4_ent*GWP_CH4 + ch4_deie*GWP_CH4 + n2o_deie*GWP_N2O
+
+        clr_zoo = "#f87171" if co2eq_zoo>5 else "#fbbf24" if co2eq_zoo>1 else "#4ade80"
+        st.markdown(f"""<div style="background:#0d1a0d;border-radius:10px;padding:.8rem;border:1px solid rgba(245,158,11,.3);font-size:.78rem">
+          🐄 CH₄ fermentazione: <b style="color:#fbbf24">{round(ch4_ent,2)} t/a</b><br>
+          💩 CH₄ deiezioni: <b style="color:#fbbf24">{round(ch4_deie,2)} t/a</b><br>
+          🌿 N₂O deiezioni: <b style="color:#f87171">{round(n2o_deie,2)} t/a</b><br>
+          <hr style="border:none;border-top:1px solid rgba(245,158,11,.2);margin:.4rem 0">
+          <b>Totale Scope 1 zootecnia: <span style="color:{clr_zoo}">{round(co2eq_zoo,2)} tCO₂eq/anno</span></b>
+          {"<br>✅ Biogas riduce CH₄ deiezioni -70%" if zoo_biogas_zoo else ""}
+        </div>""", unsafe_allow_html=True)
+        zoo_note = st.text_area("Note zootecnia (auditor)", height=60, key="zoo_note")
+
+    st.session_state["esrs_zoo"] = {
+        "bovini_latte": zoo_bovini_latte, "bovini_carne": zoo_bovini_carne,
+        "suini": zoo_suini, "ovicaprini": zoo_ovicaprini, "pollame": zoo_pollame,
+        "altri": zoo_altri, "gestione_deiezioni": zoo_gest_deiezioni,
+        "giorni_pascolo": zoo_giorni_pascolo, "biogas": zoo_biogas_zoo,
+        "piano_nutrizione": zoo_piano_nut,
+        "ch4_fermentazione_t": round(ch4_ent, 3),
+        "ch4_deiezioni_t": round(ch4_deie, 3),
+        "n2o_deiezioni_t": round(n2o_deie, 3),
+        "co2eq_totale": round(co2eq_zoo, 3), "note": zoo_note
+    }
+
+with st.expander("🌿 E4 — Natura 2000 & Aree Protette (verifica GPS)", expanded=False):
+    st.markdown("""<div style="background:#161c16;border-left:4px solid #22c55e;
+      border-radius:8px;padding:.7rem 1rem;margin-bottom:.8rem;font-size:.78rem;color:#86efac">
+      <b style="color:#4ade80">ESRS E4 — Biodiversità</b> — Verifica se i campi aziendali ricadono
+      in aree protette (Rete Natura 2000, Parchi nazionali/regionali, ZSC/ZPS/SIC).
+      Obbligatorio per disclosure E4-1. Da verificare tramite EUNIS o SIT regionale.
+    </div>""", unsafe_allow_html=True)
+
+    n2k_c1, n2k_c2 = st.columns(2)
+    with n2k_c1:
+        st.markdown("**Verifica per campo**")
+        n2k_rows = []
+        for _, _r in df_edit.iterrows():
+            nome_c = str(_r.get("Campo", ""))
+            lat_c  = float(_r.get("Lat", 0))
+            lon_c  = float(_r.get("Lon", 0))
+            coord_str = f"({lat_c:.4f}, {lon_c:.4f})" if lat_c != 0 else "GPS non inserito"
+            n2k_status = st.selectbox(
+                f"{nome_c} {coord_str}",
+                ["Non verificato","No — fuori da aree protette",
+                 "Sì — zona Natura 2000 (SIC/ZSC)","Sì — Zona Protezione Speciale (ZPS)",
+                 "Sì — Parco nazionale/regionale","Sì — altra area protetta"],
+                key=f"n2k_{nome_c}"
+            )
+            n2k_rows.append({"campo": nome_c, "status": n2k_status, "coord": coord_str})
+
+        st.markdown("""<div style="background:#0d1a0d;border-radius:8px;padding:.6rem;
+          border:1px solid rgba(34,197,94,.2);font-size:.72rem;margin-top:.5rem">
+          🔗 <b>Strumenti verifica:</b><br>
+          • <a href="https://natura2000.eea.europa.eu/" target="_blank" style="color:#4ade80">natura2000.eea.europa.eu</a><br>
+          • Geoportale ISPRA: <a href="https://www.isprambiente.gov.it" target="_blank" style="color:#4ade80">isprambiente.gov.it</a><br>
+          • SIT Regionale della tua Regione
+        </div>""", unsafe_allow_html=True)
+
+    with n2k_c2:
+        st.markdown("**Misure di tutela adottate**")
+        n2k_misure = st.multiselect("Misure attive per biodiversità", [
+            "Fasce tampone inerbite","Siepi e alberi campestri mantenuti",
+            "Stagni/pozze per fauna selvatica","Nidificatori artificiali (uccelli/pipistrelli)",
+            "Nessun intervento in periodo nidificazione","Riduzione uso pesticidi aree sensibili",
+            "Corridoi ecologici mantenuti","Monitoraggio specie indicatrici",
+            "Piano gestione Natura 2000 adottato","Nessuna misura specifica"], key="n2k_mis")
+        n2k_specie = st.text_area("Specie protette rilevate in azienda (se note)",
+            height=60, key="n2k_sp",
+            placeholder="Es: Civetta, Riccio europeo, Tritone crestato...")
+        n2k_impatti = st.selectbox("Impatto aziendale su habitat Natura 2000",
+            ["Non applicabile — fuori da aree","Nessun impatto rilevato",
+             "Impatto lieve — monitorato","Impatto moderato — in mitigazione",
+             "Impatto significativo — valutazione incidenza richiesta"], key="n2k_imp")
+        n2k_valutaz = st.selectbox("Valutazione di Incidenza (VINCA) effettuata",
+            ["Non necessaria","Sì — approvata","In corso","No — da avviare"], key="n2k_vi")
+        n2k_note = st.text_area("Note Natura 2000 (auditor)", height=60, key="n2k_note")
+
+    in_n2k = sum(1 for r in n2k_rows if "Sì" in r["status"])
+    st.session_state["esrs_n2k"] = {
+        "campi": n2k_rows, "campi_in_n2k": in_n2k,
+        "misure_tutela": n2k_misure, "specie_protette": n2k_specie,
+        "impatto_habitat": n2k_impatti, "vinca": n2k_valutaz, "note": n2k_note
+    }
+    if in_n2k > 0:
+        st.warning(f"⚠️ {in_n2k} campo/i ricade in area protetta — verificare obbligo VINCA e disclosure E4-1 obbligatoria.")
+
+with st.expander("👥 ESRS S1 — Disclosure 14: Discriminazioni, Procedimenti & Retribuzione equa", expanded=False):
+    st.markdown("""<div style="background:#161c16;border-left:4px solid #3b82f6;
+      border-radius:8px;padding:.7rem 1rem;margin-bottom:.8rem;font-size:.78rem;color:#86efac">
+      <b style="color:#60a5fa">ESRS S1 — Disclosure 14</b> — Requisiti specifici su
+      discriminazioni, procedimenti disciplinari, retribuzione equa e tutela dei diritti fondamentali.
+      Obbligatorio per aziende con dipendenti soggette a CSRD.
+    </div>""", unsafe_allow_html=True)
+
+    d14_c1, d14_c2 = st.columns(2)
+    with d14_c1:
+        st.markdown("**Discriminazioni e procedimenti**")
+        d14_segnalaz    = st.number_input("Segnalazioni discriminazione ricevute (n°/anno)", 0, 1000, 0, key="d14_seg")
+        d14_procedim    = st.number_input("Procedimenti disciplinari avviati (n°/anno)", 0, 1000, 0, key="d14_proc")
+        d14_licenz_disc = st.number_input("Licenziamenti per giusta causa (n°/anno)", 0, 1000, 0, key="d14_lic")
+        d14_ricorsi     = st.number_input("Ricorsi/contenziosi lavoro pendenti (n°)", 0, 1000, 0, key="d14_ric")
+        d14_gap_retrib  = st.number_input("Gender pay gap (% differenza M/F stesso ruolo)", -100.0, 100.0, 0.0, key="d14_gap",
+                                           help="Positivo = uomini guadagnano di più. Zero = parità.")
+    with d14_c2:
+        st.markdown("**Politiche e tutele**")
+        d14_pol_antidisc = st.selectbox("Politica antidiscriminazione adottata",
+            ["Sì — formale e comunicata","Sì — informale","No"], key="d14_pad")
+        d14_pol_molest   = st.selectbox("Procedura anti-molestie/mobbing",
+            ["Sì — formale","Sì — informale","No"], key="d14_pmol")
+        d14_salario_eq   = st.selectbox("Principio parità retributiva applicato",
+            ["Sì — verificato","Sì — dichiarato","No","In corso verifica"], key="d14_seq")
+        d14_lavoro_fort  = st.selectbox("Verifica assenza lavoro forzato/minorile in filiera",
+            ["Sì — audit formale","Sì — dichiarazione fornitori","No","Non applicabile"], key="d14_lf")
+        d14_note         = st.text_area("Note S1-D14 (auditor)", height=70, key="d14_note")
+
+    st.session_state["esrs_s1_d14"] = {
+        "segnalazioni_disc": d14_segnalaz, "procedimenti_disc": d14_procedim,
+        "licenziamenti_gc": d14_licenz_disc, "ricorsi_pendenti": d14_ricorsi,
+        "gender_pay_gap_pct": d14_gap_retrib, "politica_antidisc": d14_pol_antidisc,
+        "procedura_molestie": d14_pol_molest, "parita_retributiva": d14_salario_eq,
+        "verifica_lavoro_forzato": d14_lavoro_fort, "note": d14_note
+    }
+
+with st.expander("🎁 ESRS S1 — Piano Welfare Aziendale Formale", expanded=False):
+    st.markdown("""<div style="background:#161c16;border-left:4px solid #a78bfa;
+      border-radius:8px;padding:.7rem 1rem;margin-bottom:.8rem;font-size:.78rem;color:#86efac">
+      <b style="color:#c4b5fd">ESRS S1 — Welfare</b> — Piano welfare aziendale documentabile
+      e comunicabile ai dipendenti e agli stakeholder. Migliora score ESG e attrattività aziendale.
+    </div>""", unsafe_allow_html=True)
+
+    wf_c1, wf_c2 = st.columns(2)
+    with wf_c1:
+        st.markdown("**Misure welfare economiche**")
+        wf_premio_prod   = st.number_input("Premio produttività medio (€/dipendente/anno)", 0, 50000, 0, key="wf_pp")
+        wf_buoni_pasto   = st.number_input("Buoni pasto (€/gg × n° dipendenti)", 0, 100000, 0, key="wf_bp")
+        wf_trasferta     = st.number_input("Rimborso trasporto/trasferta (€/anno totale)", 0, 100000, 0, key="wf_tr")
+        wf_assic_int     = st.checkbox("Assicurazione sanitaria integrativa", key="wf_ai")
+        wf_prev_compl    = st.checkbox("Previdenza complementare (fondo pensione)", key="wf_pc")
+        wf_part_utili    = st.checkbox("Partecipazione agli utili aziendali", key="wf_pu")
+    with wf_c2:
+        st.markdown("**Misure welfare work-life balance**")
+        wf_smart_work    = st.selectbox("Smart working/lavoro flessibile",
+            ["Non applicabile (lavoro in campo)","Sì — parziale ufficio","No"], key="wf_sw")
+        wf_ferie_extra   = st.number_input("Giorni ferie aggiuntivi vs CCNL (n°)", 0, 30, 0, key="wf_fe")
+        wf_congedo_extra = st.checkbox("Congedo parentale aggiuntivo vs legge", key="wf_ce")
+        wf_formaz_euro   = st.number_input("Budget formazione per dipendente (€/anno)", 0, 10000, 0, key="wf_fm")
+        wf_alloggio      = st.checkbox("Alloggio aziendale disponibile", key="wf_al")
+        wf_asilo_nido    = st.checkbox("Contributo asilo nido/babysitter", key="wf_an")
+        wf_piano_doc     = st.selectbox("Piano welfare formalmente documentato e comunicato",
+            ["Sì — disponibile ai dipendenti","In elaborazione","No"], key="wf_doc")
+        wf_note          = st.text_area("Note welfare (auditor)", height=60, key="wf_note")
+
+    wf_val_tot = wf_premio_prod * max(st.session_state.get("esrs_s1",{}).get("tot_dip",1),1) + wf_buoni_pasto + wf_trasferta
+    st.markdown(f"""<div style="background:#161c16;border-radius:10px;padding:.6rem 1rem;
+      border:1px solid rgba(167,139,250,.3);font-size:.8rem">
+      💰 <b>Investimento welfare stimato: €{int(wf_val_tot):,}/anno</b> &nbsp;·&nbsp;
+      Piano documentato: <b style="color:{'#4ade80' if wf_piano_doc=='Sì — disponibile ai dipendenti' else '#fbbf24'}">{wf_piano_doc}</b>
+    </div>""", unsafe_allow_html=True)
+
+    st.session_state["esrs_welfare"] = {
+        "premio_prod": wf_premio_prod, "buoni_pasto": wf_buoni_pasto,
+        "rimborso_trasporto": wf_trasferta, "assic_integrativa": wf_assic_int,
+        "prev_complementare": wf_prev_compl, "partecipazione_utili": wf_part_utili,
+        "smart_working": wf_smart_work, "ferie_extra_gg": wf_ferie_extra,
+        "congedo_extra": wf_congedo_extra, "budget_formazione": wf_formaz_euro,
+        "alloggio": wf_alloggio, "asilo_nido": wf_asilo_nido,
+        "piano_documentato": wf_piano_doc, "valore_totale_annuo": int(wf_val_tot),
+        "note": wf_note
+    }
+
+with st.expander("🛡️ S4 — Consumatori & Utenti Finali (Sicurezza alimentare, etichettatura)", expanded=False):
+    st.markdown("""<div style="background:#161c16;border-left:4px solid #06b6d4;
+      border-radius:8px;padding:.7rem 1rem;margin-bottom:.8rem;font-size:.78rem;color:#86efac">
+      <b style="color:#22d3ee">ESRS S4</b> — Impatti su consumatori e utenti finali dei prodotti agricoli.
+      Include sicurezza alimentare, tracciabilità, etichettatura, reclami.
+    </div>""", unsafe_allow_html=True)
+
+    s4_c1, s4_c2 = st.columns(2)
+    with s4_c1:
+        st.markdown("**Sicurezza alimentare**")
+        s4_sistema_haccp = st.selectbox("Sistema HACCP implementato",
+            ["Sì — certificato","Sì — autocontrollo","No","Non applicabile"], key="s4_haccp")
+        s4_tracciab      = st.selectbox("Sistema tracciabilità prodotti",
+            ["Sì — informatizzato","Sì — cartaceo","Parziale","No"], key="s4_trac")
+        s4_reclami       = st.number_input("Reclami qualità/sicurezza ricevuti (n°/anno)", 0, 10000, 0, key="s4_rec")
+        s4_ritiri        = st.number_input("Ritiri/recall prodotti (n°/anno)", 0, 100, 0, key="s4_rit")
+        s4_nc_alimentari = st.number_input("Non conformità alimentari rilevate (n°/anno)", 0, 1000, 0, key="s4_nc")
+    with s4_c2:
+        st.markdown("**Etichettatura e comunicazione**")
+        s4_etich_orig    = st.selectbox("Etichettatura origine prodotto (reg. UE 1169/2011)",
+            ["Conforme","Parzialmente conforme","Non applicabile","Da verificare"], key="s4_eo")
+        s4_etich_bio     = st.selectbox("Etichettatura biologico (se certificato)",
+            ["Conforme Reg. UE 2018/848","Non applicabile","Da verificare"], key="s4_eb")
+        s4_canali        = st.multiselect("Canali di vendita principali", [
+            "GDO (supermercati)","Vendita diretta in azienda","Mercati locali/km0",
+            "Cooperative/consorzi","Industria alimentare","Export","HO.RE.CA.","E-commerce","Altro"], key="s4_can")
+        s4_certificaz_q  = st.multiselect("Certificazioni qualità prodotto attive", [
+            "DOP","IGP","STG","DOC/DOCG","IGT","Biologico UE","Demeter","Altro","Nessuna"], key="s4_cq")
+        s4_note          = st.text_area("Note S4 (auditor)", height=60, key="s4_note")
+
+    st.session_state["esrs_s4"] = {
+        "haccp": s4_sistema_haccp, "tracciabilita": s4_tracciab,
+        "reclami_n": s4_reclami, "ritiri_n": s4_ritiri, "nc_n": s4_nc_alimentari,
+        "etich_origine": s4_etich_orig, "etich_bio": s4_etich_bio,
+        "canali_vendita": s4_canali, "cert_qualita": s4_certificaz_q, "note": s4_note
+    }
+
+with st.expander("📋 G — Tracciabilità Decisioni Sostenibilità (Verbali, Delibere, Audit interni)", expanded=False):
+    st.markdown("""<div style="background:#161c16;border-left:4px solid #ec4899;
+      border-radius:8px;padding:.7rem 1rem;margin-bottom:.8rem;font-size:.78rem;color:#86efac">
+      <b style="color:#f472b6">ESRS 2 — Governance</b> — Tracciabilità delle decisioni in materia
+      di sostenibilità. Richiesto per dimostrare che gli impatti ESG vengono discussi e gestiti
+      a livello di governance.
+    </div>""", unsafe_allow_html=True)
+
+    gov_c1, gov_c2 = st.columns(2)
+    with gov_c1:
+        st.markdown("**Verbali e delibere**")
+        gov_verbali       = st.selectbox("Verbali riunioni con tema sostenibilità",
+            ["Sì — regolari e archiviati","Sì — occasionali","No"], key="gov_verb")
+        gov_freq_riun     = st.selectbox("Frequenza riunioni su temi ESG",
+            ["Mensile","Trimestrale","Semestrale","Annuale","Mai"], key="gov_freq")
+        gov_delibere      = st.selectbox("Delibere formali su obiettivi sostenibilità",
+            ["Sì — con target e scadenze","Sì — generiche","No"], key="gov_delib")
+        gov_relazione_ann = st.selectbox("Relazione annuale sostenibilità prodotta",
+            ["Sì — pubblica","Sì — interna","No","In elaborazione"], key="gov_rel")
+        gov_audit_int     = st.selectbox("Audit interno su performance ESG",
+            ["Sì — annuale","Sì — biennale","No"], key="gov_aud")
+    with gov_c2:
+        st.markdown("**Responsabilità e controllo**")
+        gov_kpi_sost      = st.multiselect("KPI sostenibilità monitorati regolarmente", [
+            "Emissioni GHG Scope 1+2+3","Consumo acqua","Sostanza organica suolo",
+            "Infortuni sul lavoro","Formazione dipendenti","Score ESG",
+            "Crediti carbonio generati","PAC Eco-Scheme incassato",
+            "Soddisfazione clienti","Nessuno ancora"], key="gov_kpi")
+        gov_incentivi_mgmt = st.selectbox("Obiettivi ESG collegati a incentivi del management",
+            ["Sì","No","Non applicabile"], key="gov_inc")
+        gov_revisione_ext  = st.selectbox("Revisione esterna della governance ESG",
+            ["Sì — ente accreditato","Sì — consulente","No"], key="gov_rev")
+        gov_note           = st.text_area("Note tracciabilità decisioni (auditor)", height=80, key="gov_note")
+
+    st.session_state["esrs_governance"] = {
+        "verbali_sost": gov_verbali, "freq_riunioni": gov_freq_riun,
+        "delibere_formali": gov_delibere, "relazione_annuale": gov_relazione_ann,
+        "audit_interno": gov_audit_int, "kpi_monitorati": gov_kpi_sost,
+        "incentivi_mgmt": gov_incentivi_mgmt, "revisione_esterna": gov_revisione_ext,
+        "note": gov_note
+    }
+
+with st.expander("⚖️ G — Conflitti di Interesse & Etica Aziendale", expanded=False):
+    st.markdown("""<div style="background:#161c16;border-left:4px solid #fbbf24;
+      border-radius:8px;padding:.7rem 1rem;margin-bottom:.8rem;font-size:.78rem;color:#86efac">
+      <b style="color:#fde68a">ESRS 2 — Anti-corruzione & Etica</b> — Gestione conflitti di interesse,
+      politica anti-corruzione, conformità normativa. Richiesto da ESRS 2 G1-1 e G1-2.
+    </div>""", unsafe_allow_html=True)
+
+    et_c1, et_c2 = st.columns(2)
+    with et_c1:
+        st.markdown("**Etica e anti-corruzione**")
+        et_codice_etico   = st.selectbox("Codice etico aziendale adottato",
+            ["Sì — pubblico e comunicato","Sì — interno","No","In elaborazione"], key="et_ce")
+        et_anticorruz     = st.selectbox("Politica anti-corruzione/anti-frode",
+            ["Sì — formale","Sì — informale","No"], key="et_ac")
+        et_conflitti      = st.selectbox("Procedura gestione conflitti di interesse",
+            ["Sì — formale con registro","Sì — informale","No"], key="et_ci")
+        et_casi_corruz    = st.number_input("Casi corruzione/frode rilevati (n°/anno)", 0, 100, 0, key="et_cc")
+        et_sanzioni       = st.number_input("Sanzioni amministrative ricevute (n°/anno)", 0, 100, 0, key="et_san")
+    with et_c2:
+        st.markdown("**Conformità normativa**")
+        et_violaz_amb     = st.number_input("Violazioni normativa ambientale (n°/anno)", 0, 100, 0, key="et_va")
+        et_violaz_lav     = st.number_input("Violazioni normativa lavoro (n°/anno)", 0, 100, 0, key="et_vl")
+        et_violaz_alim    = st.number_input("Violazioni sicurezza alimentare (n°/anno)", 0, 100, 0, key="et_vf")
+        et_whistl         = st.selectbox("Canale segnalazione illeciti (whistleblowing aziendale)",
+            ["Sì — sistema digitale anonimo","Sì — referente interno","No"], key="et_wh")
+        et_formaz_etica   = st.checkbox("Formazione su etica/anticorruzione erogata ai dipendenti", key="et_fe")
+        et_note           = st.text_area("Note etica e conflitti (auditor)", height=70, key="et_note")
+
+    # Score etica automatico
+    et_score = 100
+    if et_codice_etico == "No": et_score -= 20
+    if et_anticorruz == "No": et_score -= 20
+    if et_conflitti == "No": et_score -= 15
+    et_score -= min(40, (et_casi_corruz + et_sanzioni + et_violaz_amb + et_violaz_lav) * 5)
+    et_score = max(0, et_score)
+    et_clr = "#4ade80" if et_score>=80 else "#fbbf24" if et_score>=50 else "#f87171"
+    st.markdown(f"""<div style="background:#161c16;border-radius:10px;padding:.6rem 1rem;
+      border:1px solid rgba(251,191,36,.3);font-size:.8rem">
+      ⚖️ <b>Score conformità etica: <span style="color:{et_clr}">{et_score}/100</span></b> &nbsp;·&nbsp;
+      Violazioni tot.: <b style="color:#f87171">{et_violaz_amb+et_violaz_lav+et_violaz_alim}</b>
+    </div>""", unsafe_allow_html=True)
+
+    st.session_state["esrs_etica"] = {
+        "codice_etico": et_codice_etico, "politica_anticorruz": et_anticorruz,
+        "gestione_conflitti": et_conflitti, "casi_corruzione": et_casi_corruz,
+        "sanzioni_amm": et_sanzioni, "violazioni_amb": et_violaz_amb,
+        "violazioni_lav": et_violaz_lav, "violazioni_alim": et_violaz_alim,
+        "whistleblowing": et_whistl, "formazione_etica": et_formaz_etica,
+        "score_etica": et_score, "note": et_note
+    }
 
 # ══════════════════════════════════════════════════════════════════════
 #  CERTIFICAZIONI
@@ -4341,6 +4700,180 @@ if RL_OK and gen_multi:
     t_irp.setStyle(total_row_style(make_ts(rc.HexColor("#92400E"), rc.HexColor("#FFFBEB"), WH), rc.HexColor("#92400E")))
     story.append(t_irp)
     story.append(Paragraph("Valori monetizzati indicativi — certificazione richiede valutazione esperto Natural Capital.", S_sm))
+    story.append(Spacer(1,5*mm))
+
+    # ══════════════════════════════════════════════════════════
+    # SEZIONE 7 — ZOOTECNIA · NATURA2000 · S1-D14 · WELFARE · S4 · GOV · ETICA
+    # ══════════════════════════════════════════════════════════
+    story.append(PageBreak())
+    story.append(section_banner("SEZIONE 7 — DATI AUDITOR INTEGRATIVI",
+                                rc.HexColor("#065F46"),
+                                "Zootecnia · Natura 2000 · S1 Disc.14 · Welfare · S4 · Governance · Etica"))
+    story.append(Spacer(1,4*mm))
+
+    # ── ZOOTECNIA ─────────────────────────────────────────────
+    _zoo = st.session_state.get("esrs_zoo", {})
+    story.append(Paragraph("E1/E4 — Zootecnia & Emissioni Animali (IPCC Tier 1)",
+        S("h_zoo",fontSize=10,textColor=rc.HexColor("#D97706"),fontName="Helvetica-Bold",spaceBefore=6,spaceAfter=3)))
+    zoo_rows = [
+        [C("Specie",True),C("Capi",True),C("CH₄ enterica t/a",True),C("CH₄ deiezioni t/a",True),C("N₂O deiezioni t/a",True)],
+    ]
+    ef_ent_pdf  = {"bovini_latte":117,"bovini_carne":57,"suini":1.5,"ovicaprini":5,"pollame":0}
+    ef_ch4d_pdf = {"bovini_latte":16,"bovini_carne":10,"suini":5,"ovicaprini":0.4,"pollame":0.02}
+    ef_n2od_pdf = {"bovini_latte":1.5,"bovini_carne":1.0,"suini":0.6,"ovicaprini":0.2,"pollame":0.05}
+    specie_map  = [
+        ("Bovini da latte","bovini_latte"),("Bovini da carne","bovini_carne"),
+        ("Suini","suini"),("Ovini/Caprini","ovicaprini"),("Pollame","pollame"),
+    ]
+    for label, key in specie_map:
+        capi = _zoo.get(key, 0)
+        if capi > 0:
+            ch4e = capi * ef_ent_pdf[key] / 1000
+            ch4d = capi * ef_ch4d_pdf[key] / 1000 * (0.30 if _zoo.get("biogas") else 1.0)
+            n2od = capi * ef_n2od_pdf[key] / 1000
+            zoo_rows.append([C(label),C(str(capi),True),
+                C(f"{ch4e:.3f}",False,GLD_C),C(f"{ch4d:.3f}",False,GLD_C),C(f"{n2od:.3f}",False,RED_C)])
+    zoo_rows.append([C("TOTALE CO₂eq (GWP CH4=28, N2O=265)",True),C(""),
+        C(""),C(""),C(f"{_zoo.get('co2eq_totale',0):.2f} tCO₂eq",True,RED_C)])
+    t_zoo = Table(zoo_rows, colWidths=[W*0.28,W*0.12,W*0.20,W*0.20,W*0.20])
+    t_zoo.setStyle(make_ts(rc.HexColor("#D97706"), rc.HexColor("#FFFBEB"), WH))
+    story.append(t_zoo)
+    story.append(Paragraph(
+        f"Gestione deiezioni: {_zoo.get('gestione_deiezioni','—')} · "
+        f"Giorni pascolo: {_zoo.get('giorni_pascolo',0)} · "
+        f"Biogas: {'Sì (riduzione CH₄ -70%)' if _zoo.get('biogas') else 'No'} · "
+        f"Piano nutrizione: {_zoo.get('piano_nutrizione','—')}", S_sm))
+    story.append(Spacer(1,4*mm))
+
+    # ── NATURA 2000 ────────────────────────────────────────────
+    _n2k = st.session_state.get("esrs_n2k", {})
+    story.append(Paragraph("E4 — Natura 2000 & Aree Protette",
+        S("h_n2k",fontSize=10,textColor=MED_GN,fontName="Helvetica-Bold",spaceBefore=6,spaceAfter=3)))
+    campi_n2k = _n2k.get("campi", [])
+    if campi_n2k:
+        n2k_rows = [[C("Campo",True),C("Coordinate GPS",True),C("Status Natura 2000",True)]]
+        for campo in campi_n2k:
+            clr_n2k = RED_C if "Sì" in campo.get("status","") else MED_GN if "No —" in campo.get("status","") else GRY_C
+            n2k_rows.append([C(campo.get("campo","—")),C(campo.get("coord","—")),
+                C(campo.get("status","—"),False,clr_n2k)])
+        t_n2k = Table(n2k_rows, colWidths=[W*0.25,W*0.30,W*0.45])
+        t_n2k.setStyle(make_ts(MED_GN, LT_GN, WH))
+        story.append(t_n2k)
+    story.append(Paragraph(
+        f"Campi in area protetta: {_n2k.get('campi_in_n2k',0)} · "
+        f"VINCA: {_n2k.get('vinca','—')} · "
+        f"Impatto habitat: {_n2k.get('impatto_habitat','—')}", S_sm))
+    if _n2k.get("misure_tutela"):
+        story.append(Paragraph(f"Misure tutela: {', '.join(_n2k['misure_tutela'])}", S_sm))
+    story.append(Spacer(1,4*mm))
+
+    # ── S1 DISCLOSURE 14 ──────────────────────────────────────
+    _d14 = st.session_state.get("esrs_s1_d14", {})
+    story.append(Paragraph("ESRS S1 — Disclosure 14: Discriminazioni & Retribuzione Equa",
+        S("h_d14",fontSize=10,textColor=rc.HexColor("#2563EB"),fontName="Helvetica-Bold",spaceBefore=6,spaceAfter=3)))
+    d14_rows = [
+        [C("Indicatore D14",True),C("Valore",True),C("Indicatore D14",True),C("Valore",True)],
+        [C("Segnalazioni discriminazione"),C(str(_d14.get("segnalazioni_disc",0)),False,RED_C if _d14.get("segnalazioni_disc",0)>0 else MED_GN),
+         C("Procedimenti disciplinari"),C(str(_d14.get("procedimenti_disc",0)))],
+        [C("Licenziamenti giusta causa"),C(str(_d14.get("licenziamenti_gc",0))),
+         C("Ricorsi/contenziosi pendenti"),C(str(_d14.get("ricorsi_pendenti",0)),False,RED_C if _d14.get("ricorsi_pendenti",0)>0 else GRY_C)],
+        [C("Gender pay gap %"),C(f"{_d14.get('gender_pay_gap_pct',0):+.1f}%",False,GLD_C if abs(_d14.get('gender_pay_gap_pct',0))>5 else MED_GN),
+         C("Parità retributiva"),C(str(_d14.get("parita_retributiva","—")))],
+        [C("Politica antidiscriminazione"),C(str(_d14.get("politica_antidisc","—"))),
+         C("Procedura anti-molestie"),C(str(_d14.get("procedura_molestie","—")))],
+        [C("Verifica lavoro forzato/minorile"),C(str(_d14.get("verifica_lavoro_forzato","—"))),C(""),C("")],
+    ]
+    t_d14 = Table(d14_rows, colWidths=[W*0.30,W*0.20,W*0.30,W*0.20])
+    t_d14.setStyle(make_ts(rc.HexColor("#2563EB"), rc.HexColor("#EFF6FF"), WH))
+    story.append(t_d14)
+    story.append(Spacer(1,4*mm))
+
+    # ── WELFARE ────────────────────────────────────────────────
+    _wf = st.session_state.get("esrs_welfare", {})
+    story.append(Paragraph("ESRS S1 — Piano Welfare Aziendale Formale",
+        S("h_wf",fontSize=10,textColor=rc.HexColor("#7C3AED"),fontName="Helvetica-Bold",spaceBefore=6,spaceAfter=3)))
+    wf_rows = [
+        [C("Misura Welfare",True),C("Stato",True),C("Misura Welfare",True),C("Stato",True)],
+        [C("Premio produttività"),C(f"€{_wf.get('premio_prod',0):,}/dip"),
+         C("Buoni pasto"),C(f"€{_wf.get('buoni_pasto',0):,}/anno")],
+        [C("Assicurazione integrativa"),C("✅ Sì" if _wf.get("assic_integrativa") else "No"),
+         C("Previdenza complementare"),C("✅ Sì" if _wf.get("prev_complementare") else "No")],
+        [C("Ferie extra CCNL"),C(f"{_wf.get('ferie_extra_gg',0)} giorni"),
+         C("Budget formazione"),C(f"€{_wf.get('budget_formazione',0):,}/dip/anno")],
+        [C("Alloggio aziendale"),C("✅ Sì" if _wf.get("alloggio") else "No"),
+         C("Contributo asilo nido"),C("✅ Sì" if _wf.get("asilo_nido") else "No")],
+        [C("Piano documentato"),C(str(_wf.get("piano_documentato","—")),True,MED_GN if "Sì" in str(_wf.get("piano_documentato","")) else GLD_C),
+         C("Investimento welfare totale"),C(f"€{_wf.get('valore_totale_annuo',0):,}/anno",True,MED_GN)],
+    ]
+    t_wf = Table(wf_rows, colWidths=[W*0.30,W*0.20,W*0.30,W*0.20])
+    t_wf.setStyle(make_ts(rc.HexColor("#7C3AED"), rc.HexColor("#F5F3FF"), WH))
+    story.append(t_wf)
+    story.append(Spacer(1,4*mm))
+
+    # ── S4 CONSUMATORI ─────────────────────────────────────────
+    _s4 = st.session_state.get("esrs_s4", {})
+    story.append(Paragraph("ESRS S4 — Consumatori & Sicurezza Alimentare",
+        S("h_s4",fontSize=10,textColor=rc.HexColor("#0891B2"),fontName="Helvetica-Bold",spaceBefore=6,spaceAfter=3)))
+    s4_rows = [
+        [C("Indicatore S4",True),C("Valore",True),C("Indicatore S4",True),C("Valore",True)],
+        [C("Sistema HACCP"),C(str(_s4.get("haccp","—"))),
+         C("Tracciabilità prodotti"),C(str(_s4.get("tracciabilita","—")))],
+        [C("Reclami qualità n°"),C(str(_s4.get("reclami_n",0)),False,RED_C if _s4.get("reclami_n",0)>0 else GRY_C),
+         C("Ritiri/recall n°"),C(str(_s4.get("ritiri_n",0)),False,RED_C if _s4.get("ritiri_n",0)>0 else GRY_C)],
+        [C("Non conformità alimentari"),C(str(_s4.get("nc_n",0))),
+         C("Etichettatura origine"),C(str(_s4.get("etich_origine","—")))],
+        [C("Canali vendita"),C(", ".join(_s4.get("canali_vendita",[]) or ["—"])[:60]),
+         C("Cert. qualità prodotto"),C(", ".join(_s4.get("cert_qualita",[]) or ["—"])[:40])],
+    ]
+    t_s4 = Table(s4_rows, colWidths=[W*0.28,W*0.22,W*0.28,W*0.22])
+    t_s4.setStyle(make_ts(rc.HexColor("#0891B2"), rc.HexColor("#ECFEFF"), WH))
+    story.append(t_s4)
+    story.append(Spacer(1,4*mm))
+
+    # ── GOVERNANCE TRACCIABILITÀ ───────────────────────────────
+    _gov = st.session_state.get("esrs_governance", {})
+    story.append(Paragraph("ESRS 2 — Tracciabilità Decisioni Sostenibilità",
+        S("h_gov",fontSize=10,textColor=rc.HexColor("#BE185D"),fontName="Helvetica-Bold",spaceBefore=6,spaceAfter=3)))
+    gov_rows = [
+        [C("Indicatore Governance",True),C("Valore",True),C("Indicatore Governance",True),C("Valore",True)],
+        [C("Verbali sostenibilità"),C(str(_gov.get("verbali_sost","—"))),
+         C("Frequenza riunioni ESG"),C(str(_gov.get("freq_riunioni","—")))],
+        [C("Delibere formali"),C(str(_gov.get("delibere_formali","—"))),
+         C("Relazione annuale"),C(str(_gov.get("relazione_annuale","—")))],
+        [C("Audit interno ESG"),C(str(_gov.get("audit_interno","—"))),
+         C("Incentivi mgmt ESG"),C(str(_gov.get("incentivi_mgmt","—")))],
+        [C("Revisione esterna"),C(str(_gov.get("revisione_esterna","—"))),C(""),C("")],
+    ]
+    if _gov.get("kpi_monitorati"):
+        gov_rows.append([C("KPI monitorati"),C(", ".join(_gov["kpi_monitorati"])[:120],False,MED_GN)])
+        gov_rows[-1] = [C("KPI sostenibilità monitorati",True),
+                        C(", ".join(_gov["kpi_monitorati"])[:120],False,MED_GN),C(""),C("")]
+    t_gov = Table(gov_rows, colWidths=[W*0.30,W*0.20,W*0.30,W*0.20])
+    t_gov.setStyle(make_ts(rc.HexColor("#BE185D"), rc.HexColor("#FDF2F8"), WH))
+    story.append(t_gov)
+    story.append(Spacer(1,4*mm))
+
+    # ── ETICA & CONFLITTI ──────────────────────────────────────
+    _et = st.session_state.get("esrs_etica", {})
+    story.append(Paragraph("ESRS 2 — Conflitti di Interesse & Etica Aziendale",
+        S("h_et",fontSize=10,textColor=GLD_C,fontName="Helvetica-Bold",spaceBefore=6,spaceAfter=3)))
+    et_rows = [
+        [C("Indicatore Etica",True),C("Valore",True),C("Indicatore Etica",True),C("Valore",True)],
+        [C("Codice etico"),C(str(_et.get("codice_etico","—"))),
+         C("Politica anticorruzione"),C(str(_et.get("politica_anticorruz","—")))],
+        [C("Gestione conflitti interesse"),C(str(_et.get("gestione_conflitti","—"))),
+         C("Whistleblowing"),C(str(_et.get("whistleblowing","—")))],
+        [C("Casi corruzione n°"),C(str(_et.get("casi_corruzione",0)),False,RED_C if _et.get("casi_corruzione",0)>0 else GRY_C),
+         C("Sanzioni amministrative"),C(str(_et.get("sanzioni_amm",0)),False,RED_C if _et.get("sanzioni_amm",0)>0 else GRY_C)],
+        [C("Violazioni ambientali"),C(str(_et.get("violazioni_amb",0)),False,RED_C if _et.get("violazioni_amb",0)>0 else GRY_C),
+         C("Violazioni normativa lavoro"),C(str(_et.get("violazioni_lav",0)),False,RED_C if _et.get("violazioni_lav",0)>0 else GRY_C)],
+        [C("Score conformità etica"),C(f"{_et.get('score_etica',0)}/100",True,
+           MED_GN if _et.get("score_etica",0)>=80 else GLD_C if _et.get("score_etica",0)>=50 else RED_C),
+         C("Formazione etica dipendenti"),C("✅ Sì" if _et.get("formazione_etica") else "No")],
+    ]
+    t_et = Table(et_rows, colWidths=[W*0.30,W*0.20,W*0.30,W*0.20])
+    t_et.setStyle(make_ts(rc.HexColor("#92400E"), rc.HexColor("#FFFBEB"), WH))
+    story.append(t_et)
     story.append(Spacer(1,5*mm))
 
     # ══════════════════════════════════════════════════════════
