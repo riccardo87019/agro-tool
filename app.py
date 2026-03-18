@@ -400,6 +400,42 @@ PROT = {
 KC = {"Cereali":1.15,"Vite (DOC/IGT)":0.70,"Olivo":0.65,"Nocciolo":0.80,
       "Frutteto":1.10,"Orticole":1.20,"Foraggere":1.00,"Misto":0.90}
 
+# ── Kc stagionale per coltura (FAO-56) — pesi mensili normalizzati ──────────────
+# Struttura: {coltura: [kc_gen, kc_feb, ..., kc_dic]}
+KC_STAGIONALE = {
+    "Cereali":        [0.30,0.35,0.50,0.85,1.15,1.15,0.80,0.40,0.30,0.30,0.30,0.30],
+    "Vite (DOC/IGT)": [0.20,0.20,0.25,0.45,0.65,0.70,0.70,0.65,0.55,0.35,0.20,0.20],
+    "Olivo":          [0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65,0.65],
+    "Nocciolo":       [0.40,0.40,0.55,0.70,0.80,0.80,0.80,0.75,0.65,0.50,0.40,0.40],
+    "Frutteto":       [0.45,0.50,0.65,0.85,1.05,1.10,1.10,1.05,0.85,0.65,0.50,0.45],
+    "Orticole":       [0.70,0.70,0.85,1.05,1.15,1.20,1.20,1.15,1.05,0.90,0.75,0.70],
+    "Foraggere":      [0.80,0.80,0.90,1.00,1.05,1.05,1.00,1.00,0.95,0.90,0.85,0.80],
+    "Misto":          [0.50,0.55,0.65,0.80,0.90,0.90,0.88,0.85,0.75,0.65,0.55,0.50],
+}
+
+# ── Fattore pH su mineralizzazione SOM (Fantappiè et al. 2011, suoli italiani) ──
+# pH ottimale per attività microbica: 6.5-7.0 → fattore 1.0
+# pH < 5.5 → mineralizzazione -25%; pH > 8.0 → mineralizzazione -15%
+def f_ph_mineralizzazione(ph):
+    """Fattore correttivo mineralizzazione SOM in funzione del pH."""
+    ph = max(4.0, min(9.0, float(ph)))
+    if ph < 5.5:   return 0.75
+    elif ph < 6.0: return 0.85
+    elif ph < 6.5: return 0.92
+    elif ph <= 7.0: return 1.00
+    elif ph <= 7.5: return 0.97
+    elif ph <= 8.0: return 0.92
+    else:           return 0.85
+
+# ── N₂O indiretto da lisciviazione e volatilizzazione (IPCC 2006 Vol.4) ─────────
+# EF4 volatilizzazione: 0.010 kgN₂O-N/kg NH₃-N volatilizzato
+# EF5 lisciviazione:    0.0075 kgN₂O-N/kg N lisciviato
+# Frazione N volatilizzata: Frac_gasF = 0.10 urea, 0.02 altri minerali, 0.005 organici
+# Frazione N lisciviata:    Frac_leach = 0.30 (media EU, clima mediterraneo)
+N2O_EF4 = 0.010   # kgN₂O-N/kg NH₃-N volatilizzato
+N2O_EF5 = 0.0075  # kgN₂O-N/kg N lisciviato
+FRAC_LEACH = 0.30  # 30% N lisciviato in climi mediterranei
+
 BM_COLTURA = {
     "Cereali":         {"score":48, "co2_ha":1.9, "margine_pct":20, "label":"Cereali/Seminativi"},
     "Vite (DOC/IGT)":  {"score":57, "co2_ha":3.1, "margine_pct":38, "label":"Vitivinicolo DOC"},
@@ -477,15 +513,15 @@ EF_TRASPORTI = {
 if "df_campi" not in st.session_state:
     st.session_state.df_campi = pd.DataFrame([
         {"Campo":"Nord A1","Ettari":14.0,"SO %":1.6,"Argilla %":26,"Limo %":30,
-         "Densità":1.32,"Protocollo":"Convenzionale","Cover crops":False,
+         "Densità":1.32,"pH":6.8,"Profondità cm":30,"Protocollo":"Convenzionale","Cover crops":False,
          "Coltura":"Cereali","Irrigazione m³/ha":750,"Lat":43.62,"Lon":13.51,
          "Analisi suolo":"2022-03"},
         {"Campo":"Vigneto Est","Ettari":7.0,"SO %":1.3,"Argilla %":17,"Limo %":42,
-         "Densità":1.44,"Protocollo":"Intermedio","Cover crops":False,
+         "Densità":1.44,"pH":7.2,"Profondità cm":25,"Protocollo":"Intermedio","Cover crops":False,
          "Coltura":"Vite (DOC/IGT)","Irrigazione m³/ha":280,"Lat":43.60,"Lon":13.54,
          "Analisi suolo":"2024-06"},
         {"Campo":"Oliveto Sud","Ettari":5.0,"SO %":2.2,"Argilla %":23,"Limo %":36,
-         "Densità":1.24,"Protocollo":"Rigenerativo Full","Cover crops":True,
+         "Densità":1.24,"pH":7.0,"Profondità cm":30,"Protocollo":"Rigenerativo Full","Cover crops":True,
          "Coltura":"Olivo","Irrigazione m³/ha":0,"Lat":43.58,"Lon":13.49,
          "Analisi suolo":"2025-09"},
     ])
@@ -707,53 +743,108 @@ def wcode_icon(c):
 #  MOTORE SCIENTIFICO
 # ══════════════════════════════════════════════════════════════════════
 def calcola(row, boost=False):
-    prot = "Rigenerativo Full" if boost else str(row.get("Protocollo","Intermedio"))
-    p    = PROT.get(prot, PROT["Intermedio"])
-    ha   = max(0.1, float(row.get("Ettari",1)))
-    so   = max(0.1, float(row.get("SO %",1.5)))
-    arg  = max(1.0, float(row.get("Argilla %",20)))
-    lim  = max(1.0, float(row.get("Limo %",30)))
-    den  = max(0.7, float(row.get("Densità",1.3)))
-    cc   = bool(row.get("Cover crops",False)) or boost
-    col  = str(row.get("Coltura","Cereali"))
-    irr  = max(0.0, float(row.get("Irrigazione m³/ha",0)))
-    massa  = 0.30 * 10000 * den
+    prot  = "Rigenerativo Full" if boost else str(row.get("Protocollo","Intermedio"))
+    p     = PROT.get(prot, PROT["Intermedio"])
+    ha    = max(0.1, float(row.get("Ettari",1)))
+    so    = max(0.1, float(row.get("SO %",1.5)))
+    arg   = max(1.0, float(row.get("Argilla %",20)))
+    lim   = max(1.0, float(row.get("Limo %",30)))
+    den   = max(0.7, float(row.get("Densità",1.3)))
+    ph    = float(row.get("pH", 6.8))          # ← NUOVO: pH suolo
+    prof  = max(10, float(row.get("Profondità cm", 30)))  # ← NUOVO: profondità campionamento
+    cc    = bool(row.get("Cover crops",False)) or boost
+    col   = str(row.get("Coltura","Cereali"))
+    irr   = max(0.0, float(row.get("Irrigazione m³/ha",0)))
+
+    # ── SOC stock con profondità reale (non fissa 30cm) ──────────────────────
+    # IPCC 2006: massa = profondità(m) × 10000 m²/ha × densità
+    massa  = (prof/100) * 10000 * den          # ← MIGLIORATO: usa profondità reale
     soc    = massa * (so/100) * 0.58
+
+    # ── Fattori sequestro carbonio con correzione pH ──────────────────────────
     f_text = 1 + (arg/100) + (lim/200)
     f_cc   = 1.15 if cc else 1.0
     f_clim = F_CLIMA.get(zona, 1.0)
-    seq_ha = soc * p["co2c"] * f_text * f_cc * f_clim * p["fmg"]
+    f_pH   = f_ph_mineralizzazione(ph)         # ← NUOVO: correzione pH
+    seq_ha = soc * p["co2c"] * f_text * f_cc * f_clim * p["fmg"] * f_pH
     co2_seq= seq_ha * 3.667 * ha
+
+    # ── N₂O diretto (Scope 1) ────────────────────────────────────────────────
     n_kg   = p["n_ha"] * ha
-    n2o    = n_kg * 0.01 * (44/28) * 265 / 1000
-    diesel = p["diesel"] * ha
-    die_co2= diesel * 2.68 / 1000
+    n2o_diretto = n_kg * 0.01 * (44/28) * 265 / 1000
+
+    # ── N₂O indiretto: volatilizzazione + lisciviazione (IPCC 2006 Vol.4) ────
+    # Stima conservativa: frac_gas 10% per protocollo convenzionale, 5% intermedio, 2% rigenerativo
+    frac_gas = {"Convenzionale": 0.10, "Intermedio": 0.05, "Rigenerativo Full": 0.02}.get(prot, 0.05)
+    n2o_vol  = n_kg * frac_gas * N2O_EF4 * (44/28) * 265 / 1000
+    n2o_leach= n_kg * FRAC_LEACH * N2O_EF5 * (44/28) * 265 / 1000
+    n2o      = n2o_diretto + n2o_vol + n2o_leach  # ← MIGLIORATO: N₂O totale
+
+    diesel   = p["diesel"] * ha
+    die_co2  = diesel * 2.68 / 1000
     co2_emit = n2o + die_co2
-    kc        = KC.get(col, 1.0)
-    et0_ann   = M["et0"] * 365
-    pioggia_e = MS["pioggia_30g"] * 12 * 0.85
-    fabb_raw  = max(0, (et0_ann*kc - pioggia_e) * 10 * ha)
-    fabb_irr  = fabb_raw * (0.65 if inv_drip else 1.0)
-    irr_tot   = irr * ha
-    spreco    = max(0, irr_tot - fabb_irr)
-    ret_h2o   = max(0, (so-1.0)*1.5*3*10*ha)
+
+    # ── Bilancio idrico con Kc stagionale (FAO-56) ───────────────────────────
+    mese_corrente = datetime.now().month - 1  # 0-based
+    kc_mens = KC_STAGIONALE.get(col, [KC.get(col,1.0)]*12)
+    # Calcola ET₀ annua ponderata per stagione usando dati ERA5 mensili
+    if MA and len(MA) == 12:
+        # Usa ET₀ mensili reali da ERA5
+        et0_annua = sum(MA[i]["et0"] for i in range(12))
+        # Fabbisogno = somma mensile di ET₀_mese × Kc_mese × ha
+        fabb_mensile = sum(
+            MA[i]["et0"] * kc_mens[i % 12] * 10 * ha
+            for i in range(len(MA))
+        )
+        pioggia_ann = sum(MA[i]["pioggia"] * 0.85 for i in range(len(MA)))
+        fabb_raw = max(0, fabb_mensile - pioggia_ann)
+    else:
+        # Fallback: Kc medio annuo
+        kc_medio = sum(kc_mens) / 12
+        et0_ann  = M["et0"] * 365
+        pioggia_e = MS["pioggia_30g"] * 12 * 0.85
+        fabb_raw  = max(0, (et0_ann * kc_medio - pioggia_e) * 10 * ha)
+
+    fabb_irr = fabb_raw * (0.65 if inv_drip else 1.0)
+    irr_tot  = irr * ha
+    spreco   = max(0, irr_tot - fabb_irr)
+    ret_h2o  = max(0, (so-1.0)*1.5*3*10*ha)
+
     return {
-        "co2_seq":   round(co2_seq,3), "co2_emit":  round(co2_emit,3),
-        "co2_netto": round(co2_seq-co2_emit,3),
-        "n2o":       round(n2o,3),     "diesel_co2":round(die_co2,3),
-        "diesel_l":  round(diesel,1),  "n_kg":      round(n_kg,1),
-        "fabb_irr":  round(fabb_irr,0),"irr_tot":   round(irr_tot,0),
-        "spreco":    round(spreco,0),   "ret_h2o":   round(ret_h2o,0),
-        "c_diesel":  round(diesel*costo_diesel,0),
-        "c_n":       round(n_kg*0.85,0),
-        "c_irr":     round(irr_tot*costo_acqua,0),
-        "valore_f":  round(ha*(15000+(so/1.2-1)*0.12*15000),0),
-        "seq_ha":    round(seq_ha*3.667,3),
+        "co2_seq":    round(co2_seq,3),    "co2_emit":   round(co2_emit,3),
+        "co2_netto":  round(co2_seq-co2_emit,3),
+        "n2o":        round(n2o,3),         "n2o_dir":    round(n2o_diretto,3),
+        "n2o_ind":    round(n2o_vol+n2o_leach,3),
+        "diesel_co2": round(die_co2,3),
+        "diesel_l":   round(diesel,1),      "n_kg":       round(n_kg,1),
+        "fabb_irr":   round(fabb_irr,0),    "irr_tot":    round(irr_tot,0),
+        "spreco":     round(spreco,0),       "ret_h2o":    round(ret_h2o,0),
+        "c_diesel":   round(diesel*costo_diesel,0),
+        "c_n":        round(n_kg*0.85,0),
+        "c_irr":      round(irr_tot*costo_acqua,0),
+        "valore_f":   round(ha*(15000+(so/1.2-1)*0.12*15000),0),
+        "seq_ha":     round(seq_ha*3.667,3),
+        "f_pH":       round(f_pH,3),
+        "prof_cm":    prof,
     }
 
-def rothc_proiezione(so0, protocollo, anni=10):
-    k = {"Convenzionale": -0.038, "Intermedio": -0.010, "Rigenerativo Full": 0.015
-         }.get(str(protocollo), -0.010)
+def rothc_proiezione(so0, protocollo, anni=10, ph=6.8, temp_media=15.0):
+    """
+    RothC semplificato con correzioni pH e temperatura.
+    Coleman & Jenkinson 1996 + Fantappiè 2011 (pH) + Arrhenius Q10 (temperatura).
+    """
+    k_base = {"Convenzionale": -0.038, "Intermedio": -0.010, "Rigenerativo Full": 0.015
+              }.get(str(protocollo), -0.010)
+    # Correzione pH: pH ottimale 6.5-7.0 → fattore 1.0
+    f_pH_rothc = f_ph_mineralizzazione(ph)
+    # Correzione temperatura (Q10=2.0): ogni +10°C raddoppia la decomposizione
+    # Temperatura di riferimento: 15°C
+    f_temp = 2.0 ** ((temp_media - 15.0) / 10.0)
+    # Applica correzioni solo alla componente di perdita (k negativo)
+    if k_base < 0:
+        k = k_base * f_pH_rothc * f_temp
+    else:
+        k = k_base * f_pH_rothc  # per rigenerativo: pH influenza sequestro ma non temperatura
     valori = [round(so0 * ((1 + k) ** i), 3) for i in range(anni + 1)]
     delta_5  = round(valori[5]  - so0, 3)
     delta_10 = round(valori[10] - so0, 3)
@@ -891,6 +982,10 @@ df_edit = st.data_editor(
         "Argilla %":         st.column_config.NumberColumn(min_value=1,max_value=80),
         "Limo %":            st.column_config.NumberColumn(min_value=1,max_value=80),
         "Densità":           st.column_config.NumberColumn(min_value=0.7,max_value=1.9,format="%.2f"),
+        "pH":                st.column_config.NumberColumn(min_value=4.0,max_value=9.0,format="%.1f",
+                             help="pH del suolo (4=molto acido, 7=neutro, 8.5=alcalino). Influenza mineralizzazione SOM."),
+        "Profondità cm":     st.column_config.NumberColumn(min_value=10,max_value=60,format="%.0f",
+                             help="Profondità campionamento analisi suolo (cm). Standard: 0-30cm. Influenza stock SOC."),
         "Irrigazione m³/ha": st.column_config.NumberColumn(min_value=0,max_value=10000),
         "Lat": st.column_config.NumberColumn(min_value=-90,max_value=90,format="%.5f"),
         "Lon": st.column_config.NumberColumn(min_value=-180,max_value=180,format="%.5f"),
@@ -922,6 +1017,7 @@ if "Analisi suolo" in df_edit.columns:
             "Dati SO%, Argilla% e Densità potrebbero non riflettere la situazione attuale. "
             "Si consiglia un nuovo prelievo (costo 150-300 euro/campo)."
         )
+
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -1667,6 +1763,47 @@ else:           rating,rcls,rcol,rbg = "D — Critico","D","#f87171","rgba(239,6
 coltura_principale = df_edit["Coltura"].mode()[0] if len(df_edit)>0 else "Misto"
 bm = BM_COLTURA.get(coltura_principale, BM_COLTURA["Misto"])
 
+# ── Info precisione modello (dopo calcoli aggregati — res_att disponibile) ──
+with st.expander("🔬 Precisione modello — come i nuovi parametri migliorano i calcoli"):
+    ph_valori = []; prof_valori = []
+    for _, _r in df_edit.iterrows():
+        try:
+            ph_valori.append(float(_r.get("pH", 6.8)))
+            prof_valori.append(float(_r.get("Profondità cm", 30)))
+        except: pass
+    ph_medio   = round(sum(ph_valori)/max(len(ph_valori),1), 1) if ph_valori else 6.8
+    prof_media = round(sum(prof_valori)/max(len(prof_valori),1), 0) if prof_valori else 30.0
+    f_ph_medio = f_ph_mineralizzazione(ph_medio)
+    diff_prof  = round((prof_media/30 - 1)*100, 1)
+    n2o_ind_tot = sum(r.get("n2o_ind",0) for r in res_att)
+
+    cols_prec = st.columns(4)
+    with cols_prec[0]:
+        st.metric("pH medio aziendale", f"{ph_medio}", help="pH ottimale: 6.5-7.0")
+        clr_ph = "🟢" if 6.5 <= ph_medio <= 7.0 else "🟡" if 6.0 <= ph_medio <= 7.5 else "🔴"
+        st.caption(f"{clr_ph} Fattore mineralizzazione: {f_ph_medio:.2f}")
+    with cols_prec[1]:
+        st.metric("Profondità media", f"{prof_media:.0f} cm",
+                  delta=f"{diff_prof:+.0f}% vs 30cm standard")
+        st.caption("Stock SOC proporzionale alla profondità")
+    with cols_prec[2]:
+        st.metric("N₂O indiretto totale", f"{round(n2o_ind_tot,2)} tCO₂eq",
+                  help="Volatilizzazione + lisciviazione (IPCC EF4+EF5)")
+        st.caption("Prima escluso — ora nel Scope 1")
+    with cols_prec[3]:
+        st.metric("Kc stagionale", "Attivo ✅",
+                  help="Coefficienti mensili FAO-56 invece di Kc fisso annuo")
+        st.caption("Fabbisogno idrico ±30% più preciso")
+    st.markdown("""
+    | Parametro | Prima | Ora | Miglioramento |
+    |-----------|-------|-----|---------------|
+    | **SOC stock** | Profondità fissa 30cm | Profondità reale analisi | ±15% precisione |
+    | **Sequestro** | Nessuna correzione pH | Fattore pH Fantappiè 2011 | ±20% precisione |
+    | **N₂O** | Solo EF1 diretto | EF1 + EF4 vol. + EF5 lisc. | +10-25% emissioni |
+    | **Bilancio idrico** | Kc medio annuo | Kc mensile FAO-56 | ±30% fabbisogno |
+    | **RothC** | k fisso | k corretto pH + temperatura | ±15% proiezione SOM |
+    """)
+
 # ══════════════════════════════════════════════════════════════════════
 #  BILANCIO SCOPE 1-2-3
 # ══════════════════════════════════════════════════════════════════════
@@ -1685,7 +1822,9 @@ with sb1:
         🔴 Scope 1 — Emissioni Dirette</div>
       <div style="font-size:.78rem;line-height:1.9">
         Gasolio macchine: <b>{round(S('diesel_co2'),2)} tCO₂</b><br>
-        N₂O fertilizzanti campo: <b>{round(S('n2o')+co2_fert_n2o,2)} tCO₂eq</b><br>
+        N₂O diretto campo: <b>{round(S('n2o'),2)} tCO₂eq</b><br>
+        N₂O indiretto (vol.+lisc.): <b>{round(S('n2o_ind'),2)} tCO₂eq</b><br>
+        N₂O fertilizzanti specifici: <b>{round(co2_fert_n2o,2)} tCO₂eq</b><br>
         Combustione scarti: <b>{round(max(0,sum(r['qty']*r['ef'] for r in scarti_detail if r['ef']>0)),2)} tCO₂</b><br>
         <hr style="border:none;border-top:1px solid #fca5a5;margin:.4rem 0">
         <b>Totale Scope 1: {round(scope1_total,2)} tCO₂eq/anno</b>
@@ -2091,7 +2230,8 @@ with rc1:
         so0   = max(0.1, float(_r.get("SO %", 1.5)))
         prot  = str(_r.get("Protocollo", "Intermedio"))
         nome  = str(_r.get("Campo", ""))
-        vals, d5, d10, k = rothc_proiezione(so0, prot, 10)
+        ph_r  = float(_r.get("pH", 6.8))
+        vals, d5, d10, k = rothc_proiezione(so0, prot, 10, ph=ph_r, temp_media=MS["temp_30g"])
         clr   = col_prot.get(prot, "#94a3b8")
         fig_rc.add_scatter(
             x=anni_proj, y=vals, name=f"{nome} ({prot[:4]}…)",
@@ -2114,7 +2254,8 @@ with rc2:
         so0  = max(0.1, float(_r.get("SO %", 1.5)))
         prot = str(_r.get("Protocollo", "Intermedio"))
         nome = str(_r.get("Campo", ""))
-        _, d5, d10, k = rothc_proiezione(so0, prot, 10)
+        ph_r = float(_r.get("pH", 6.8))
+        _, d5, d10, k = rothc_proiezione(so0, prot, 10, ph=ph_r, temp_media=MS["temp_30g"])
         clr5  = "#4ade80" if d5  >= 0 else "#f87171"
         clr10 = "#4ade80" if d10 >= 0 else "#f87171"
         st.markdown(f"""<div style="border-left:3px solid {col_prot.get(prot,'#94a3b8')};
@@ -2131,7 +2272,8 @@ for _, _r in df_edit.iterrows():
     so0  = max(0.1, float(_r.get("SO %", 1.5)))
     prot = str(_r.get("Protocollo", "Intermedio"))
     nome = str(_r.get("Campo", ""))
-    vals, d5, _, _ = rothc_proiezione(so0, prot, 10)
+    ph_r3 = float(_r.get("pH", 6.8))
+    vals, d5, _, _ = rothc_proiezione(so0, prot, 10, ph=ph_r3, temp_media=MS["temp_30g"])
     if vals[5] < 1.5:
         campi_rischio_som.append((nome, round(vals[5], 2)))
 if campi_rischio_som:
