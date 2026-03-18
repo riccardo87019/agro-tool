@@ -4142,12 +4142,9 @@ if RL_OK and gen_multi:
             C(t.get("note",""),False,GRY_C),
         ]
         dma_rows.append(row)
-        # Applica sfondo riga
-        idx = len(dma_rows)-1
-        TS_MAP.add("BACKGROUND",(0,idx),(-1,idx),row_bg)
 
-    t_dma = Table(dma_rows, colWidths=[W*0.22,W*0.09,W*0.13,W*0.13,W*0.16,W*0.27], repeatRows=1)
-    t_dma.setStyle(TableStyle([
+    # Build TableStyle with per-row backgrounds locally (no TS_MAP mutation)
+    dma_cmds = [
         ("BACKGROUND",   (0,0),(-1,0), rc.HexColor("#7C3AED")),
         ("TEXTCOLOR",    (0,0),(-1,0), WH),
         ("FONTNAME",     (0,0),(-1,0), "Helvetica-Bold"),
@@ -4159,9 +4156,19 @@ if RL_OK and gen_multi:
         ("BOTTOMPADDING",(0,0),(-1,-1),5),
         ("LEFTPADDING",  (0,0),(-1,-1),6),
         ("RIGHTPADDING", (0,0),(-1,-1),6),
-        ("ROWBACKGROUNDS",(0,1),(-1,-1),[ROW1,ROW2]),
         ("TEXTCOLOR",    (0,1),(-1,-1),GRY_C),
-    ]))
+    ]
+    # Add per-row background colours
+    for idx, t in enumerate(_temi, start=1):
+        imp2 = t["impatto"]; fin2 = t["finanziario"]
+        if   imp2>=_sog and fin2>=_sog: rb = rc.HexColor("#FFF0F0")
+        elif imp2>=_sog:                rb = rc.HexColor("#F0FDF4")
+        elif fin2>=_sog:                rb = rc.HexColor("#FFFBEB")
+        else:                           rb = ROW2
+        dma_cmds.append(("BACKGROUND",(0,idx),(-1,idx),rb))
+
+    t_dma = Table(dma_rows, colWidths=[W*0.22,W*0.09,W*0.13,W*0.13,W*0.16,W*0.27], repeatRows=1)
+    t_dma.setStyle(TableStyle(dma_cmds))
     story.append(t_dma)
     story.append(Spacer(1,3*mm))
 
