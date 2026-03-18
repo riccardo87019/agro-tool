@@ -2357,15 +2357,26 @@ pac_cols = st.columns(3)
 for i, p in enumerate(pac_items):
     importo = round(p["ha"]*p["pag_ha"],0) if p["ok"] else 0
     with pac_cols[i%3]:
-        bg    = "#f0fdf4" if p["ok"] else "#fafaf9"
-        brd   = "border-left:4px solid #1a6b3a;" if p["ok"] else "border-left:4px solid #e5e7eb;"
-        ico   = "✅" if p["ok"] else "○"
-        color = "#065f46" if p["ok"] else "#6b7280"
-        st.markdown(f"""<div style="background:{bg};border-radius:11px;padding:.85rem 1rem;
-          margin:.3rem 0;border:1px solid rgba(15,53,32,.12);{brd}">
-          <b style="font-size:.83rem;color:{color}">{ico} {p["nome"]}</b><br>
-          <span style="font-size:.7rem;color:#86efac">{p["motivo"]}</span><br>
-          {"<b style='color:#1a6b3a;font-size:.82rem'>€"+f"{int(importo):,}/anno</b> ({p['ha']:.0f} ha × €{p['pag_ha']}/ha)" if p["ok"] else f"<span style='color:#fde68a;font-size:.72rem'>💡 {p['azione']}</span>"}
+        if p["ok"]:
+            bg  = "#0d2b1a"
+            brd = "border-left:4px solid #22c55e;"
+            ico = "✅"
+            nome_clr   = "#4ade80"
+            motivo_clr = "#86efac"
+            importo_html = f"<b style='color:#22c55e;font-size:.84rem'>€{int(importo):,}/anno</b> <span style='color:#a3d9a5;font-size:.7rem'>({p['ha']:.0f} ha × €{p['pag_ha']}/ha)</span>"
+        else:
+            bg  = "#161c16"
+            brd = "border-left:4px solid #374151;"
+            ico = "○"
+            nome_clr   = "#9ca3af"
+            motivo_clr = "#6b7280"
+            importo_html = f"<span style='color:#fde68a;font-size:.72rem'>💡 {p['azione']}</span>"
+
+        st.markdown(f"""<div style="background:{bg};border-radius:11px;padding:.9rem 1.1rem;
+          margin:.3rem 0;border:1px solid rgba(34,197,94,.15);{brd}">
+          <b style="font-size:.83rem;color:{nome_clr}">{ico} {p["nome"]}</b><br>
+          <span style="font-size:.7rem;color:{motivo_clr}">{p["motivo"]}</span><br>
+          <div style="margin-top:.3rem">{importo_html}</div>
         </div>""", unsafe_allow_html=True)
 
 st.markdown(f"""
