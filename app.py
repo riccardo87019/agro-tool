@@ -3048,24 +3048,280 @@ for i,az in enumerate(azioni[:6],1):
       <span style="color:#86efac"> · 📜 {az['c']}</span></div>
     </div>""",unsafe_allow_html=True)
 
-# RISCHI
-st.markdown('<div class="sec">⚠️ Mappa dei Rischi</div>',unsafe_allow_html=True)
-rischi=[]
-if stress_idx>.4: rischi.append({"l":"alto","t":f"Stress idrico critico {round(stress_idx*100):.0f}% — rischio produttivo immediato"})
-if tot_netto<0:   rischi.append({"l":"alto","t":"Bilancio GHG Sc.1+3 negativo — azienda emittente netta"})
-if co2_fert_prod>2.0: rischi.append({"l":"alto","t":f"Emissioni Scope 3 fertilizzanti elevate ({round(co2_fert_prod,1)} t) — vulnerabile a normativa CSRD"})
+# ══════════════════════════════════════════════════════════════════════
+#  RISCHI & OPPORTUNITÀ — Registro completo ESRS 2 + TCFD
+# ══════════════════════════════════════════════════════════════════════
+st.markdown('<div class="sec">⚠️ Registro Rischi & Opportunità — ESRS 2 · TCFD · EFRAG 2023</div>', unsafe_allow_html=True)
+st.caption("Analisi strutturata conforme ESRS 2 (IRO — Impacts, Risks and Opportunities) e TCFD (Task Force on Climate-related Financial Disclosures).")
+
+# ── Rischi automatici da dati ─────────────────────────────────────────
+rischi_auto = []
+if stress_idx > .4:
+    rischi_auto.append({"cat":"Clima","l":"alto","prob":85,"imp_eco":round(fatturato*0.12),
+        "t":f"Stress idrico critico {round(stress_idx*100):.0f}%",
+        "desc":"Deficit idrico attuale superiore alla soglia critica. Rischio resa immediato.",
+        "mitig":"Micro-irrigazione + copertura suolo + varietà resistenti siccità",
+        "orizzonte":"Breve (1-2 anni)"})
+if tot_netto < 0:
+    rischi_auto.append({"cat":"Normativo","l":"alto","prob":75,"imp_eco":round(abs(tot_netto)*prezzo_co2*3),
+        "t":"Bilancio GHG negativo — azienda emittente netta",
+        "desc":"Le emissioni Scope 1+3 superano il sequestro. Esposizione a tassazione carbonio futura.",
+        "mitig":"Protocollo rigenerativo + sostituzione fertilizzanti minerali + cover crops",
+        "orizzonte":"Medio (2-5 anni)"})
+if co2_fert_prod > 2.0:
+    rischi_auto.append({"cat":"Normativo","l":"alto","prob":90,"imp_eco":round(co2_fert_prod*prezzo_co2*5),
+        "t":f"Emissioni Scope 3 fertilizzanti elevate ({round(co2_fert_prod,1)} t)",
+        "desc":"Alta dipendenza da fertilizzanti minerali. Vulnerabile a CSRD e Carbon Border Adjustment.",
+        "mitig":"Sostituzione con organici/letame — risparmio stimato 60% emissioni Scope 3",
+        "orizzonte":"Breve (1-2 anni)"})
 if any(str(r.get("Protocollo",""))=="Convenzionale" for _,r in df_edit.iterrows()):
-    rischi.append({"l":"alto","t":"Lavorazione convenzionale: perdita SOM >0.5% stimata in 5 anni"})
+    rischi_auto.append({"cat":"Fisico","l":"alto","prob":95,"imp_eco":round(tot_vf*0.08),
+        "t":"Perdita SOM con lavorazione convenzionale",
+        "desc":"RothC stima perdita >3.8% SOM/anno sui campi convenzionali. Degrado struttura suolo.",
+        "mitig":"Transizione a lavorazione minima/conservativa + cover crops autunnali",
+        "orizzonte":"Medio (3-5 anni)"})
 if not any([cert_bio,cert_sqnpi,cert_gap]):
-    rischi.append({"l":"medio","t":"Zero certificazioni: esclusione filiere premium e crediti ufficiali"})
-if marg_pct<20: rischi.append({"l":"medio","t":f"Margine {marg_pct}% sotto soglia resilienza aziendale"})
-rischi.append({"l":"medio","t":"CSRD 2026: filiere >€40M richiedono ESG Scope 1+2+3 dei fornitori entro 2027"})
-rischi.append({"l":"basso","t":"Volatilità mercato CO₂ volontario: range €25-65/t nel 2026"})
-rischi.append({"l":"basso","t":"Scenario RCP4.5: +1.2°C area mediterranea entro 2035"})
-rm={"alto":"r-alto","medio":"r-medio","basso":"r-basso"}
-st.markdown('<div style="line-height:3">'+
-    " ".join([f'<span class="risk {rm[r["l"]]}">{r["l"].upper()} — {r["t"]}</span>' for r in rischi])+
-    "</div>",unsafe_allow_html=True)
+    rischi_auto.append({"cat":"Mercato","l":"medio","prob":70,"imp_eco":round(fatturato*0.15),
+        "t":"Zero certificazioni: esclusione filiere premium",
+        "desc":"Senza certificazioni riconosciute impossibile accedere a filiere GDO premium e export.",
+        "mitig":"Avvio SQnpi (6 mesi, ~€800) come primo step. Poi GlobalG.A.P.",
+        "orizzonte":"Breve (6-12 mesi)"})
+if marg_pct < 20:
+    rischi_auto.append({"cat":"Finanziario","l":"medio","prob":60,"imp_eco":round((20-marg_pct)/100*fatturato),
+        "t":f"Margine {marg_pct}% sotto soglia resilienza",
+        "desc":"Margine inferiore al 20% riduce la capacità di assorbire shock di prezzo o produzione.",
+        "mitig":"Diversificazione colturale + riduzione costi input + accesso PAC Eco-Scheme",
+        "orizzonte":"Medio (1-3 anni)"})
+rischi_auto.append({"cat":"Normativo","l":"medio","prob":85,"imp_eco":round(fatturato*0.05),
+    "t":"CSRD 2026: filiere >€40M richiedono ESG Scope 1+2+3",
+    "desc":"Dal 2026 i buyer obbligati CSRD trasferiscono i requisiti ai fornitori. Rischio esclusione contratti.",
+    "mitig":"Completare rendicontazione ESG con AgroLog — report pronto in 15 secondi",
+    "orizzonte":"Breve (entro 2026)"})
+rischi_auto.append({"cat":"Mercato","l":"basso","prob":50,"imp_eco":round(max(0,val_cred)*0.4),
+    "t":f"Volatilità mercato CO₂ volontario (€25-65/t)",
+    "desc":"Il prezzo dei crediti carbonio volontari è volatile. Ricavi da crediti non garantiti.",
+    "mitig":"Certificazione ISO 14064 + accesso mercati regolamentati (Verra VCS)",
+    "orizzonte":"Lungo (5+ anni)"})
+rischi_auto.append({"cat":"Fisico","l":"basso","prob":70,"imp_eco":round(fatturato*0.08),
+    "t":"Scenario RCP4.5: +1.2°C area mediterranea entro 2035",
+    "desc":"Aumento temperature riduce rese e aumenta fabbisogno idrico. Rischi fitosanitari nuovi.",
+    "mitig":"Adattamento varietale + incremento SOM per ritenzione idrica + assicurazioni climatiche",
+    "orizzonte":"Lungo (10+ anni)"})
+
+# ── Opportunità automatiche ───────────────────────────────────────────
+opport_auto = []
+if tot_netto > 0:
+    opport_auto.append({"cat":"Mercato","l":"alta","val_pot":int(val_cred),
+        "t":"Vendita crediti carbonio",
+        "desc":f"Bilancio GHG positivo ({round(tot_netto,1)} tCO₂eq/anno). Certificazione ISO 14064 abilita vendita su Xpansiv CBL.",
+        "azione":"Avviare certificazione ISO 14064 (6-9 mesi, ~€3.000-5.000)",
+        "orizzonte":"Medio (12-18 mesi)"})
+if pac_totale > 0:
+    opport_auto.append({"cat":"Finanziario","l":"alta","val_pot":int(pac_totale),
+        "t":f"PAC Eco-Scheme — €{int(pac_totale):,}/anno già accessibili",
+        "desc":"Pagamenti aggiuntivi PAC già attivabili con le pratiche attuali. Spesso non richiesti.",
+        "azione":"Presentare domanda tramite CAA entro campagna PAC corrente",
+        "orizzonte":"Breve (entro campagna PAC)"})
+opport_auto.append({"cat":"Mercato","l":"alta","val_pot":round(fatturato*0.18),
+    "t":"Filiere premium biologico/sostenibile",
+    "desc":"Mercato biologico +8%/anno. Premium price medio +20-35% vs convenzionale per cereali e olio.",
+    "azione":"Avvio conversione biologica (24 mesi) + certificazione Reg. UE 2018/848",
+    "orizzonte":"Medio (2-3 anni)"})
+opport_auto.append({"cat":"Finanziario","l":"media","val_pot":round(tot_spreco*costo_acqua*0.7) if tot_spreco>500 else 0,
+    "t":"Risparmio idrico con micro-irrigazione",
+    "desc":f"Spreco attuale {int(tot_spreco):,} m³/anno. Micro-irrigazione riduce consumi del 35%.",
+    "azione":"Investimento micro-irrigazione + PAC ES5 (€85/ha) + risparmio bolletta",
+    "orizzonte":"Breve (1-2 anni)"}) if tot_spreco > 300 else None
+opport_auto = [o for o in opport_auto if o is not None]
+opport_auto.append({"cat":"Finanziario","l":"media","val_pot":round(fatturato*0.03),
+    "t":"Finanziamenti green PNRR/BEI/PSR",
+    "desc":"Fondo Innovazione PNRR, misure PSR agroambientali, prestiti BEI per agricoltura sostenibile.",
+    "azione":"Verifica bandi aperti con CAA o consulente PNRR. Score ESG migliora accesso al credito.",
+    "orizzonte":"Breve (entro 2025-2026)"})
+opport_auto.append({"cat":"Mercato","l":"media","val_pot":round(fatturato*0.08),
+    "t":"Servizi ecosistemici e agriturismo",
+    "desc":"Pagamenti per servizi ecosistemici (PSE), agriturismo, didattica agricola, vendita diretta.",
+    "azione":"Valutare diversificazione con enti locali e programmi regionali PSE",
+    "orizzonte":"Medio (2-4 anni)"})
+
+# ── Tabs Rischi / Opportunità ─────────────────────────────────────────
+tab_r, tab_o, tab_mat = st.tabs(["⚠️ Registro Rischi", "🚀 Registro Opportunità", "📊 Matrice Probabilità/Impatto"])
+
+with tab_r:
+    # Rischi personalizzabili dall'auditor
+    st.markdown("**Rischi rilevati automaticamente + integrazione auditor**")
+    with st.expander("➕ Aggiungi rischio personalizzato (auditor)", expanded=False):
+        rc1, rc2, rc3 = st.columns(3)
+        with rc1:
+            r_cat    = st.selectbox("Categoria", ["Clima","Fisico","Normativo","Mercato","Finanziario","Reputazionale","Operativo"], key="r_cat")
+            r_liv    = st.selectbox("Livello", ["alto","medio","basso"], key="r_liv")
+            r_tit    = st.text_input("Titolo rischio", key="r_tit")
+        with rc2:
+            r_prob   = st.slider("Probabilità (%)", 0, 100, 50, key="r_prob")
+            r_imp    = st.number_input("Impatto economico stimato (€/anno)", 0, 5000000, 0, key="r_imp")
+            r_oriz   = st.selectbox("Orizzonte temporale", ["Breve (0-2 anni)","Medio (2-5 anni)","Lungo (5+ anni)"], key="r_oriz")
+        with rc3:
+            r_desc   = st.text_area("Descrizione", height=60, key="r_desc")
+            r_mitig  = st.text_area("Piano di mitigazione", height=60, key="r_mitig")
+        if st.button("➕ Aggiungi rischio", key="btn_add_r"):
+            if r_tit:
+                if "rischi_custom" not in st.session_state:
+                    st.session_state["rischi_custom"] = []
+                st.session_state["rischi_custom"].append({
+                    "cat":r_cat,"l":r_liv,"prob":r_prob,"imp_eco":r_imp,
+                    "t":r_tit,"desc":r_desc,"mitig":r_mitig,"orizzonte":r_oriz
+                })
+                st.success(f"✅ Rischio '{r_tit}' aggiunto.")
+
+    # Merge automatici + custom
+    rischi_custom = st.session_state.get("rischi_custom", [])
+    tutti_rischi  = rischi_auto + rischi_custom
+
+    # Salva per compatibilità con mappa badge sotto
+    rischi = [{"l":r["l"],"t":r["t"]} for r in tutti_rischi]
+    st.session_state["tutti_rischi"] = tutti_rischi
+
+    col_ord = st.selectbox("Ordina per", ["Livello","Probabilità","Impatto economico","Categoria"], key="r_ord")
+    ord_map = {"Livello": lambda x: {"alto":0,"medio":1,"basso":2}[x["l"]],
+               "Probabilità": lambda x: -x["prob"],
+               "Impatto economico": lambda x: -x["imp_eco"],
+               "Categoria": lambda x: x["cat"]}
+    tutti_rischi_ord = sorted(tutti_rischi, key=ord_map[col_ord])
+
+    for r in tutti_rischi_ord:
+        bg_r = {"alto":"rgba(239,68,68,.12)","medio":"rgba(245,158,11,.10)","basso":"rgba(34,197,94,.08)"}[r["l"]]
+        brd_r= {"alto":"#ef4444","medio":"#f59e0b","basso":"#22c55e"}[r["l"]]
+        ic_r = {"alto":"🔴","medio":"🟡","basso":"🟢"}[r["l"]]
+        st.markdown(f"""<div style="background:{bg_r};border-left:4px solid {brd_r};
+          border-radius:0 10px 10px 0;padding:.8rem 1.2rem;margin:.35rem 0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem">
+            <span style="font-weight:700;font-size:.85rem;color:#e8f5e9">{ic_r} [{r['cat']}] {r['t']}</span>
+            <span style="font-size:.72rem;color:#86efac">
+              Prob: <b style="color:#fff">{r['prob']}%</b> &nbsp;·&nbsp;
+              Impatto: <b style="color:#fde68a">€{r['imp_eco']:,}/anno</b> &nbsp;·&nbsp;
+              {r['orizzonte']}
+            </span>
+          </div>
+          <div style="font-size:.76rem;color:#86efac">{r['desc']}</div>
+          <div style="font-size:.74rem;color:#4ade80;margin-top:.2rem">🛡️ <b>Mitigazione:</b> {r['mitig']}</div>
+        </div>""", unsafe_allow_html=True)
+
+    # Indicatori sintesi rischi
+    n_alto = sum(1 for r in tutti_rischi if r["l"]=="alto")
+    n_med  = sum(1 for r in tutti_rischi if r["l"]=="medio")
+    imp_tot_rischi = sum(r["imp_eco"] for r in tutti_rischi)
+    st.markdown(f"""<div style="background:#161c16;border-radius:10px;padding:.7rem 1.2rem;
+      margin-top:.5rem;font-size:.8rem;border:1px solid rgba(239,68,68,.2)">
+      📊 <b>Sintesi registro rischi:</b> &nbsp;
+      🔴 Rischi alti: <b style="color:#f87171">{n_alto}</b> &nbsp;·&nbsp;
+      🟡 Medi: <b style="color:#fbbf24">{n_med}</b> &nbsp;·&nbsp;
+      Esposizione economica totale: <b style="color:#fde68a">€{imp_tot_rischi:,}/anno</b>
+    </div>""", unsafe_allow_html=True)
+
+with tab_o:
+    st.markdown("**Opportunità rilevate automaticamente + integrazione auditor**")
+    with st.expander("➕ Aggiungi opportunità personalizzata (auditor)", expanded=False):
+        oc1, oc2, oc3 = st.columns(3)
+        with oc1:
+            o_cat   = st.selectbox("Categoria", ["Mercato","Finanziario","Normativo","Tecnologico","Reputazionale","Operativo"], key="o_cat")
+            o_liv   = st.selectbox("Priorità", ["alta","media","bassa"], key="o_liv")
+            o_tit   = st.text_input("Titolo opportunità", key="o_tit")
+        with oc2:
+            o_val   = st.number_input("Valore potenziale (€/anno)", 0, 5000000, 0, key="o_val")
+            o_oriz  = st.selectbox("Orizzonte", ["Breve (0-2 anni)","Medio (2-5 anni)","Lungo (5+ anni)"], key="o_oriz")
+        with oc3:
+            o_desc  = st.text_area("Descrizione", height=60, key="o_desc")
+            o_az    = st.text_area("Azione necessaria", height=60, key="o_az")
+        if st.button("➕ Aggiungi opportunità", key="btn_add_o"):
+            if o_tit:
+                if "opport_custom" not in st.session_state:
+                    st.session_state["opport_custom"] = []
+                st.session_state["opport_custom"].append({
+                    "cat":o_cat,"l":o_liv,"val_pot":o_val,
+                    "t":o_tit,"desc":o_desc,"azione":o_az,"orizzonte":o_oriz
+                })
+                st.success(f"✅ Opportunità '{o_tit}' aggiunta.")
+
+    opport_custom = st.session_state.get("opport_custom", [])
+    tutte_opport  = opport_auto + opport_custom
+    st.session_state["tutte_opport"] = tutte_opport
+
+    for o in sorted(tutte_opport, key=lambda x: {"alta":0,"media":1,"bassa":2}[x["l"]]):
+        bg_o = {"alta":"rgba(34,197,94,.12)","media":"rgba(59,130,246,.10)","bassa":"rgba(148,163,184,.08)"}[o["l"]]
+        brd_o= {"alta":"#22c55e","media":"#3b82f6","bassa":"#94a3b8"}[o["l"]]
+        ic_o = {"alta":"⭐","media":"✨","bassa":"💡"}[o["l"]]
+        st.markdown(f"""<div style="background:{bg_o};border-left:4px solid {brd_o};
+          border-radius:0 10px 10px 0;padding:.8rem 1.2rem;margin:.35rem 0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem">
+            <span style="font-weight:700;font-size:.85rem;color:#e8f5e9">{ic_o} [{o['cat']}] {o['t']}</span>
+            <span style="font-size:.72rem;color:#86efac">
+              Priorità: <b style="color:#fff">{o['l'].upper()}</b> &nbsp;·&nbsp;
+              Valore potenziale: <b style="color:#4ade80">€{o['val_pot']:,}/anno</b> &nbsp;·&nbsp;
+              {o['orizzonte']}
+            </span>
+          </div>
+          <div style="font-size:.76rem;color:#86efac">{o['desc']}</div>
+          <div style="font-size:.74rem;color:#60a5fa;margin-top:.2rem">🎯 <b>Azione:</b> {o['azione']}</div>
+        </div>""", unsafe_allow_html=True)
+
+    val_tot_opport = sum(o["val_pot"] for o in tutte_opport)
+    n_alta = sum(1 for o in tutte_opport if o["l"]=="alta")
+    st.markdown(f"""<div style="background:#161c16;border-radius:10px;padding:.7rem 1.2rem;
+      margin-top:.5rem;font-size:.8rem;border:1px solid rgba(34,197,94,.2)">
+      📊 <b>Sintesi registro opportunità:</b> &nbsp;
+      ⭐ Priorità alta: <b style="color:#4ade80">{n_alta}</b> &nbsp;·&nbsp;
+      Totale: <b>{len(tutte_opport)}</b> &nbsp;·&nbsp;
+      Valore potenziale aggregato: <b style="color:#4ade80">€{val_tot_opport:,}/anno</b>
+    </div>""", unsafe_allow_html=True)
+
+with tab_mat:
+    st.markdown("**Matrice Probabilità × Impatto — tutti i rischi**")
+    import plotly.graph_objects as go_iro
+    fig_iro = go_iro.Figure()
+
+    # Zone sfondo
+    fig_iro.add_shape(type="rect",x0=60,x1=100,y0=60,y1=100,fillcolor="rgba(239,68,68,.10)",line=dict(width=0))
+    fig_iro.add_shape(type="rect",x0=30,x1=60,y0=30,y1=60,fillcolor="rgba(245,158,11,.08)",line=dict(width=0))
+    fig_iro.add_shape(type="rect",x0=0,x1=30,y0=0,y1=30,fillcolor="rgba(34,197,94,.06)",line=dict(width=0))
+
+    col_cat = {"Clima":"#3b82f6","Fisico":"#8b5cf6","Normativo":"#f59e0b",
+               "Mercato":"#22c55e","Finanziario":"#ef4444","Reputazionale":"#ec4899","Operativo":"#94a3b8"}
+
+    tutti_r = st.session_state.get("tutti_rischi", rischi_auto)
+    for r in tutti_r:
+        imp_norm = min(100, r["imp_eco"] / max(fatturato, 1) * 100 * 3)
+        fig_iro.add_trace(go_iro.Scatter(
+            x=[r["prob"]], y=[imp_norm],
+            mode="markers+text",
+            marker=dict(size=16, color=col_cat.get(r["cat"],"#94a3b8"),
+                        symbol="diamond" if r["l"]=="alto" else "circle",
+                        line=dict(color="white",width=2)),
+            text=[r["t"][:25]+"…" if len(r["t"])>25 else r["t"]],
+            textposition="top center",
+            textfont=dict(size=8, color="#e8f5e9"),
+            name=r["cat"],
+            hovertemplate=f"<b>{r['t']}</b><br>Cat: {r['cat']}<br>Prob: {r['prob']}%<br>Impatto: €{r['imp_eco']:,}<br>{r['orizzonte']}<extra></extra>",
+            showlegend=False,
+        ))
+
+    fig_iro.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="#0d1a0d",
+        font=dict(family="Lexend", color="#e8f5e9"),
+        title=dict(text="Matrice Rischi — Probabilità × Impatto relativo", font=dict(size=13,color="#4ade80")),
+        xaxis=dict(title="Probabilità (%)", range=[0,105], gridcolor="rgba(34,197,94,.1)", color="#86efac"),
+        yaxis=dict(title="Impatto relativo (% fatturato × 3)", range=[0,105], gridcolor="rgba(34,197,94,.1)", color="#86efac"),
+        height=480,
+        margin=dict(t=50,b=50,l=60,r=20),
+        annotations=[
+            dict(x=80,y=90,text="<b>ZONA CRITICA</b>",showarrow=False,font=dict(size=10,color="#ef4444")),
+            dict(x=15,y=15,text="Zona gestibile",showarrow=False,font=dict(size=9,color="#22c55e")),
+        ]
+    )
+    st.plotly_chart(fig_iro, use_container_width=True)
+
+    # Legenda categorie
+    leg_html = " ".join([f'<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600;margin:2px;background:rgba(0,0,0,.3);color:{v};border:1px solid {v}">{k}</span>' for k,v in col_cat.items()])
+    st.markdown(f'<div style="margin-top:.3rem">{leg_html}</div>', unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════════════
