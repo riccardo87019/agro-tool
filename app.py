@@ -3787,11 +3787,11 @@ if RL_OK and gen_multi:
         [C("E1-6"), C("Carbon sequestration intensity"),
          C(f"{round(tot_seq/max(tot_ha,1),3)}",False,MED_GN), C("tCO2eq/ha"), C("IPCC Tier 1 — SOC stock")],
         [C("E1-6"), C("N2O diretto Scope 1 (EF1 IPCC)"),
-         C(f"{round(S('n2o'),3)}",False,RED_C), C("tCO2eq/a"), C("IPCC 2006 EF1=0.01, GWP265")],
+         C(f"{round(sum(r['n2o'] for r in res_att),3)}",False,RED_C), C("tCO2eq/a"), C("IPCC 2006 EF1=0.01, GWP265")],
         [C("E1-6"), C("N2O indiretto Scope 1 (EF4+EF5 IPCC)"),
-         C(f"{round(S('n2o_ind'),3)}",False,RED_C), C("tCO2eq/a"), C("IPCC Vol.4 EF4=0.010 EF5=0.0075")],
+         C(f"{round(sum(r['n2o_ind'] for r in res_att),3)}",False,RED_C), C("tCO2eq/a"), C("IPCC Vol.4 EF4=0.010 EF5=0.0075")],
         [C("E1-6"), C("Emissioni gasolio Scope 1"),
-         C(f"{round(S('diesel_co2'),3)}",False,RED_C), C("tCO2eq/a"), C("DEFRA 2024: 2.68 kgCO2/L")],
+         C(f"{round(sum(r['diesel_co2'] for r in res_att),3)}",False,RED_C), C("tCO2eq/a"), C("DEFRA 2024: 2.68 kgCO2/L")],
     ]
     t_e1 = Table(e1_rows, colWidths=[W*0.09,W*0.37,W*0.15,W*0.12,W*0.27], repeatRows=1)
     t_e1.setStyle(TS_EU)
@@ -3903,7 +3903,7 @@ if RL_OK and gen_multi:
         [C("305-5"), C("Reduction of GHG emissions (sequestro)"),
          C(f"+{round(tot_seq,3)}",True,GRI_GR), C("tCO2eq"), C("IPCC 2006 Vol.4 Tier 1 — SOC")],
         [C("305-5"), C("N2O emissions (Scope 1 — EF1+EF4+EF5)"),
-         C(f"{round(S('n2o')+S('n2o_ind'),3)}",False,RED_C), C("tCO2eq"), C("GWP265 · IPCC EF1+EF4+EF5")],
+         C(f"{round(sum(r['n2o'] for r in res_att)+sum(r['n2o_ind'] for r in res_att),3)}",False,RED_C), C("tCO2eq"), C("GWP265 · IPCC EF1+EF4+EF5")],
     ]
     t_gri305 = Table(gri305_rows, colWidths=[W*0.12,W*0.36,W*0.14,W*0.10,W*0.28], repeatRows=1)
     t_gri305.setStyle(TS_GRI)
@@ -3970,7 +3970,7 @@ if RL_OK and gen_multi:
         [C("B1"), C("Sequestro carbonio nel suolo"),
          C(f"+{round(tot_seq,2)}",True,MED_GN), C("tCO2eq/a"), C("IPCC Tier 1 — SOC — vantaggio netto")],
         [C("B2"), C("Energy consumption (estimate)"),
-         C(f"{round(S('diesel_l')*10,0):.0f} MJ gasolio"), C("MJ"), C("Gasolio × 36 MJ/L (PCI)")],
+         C(f"{round(sum(r['diesel_l'] for r in res_att)*10,0):.0f} MJ gasolio"), C("MJ"), C("Gasolio × 36 MJ/L (PCI)")],
         [C("B3"), C("Water consumption"),
          C(f"{int(tot_irr):,}"), C("m³/a"), C("FAO-56 Penman-Monteith live")],
         [C("B4"), C("Waste generated — scarti"),
@@ -3993,7 +3993,7 @@ if RL_OK and gen_multi:
            f"Adozione pratiche rigenerative su {float(df_edit[df_edit['Protocollo']=='Rigenerativo Full']['Ettari'].sum()):.0f} ha. "
            f"Score ESG {score}/100 — Rating {rcls}.")],
         [C("N2"), C("Rischi e opportunità ESG principali"),
-         C(f"RISCHIO: emissioni N2O {round(S('n2o')+S('n2o_ind')+co2_fert_n2o,1)} tCO2eq/a — mitigabile con fertilizzanti organici. "
+         C(f"RISCHIO: emissioni N2O {round(sum(r['n2o'] for r in res_att)+sum(r['n2o_ind'] for r in res_att)+co2_fert_n2o,1)} tCO2eq/a — mitigabile con fertilizzanti organici. "
            f"OPPORTUNITÀ: crediti CO2 EUR{int(val_cred):,}/a · PAC Eco-Scheme EUR{int(pac_totale):,}/a accessibili.")],
         [C("N3"), C("Obiettivi di sostenibilità"),
          C("Obiettivo 2030: -30% Scope 1 vs baseline. Obiettivo 2035: Carbon Positive (bilancio netto > 0). "
@@ -4043,10 +4043,10 @@ if RL_OK and gen_multi:
     story.append(Paragraph("Inventario completo per fonte e gas", S_h3))
     iso_inv_rows = [
         [C("Fonte emissione",True), C("Gas",True), C("Cat. ISO",True), C("Quantità (t)",True), C("GWP100",True), C("tCO2eq",True), C("Fattore",True)],
-        [C("Gasolio macchine"),  C("CO2"),   C("Sc.1 Dir."), C(f"{round(S('diesel_l')*2.68/1000,3)}"), C("1"),   C(f"{round(S('diesel_co2'),3)}",False,RED_C), C("DEFRA 2024")],
-        [C("N2O campo — diretto EF1"),C("N2O"),C("Sc.1 Dir."), C(f"{round(S('n2o')/265,4)}"), C("265"),  C(f"{round(S('n2o'),3)}",False,RED_C), C("IPCC EF1=1%")],
-        [C("N2O — volatilizz. EF4"), C("N2O"),C("Sc.1 Ind."), C(f"{round(S('n2o_ind')*0.5/265,4)}"), C("265"), C(f"{round(S('n2o_ind')*0.5,3)}",False,RED_C), C("IPCC EF4=0.010")],
-        [C("N2O — lisciviaz. EF5"),  C("N2O"),C("Sc.1 Ind."), C(f"{round(S('n2o_ind')*0.5/265,4)}"), C("265"), C(f"{round(S('n2o_ind')*0.5,3)}",False,RED_C), C("IPCC EF5=0.0075")],
+        [C("Gasolio macchine"),  C("CO2"),   C("Sc.1 Dir."), C(f"{round(sum(r['diesel_l'] for r in res_att)*2.68/1000,3)}"), C("1"),   C(f"{round(sum(r['diesel_co2'] for r in res_att),3)}",False,RED_C), C("DEFRA 2024")],
+        [C("N2O campo — diretto EF1"),C("N2O"),C("Sc.1 Dir."), C(f"{round(sum(r['n2o'] for r in res_att)/265,4)}"), C("265"),  C(f"{round(sum(r['n2o'] for r in res_att),3)}",False,RED_C), C("IPCC EF1=1%")],
+        [C("N2O — volatilizz. EF4"), C("N2O"),C("Sc.1 Ind."), C(f"{round(sum(r['n2o_ind'] for r in res_att)*0.5/265,4)}"), C("265"), C(f"{round(sum(r['n2o_ind'] for r in res_att)*0.5,3)}",False,RED_C), C("IPCC EF4=0.010")],
+        [C("N2O — lisciviaz. EF5"),  C("N2O"),C("Sc.1 Ind."), C(f"{round(sum(r['n2o_ind'] for r in res_att)*0.5/265,4)}"), C("265"), C(f"{round(sum(r['n2o_ind'] for r in res_att)*0.5,3)}",False,RED_C), C("IPCC EF5=0.0075")],
         [C("Fertilizzanti N2O spec."),C("N2O"),C("Sc.1"), C(f"{round(co2_fert_n2o/265,4)}"), C("265"), C(f"{round(co2_fert_n2o,3)}",False,RED_C), C("IPCC EF per tipo")],
         [C("Scarti emissivi"),    C("CO2"),  C("Sc.1"), C(f"{round(max(0,co2_scarti),3)}"), C("1"), C(f"{round(max(0,co2_scarti),3)}",False,RED_C), C("IPCC 2006 Vol.5")],
         [C("Elettricità rete"),   C("CO2"),  C("Sc.2"), C(f"{round(scope2_total,3)}"), C("1"), C(f"{round(scope2_total,3)}"), C("ISPRA 0.233")],
@@ -4356,7 +4356,7 @@ if RL_OK and gen_multi:
         [C("Sequestro carbonio SOC"),   C(f"+{round(tot_seq,2)} tCO2"),C("E1-6"),C("305-5"),C("B1"),C("Rimozioni")],
         [C("Bilancio GHG netto"),       C(f'{"+" if tot_netto>=0 else ""}{round(tot_netto,2)} tCO2',False,MED_GN if tot_netto>=0 else RED_C),C("E1-6"),C("305-1→5"),C("B1"),C("Inventario netto")],
         [C("Intensità emissiva/ha"),    C(f"{round((scope1_total+scope3_total)/max(tot_ha,1),3)} t/ha"),C("E1-6"),C("305-4"),C("B1"),C("—")],
-        [C("N2O campo (EF1+EF4+EF5)"), C(f"{round(S('n2o')+S('n2o_ind'),3)} tCO2eq"),C("E1-6"),C("305-1"),C("B1"),C("Sc.1 Ind.")],
+        [C("N2O campo (EF1+EF4+EF5)"), C(f"{round(sum(r['n2o'] for r in res_att)+sum(r['n2o_ind'] for r in res_att),3)} tCO2eq"),C("E1-6"),C("305-1"),C("B1"),C("Sc.1 Ind.")],
         [C("Consumo idrico totale"),    C(f"{int(tot_irr):,} m³/a"),C("E3-1"),C("303-5"),C("B3"),C("—")],
         [C("Stress idrico"),            C(f"{round(stress_idx*100):.0f}%"),C("E3-1"),C("303-1"),C("N2"),C("—")],
         [C("Cover crops ratio"),        C(f"{round(cc_r*100):.0f}%"),C("E4-1"),C("304-3"),C("N4"),C("—")],
@@ -4606,9 +4606,9 @@ if RL_OK and gen_pdf:
         [td("Sequestro suolo"), td("Credito"),
          td(f"+{round(tot_seq,2)}", bold=True, color=colors.HexColor("#6ee7b7")), td("IPCC Tier 1")],
         [td("Gasolio macchine"), td("Sc.1"),
-         td(f"-{round(S('diesel_co2'),2)}", color=C_RED), td("DEFRA 2024")],
+         td(f"-{round(sum(r['diesel_co2'] for r in res_att),2)}", color=C_RED), td("DEFRA 2024")],
         [td("N2O fertilizzanti"), td("Sc.1"),
-         td(f"-{round(S('n2o')+co2_fert_n2o,2)}", color=C_RED),
+         td(f"-{round(sum(r['n2o'] for r in res_att)+co2_fert_n2o,2)}", color=C_RED),
          td(f"min {round(co2_n2o_min,2)} / org {round(co2_n2o_org,2)} t")],
         [td("Scarti emissivi"), td("Sc.1"),
          td(f"-{round(max(0,co2_scarti),2)}", color=C_RED), td("IPCC 2006 Vol.5")],
