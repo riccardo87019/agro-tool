@@ -2600,6 +2600,386 @@ st.markdown(f"""
   {"✅ Ottimo utilizzo eco-scheme" if pac_totale > 500 else "⚠️ Attiva più misure per massimizzare i pagamenti"}
 </div>""", unsafe_allow_html=True)
 
+
+# ══════════════════════════════════════════════════════════════════════
+#  ESRS COMPLETI — S1 · S2 · S3 · E2 · E5 · ESRS 2 · STAKEHOLDER
+# ══════════════════════════════════════════════════════════════════════
+st.markdown('<div class="sec">📋 ESRS Completi — Dati per Auditor</div>', unsafe_allow_html=True)
+st.caption("Sezione dedicata all'auditor — inserisci i dati per completare la rendicontazione CSRD conforme a tutti gli standard ESRS obbligatori.")
+
+with st.expander("👥 ESRS S1 — Forza Lavoro Propria", expanded=False):
+    st.markdown("""<div style="background:#161c16;border-left:4px solid #3b82f6;
+      border-radius:8px;padding:.7rem 1rem;margin-bottom:.8rem;font-size:.78rem;color:#86efac">
+      <b style="color:#60a5fa">ESRS S1</b> — Dati relativi ai lavoratori alle dipendenze dirette dell'azienda.
+      Obbligatorio per aziende con &gt;10 dipendenti o in filiere con buyer CSRD-obbligati.
+    </div>""", unsafe_allow_html=True)
+
+    s1_c1, s1_c2, s1_c3 = st.columns(3)
+    with s1_c1:
+        s1_tot_dip      = st.number_input("N° dipendenti totali", 0, 10000, 0, key="s1_tot")
+        s1_dip_ft       = st.number_input("Di cui full-time", 0, 10000, 0, key="s1_ft")
+        s1_dip_pt       = st.number_input("Di cui part-time", 0, 10000, 0, key="s1_pt")
+        s1_stagionali   = st.number_input("Lavoratori stagionali/temporanei", 0, 10000, 0, key="s1_stag")
+    with s1_c2:
+        s1_donne        = st.number_input("Di cui donne (%)", 0.0, 100.0, 0.0, key="s1_donne")
+        s1_under30      = st.number_input("Di cui under 30 (%)", 0.0, 100.0, 0.0, key="s1_u30")
+        s1_salario_med  = st.number_input("Salario medio annuo (€)", 0, 200000, 0, key="s1_sal")
+        s1_salario_min  = st.number_input("Salario minimo applicato (€/anno)", 0, 100000, 0, key="s1_salmin")
+    with s1_c3:
+        s1_infortuni    = st.number_input("Infortuni sul lavoro (n°/anno)", 0, 1000, 0, key="s1_inf")
+        s1_giorni_perd  = st.number_input("Giornate perse per infortuni", 0, 10000, 0, key="s1_gp")
+        s1_formazione   = st.number_input("Ore formazione/dipendente/anno", 0.0, 500.0, 0.0, key="s1_form")
+        s1_ccnl         = st.text_input("CCNL applicato", "CCNL Operai Agricoli", key="s1_ccnl")
+
+    st.markdown("**Informazioni qualitative S1**")
+    s1_q1, s1_q2 = st.columns(2)
+    with s1_q1:
+        s1_dialogo      = st.selectbox("Dialogo sindacale / RSU", ["Sì","No","Non applicabile"], key="s1_dial")
+        s1_parita       = st.selectbox("Piano parità di genere adottato", ["Sì","No","In corso"], key="s1_par")
+        s1_welfare      = st.multiselect("Misure welfare aziendale", [
+            "Mensa/buoni pasto","Trasporto aziendale","Alloggio lavoratori",
+            "Assicurazione integrativa","Ferie aggiuntive","Formazione professionale",
+            "Benefit figli/famiglia","Nessuno"], key="s1_welf")
+    with s1_q2:
+        s1_note         = st.text_area("Note aggiuntive S1 (per l'auditor)", height=100, key="s1_note")
+
+    st.session_state["esrs_s1"] = {
+        "tot_dip": s1_tot_dip, "ft": s1_dip_ft, "pt": s1_dip_pt,
+        "stagionali": s1_stagionali, "donne_pct": s1_donne, "under30_pct": s1_under30,
+        "salario_med": s1_salario_med, "salario_min": s1_salario_min,
+        "infortuni": s1_infortuni, "giorni_persi": s1_giorni_perd,
+        "ore_formazione": s1_formazione, "ccnl": s1_ccnl,
+        "dialogo_sind": s1_dialogo, "parita_genere": s1_parita,
+        "welfare": s1_welfare, "note": s1_note
+    }
+
+with st.expander("🔗 ESRS S2 — Lavoratori Catena del Valore (Terzisti/Stagionali esterni)", expanded=False):
+    st.markdown("""<div style="background:#161c16;border-left:4px solid #8b5cf6;
+      border-radius:8px;padding:.7rem 1rem;margin-bottom:.8rem;font-size:.78rem;color:#86efac">
+      <b style="color:#a78bfa">ESRS S2</b> — Lavoratori non dipendenti diretti: contoterzisti, cooperanti,
+      stagionali forniti da agenzie, raccoglitori. Include condizioni di lavoro nella catena di fornitura.
+    </div>""", unsafe_allow_html=True)
+
+    s2_c1, s2_c2 = st.columns(2)
+    with s2_c1:
+        s2_terzisti     = st.number_input("N° contoterzisti/fornitori servizi agricoli", 0, 1000, 0, key="s2_terz")
+        s2_stagionali   = st.number_input("N° stagionali esterni (agenzie/coop)", 0, 10000, 0, key="s2_stag")
+        s2_paesi        = st.multiselect("Paese di provenienza lavoratori stagionali", [
+            "Italia","Romania","Bulgaria","Polonia","Marocco","Tunisia","Albania",
+            "Ucraina","India","Pakistan","Bangladesh","Altro"], key="s2_paesi")
+        s2_alloggio     = st.selectbox("Alloggio fornito ai stagionali esterni", 
+                                        ["Sì — struttura aziendale","Sì — contributo affitto",
+                                         "No","Non applicabile"], key="s2_allog")
+    with s2_c2:
+        s2_verifica_dd  = st.selectbox("Due diligence su condizioni lavorative fornitori", 
+                                        ["Sì — audit formale","Sì — verifica informale","No","In corso"], key="s2_dd")
+        s2_codice_cond  = st.selectbox("Codice di condotta fornitori adottato",
+                                        ["Sì","No","In elaborazione"], key="s2_cod")
+        s2_segnalazione = st.selectbox("Canale segnalazione irregolarità (whistleblowing)",
+                                        ["Sì — sistema formale","Sì — informale","No"], key="s2_seg")
+        s2_note         = st.text_area("Note aggiuntive S2 (per l'auditor)", height=80, key="s2_note")
+
+    st.session_state["esrs_s2"] = {
+        "terzisti": s2_terzisti, "stagionali_ext": s2_stagionali,
+        "paesi_provenienza": s2_paesi, "alloggio": s2_alloggio,
+        "due_diligence": s2_verifica_dd, "codice_condotta": s2_codice_cond,
+        "whistleblowing": s2_segnalazione, "note": s2_note
+    }
+
+with st.expander("🏘️ ESRS S3 — Comunità Locali e Territorio", expanded=False):
+    st.markdown("""<div style="background:#161c16;border-left:4px solid #22c55e;
+      border-radius:8px;padding:.7rem 1rem;margin-bottom:.8rem;font-size:.78rem;color:#86efac">
+      <b style="color:#4ade80">ESRS S3</b> — Impatto dell'azienda sulle comunità locali:
+      rumore, odori, traffico, accesso alle risorse idriche, paesaggio, relazioni con enti locali.
+    </div>""", unsafe_allow_html=True)
+
+    s3_c1, s3_c2 = st.columns(2)
+    with s3_c1:
+        s3_comuni       = st.text_input("Comuni/frazioni interessati dall'attività", key="s3_com")
+        s3_impatti      = st.multiselect("Impatti negativi segnalati dalla comunità", [
+            "Rumore macchinari","Odori (allevamento/compost)","Traffico mezzi agricoli",
+            "Polveri","Uso pesticidi vicino abitazioni","Impatto paesaggistico",
+            "Conflitti accesso acqua","Nessuno segnalato"], key="s3_imp")
+        s3_impatti_pos  = st.multiselect("Impatti positivi sulla comunità", [
+            "Occupazione locale","Mantenimento paesaggio agrario","Presidio territorio",
+            "Fornitura prodotti km0","Attività didattiche/agriturismo",
+            "Conservazione biodiversità locale","Altro"], key="s3_imp_pos")
+    with s3_c2:
+        s3_consultaz    = st.selectbox("Consultazione comunità locali effettuata",
+                                        ["Sì — incontri formali","Sì — informale","No"], key="s3_cons")
+        s3_enti         = st.multiselect("Collaborazioni con enti locali", [
+            "Comune","Provincia","Regione","Consorzio irriguo","Parco naturale",
+            "Associazioni di categoria","Istituti scolastici","Nessuna"], key="s3_enti")
+        s3_note         = st.text_area("Note aggiuntive S3 (per l'auditor)", height=100, key="s3_note")
+
+    st.session_state["esrs_s3"] = {
+        "comuni": s3_comuni, "impatti_neg": s3_impatti,
+        "impatti_pos": s3_impatti_pos, "consultazione": s3_consultaz,
+        "collaborazioni": s3_enti, "note": s3_note
+    }
+
+with st.expander("☣️ ESRS E2 — Inquinamento (Nitrati, Pesticidi, Suolo, Aria)", expanded=False):
+    st.markdown("""<div style="background:#161c16;border-left:4px solid #f59e0b;
+      border-radius:8px;padding:.7rem 1rem;margin-bottom:.8rem;font-size:.78rem;color:#86efac">
+      <b style="color:#fbbf24">ESRS E2</b> — Emissioni in aria, acqua e suolo diverse dai GHG.
+      Include nitrati nelle acque, pesticidi, ammoniaca (NH₃), polveri sottili da lavorazioni.
+    </div>""", unsafe_allow_html=True)
+
+    e2_c1, e2_c2, e2_c3 = st.columns(3)
+    with e2_c1:
+        e2_nitrati      = st.number_input("N applicato totale (kg N/anno)", 0.0, 500000.0, 
+                                           float(sum(float(fr.get("Quantità (kg/anno)",0))*0.46 
+                                                 for _,fr in st.session_state.get("df_fert",pd.DataFrame()).iterrows()
+                                                 if "Urea" in str(fr.get("Prodotto",""))) if "df_fert" in st.session_state else 0),
+                                           key="e2_nit")
+        e2_zona_vuln    = st.selectbox("Zona vulnerabile nitrati (Dir. 91/676/CE)",
+                                        ["Sì","No","Da verificare"], key="e2_zv")
+        e2_piano_fert   = st.selectbox("Piano di fertilizzazione redatto",
+                                        ["Sì — aggiornato","Sì — datato","No"], key="e2_pf")
+        e2_analisi_acq  = st.selectbox("Analisi acque superficiali/falda effettuata",
+                                        ["Sì — annuale","Sì — occasionale","No"], key="e2_aa")
+    with e2_c2:
+        e2_pesticidi_kg = st.number_input("Fitofarmaci usati (kg p.a./anno)", 0.0, 10000.0,
+                                           float(sum(float(ft.get("Quantità p.a. (kg/anno)",0))
+                                                 for _,ft in st.session_state.get("df_fito",pd.DataFrame()).iterrows()) if "df_fito" in st.session_state else 0),
+                                           key="e2_pest")
+        e2_ipp          = st.selectbox("Prodotti in Lista Nera UE usati",
+                                        ["No — solo prodotti consentiti","Da verificare","Sì — con deroga"], key="e2_ipp")
+        e2_buffer       = st.number_input("Fascia tampone media da corsi d'acqua (m)", 0.0, 100.0, 0.0, key="e2_buf")
+        e2_nh3          = st.number_input("Emissioni NH₃ stimate (kg/anno)", 0.0, 100000.0, 0.0, 
+                                          help="Ammoniaca da fertilizzanti e deiezioni. EF urea: ~18% N applicato", key="e2_nh3")
+    with e2_c3:
+        e2_suolo_deg    = st.selectbox("Erosione/degradazione suolo rilevata",
+                                        ["No","Lieve — monitorata","Moderata — in intervento","Grave"], key="e2_sd")
+        e2_plastiche    = st.number_input("Plastiche agricole smaltite correttamente (t/anno)", 0.0, 1000.0, 0.0, key="e2_pl")
+        e2_percolato    = st.selectbox("Gestione percolato/acque di lavaggio",
+                                        ["Vasca raccolta","Fitodepurazione","Scarico fognatura","Non gestito"], key="e2_perc")
+        e2_note         = st.text_area("Note E2 (per l'auditor)", height=80, key="e2_note")
+
+    # Calcolo indice inquinamento
+    e2_score = 100
+    if e2_zona_vuln == "Sì": e2_score -= 15
+    if e2_piano_fert == "No": e2_score -= 20
+    if e2_ipp == "Sì — con deroga": e2_score -= 25
+    if e2_suolo_deg == "Grave": e2_score -= 30
+    if e2_buffer < 5: e2_score -= 10
+    e2_score = max(0, e2_score)
+    e2_col = "#4ade80" if e2_score>=80 else "#fbbf24" if e2_score>=50 else "#f87171"
+    st.markdown(f"""<div style="background:#161c16;border-radius:10px;padding:.7rem 1.1rem;
+      border:1px solid rgba(245,158,11,.3);font-size:.8rem">
+      🔬 <b>Indice conformità E2:</b> <span style="color:{e2_col};font-weight:700">{e2_score}/100</span> &nbsp;·&nbsp;
+      NH₃ stimata: <b>{e2_nh3:.0f} kg/anno</b> &nbsp;·&nbsp;
+      N applicato: <b>{e2_nitrati:.0f} kg/anno</b> &nbsp;·&nbsp;
+      Pesticidi: <b>{e2_pesticidi_kg:.1f} kg p.a./anno</b>
+    </div>""", unsafe_allow_html=True)
+
+    st.session_state["esrs_e2"] = {
+        "n_applicato": e2_nitrati, "zona_vulnerabile": e2_zona_vuln,
+        "piano_fertilizzazione": e2_piano_fert, "analisi_acque": e2_analisi_acq,
+        "pesticidi_kg": e2_pesticidi_kg, "lista_nera": e2_ipp,
+        "buffer_m": e2_buffer, "nh3_kg": e2_nh3,
+        "erosione": e2_suolo_deg, "plastiche_t": e2_plastiche,
+        "percolato": e2_percolato, "indice_e2": e2_score, "note": e2_note
+    }
+
+with st.expander("♻️ ESRS E5 — Uso delle Risorse & Economia Circolare", expanded=False):
+    st.markdown("""<div style="background:#161c16;border-left:4px solid #06b6d4;
+      border-radius:8px;padding:.7rem 1rem;margin-bottom:.8rem;font-size:.78rem;color:#86efac">
+      <b style="color:#22d3ee">ESRS E5</b> — Efficienza nell'uso delle risorse naturali e approccio
+      circolare: riutilizzo residui, riduzione imballaggi, efficienza energetica, economia circolare.
+    </div>""", unsafe_allow_html=True)
+
+    e5_c1, e5_c2, e5_c3 = st.columns(3)
+    with e5_c1:
+        st.markdown("**Energia**")
+        e5_gasolio_l    = st.number_input("Gasolio consumato (L/anno)", 0.0, 500000.0, 
+                                           float(S("diesel_l")), key="e5_gas")
+        e5_elett_kwh    = st.number_input("Elettricità consumata (kWh/anno)", 0.0, 1000000.0, 0.0, key="e5_el")
+        e5_fotovolt_kwh = st.number_input("Fotovoltaico prodotto (kWh/anno)", 0.0, 1000000.0, 0.0, key="e5_pv")
+        e5_biogas_mwh   = st.number_input("Biogas/biomassa prodotta (MWh/anno)", 0.0, 10000.0, 0.0, key="e5_bg")
+    with e5_c2:
+        st.markdown("**Materiali e Circolarità**")
+        e5_imballaggi_kg = st.number_input("Imballaggi totali usati (kg/anno)", 0.0, 100000.0, 0.0, key="e5_imb")
+        e5_imb_riutiliz  = st.number_input("Di cui riutilizzabili (%)", 0.0, 100.0, 0.0, key="e5_imbr")
+        e5_residui_riutiL = st.number_input("Residui colturali riutilizzati (t/anno)", 0.0, 10000.0, 0.0, key="e5_res")
+        e5_acqua_riuso   = st.number_input("Acqua ricircolata/riusata (m³/anno)", 0.0, 1000000.0, 0.0, key="e5_acq")
+    with e5_c3:
+        st.markdown("**Rifiuti**")
+        e5_rifiuti_tot   = st.number_input("Rifiuti speciali prodotti (t/anno)", 0.0, 1000.0, 0.0, key="e5_rif")
+        e5_rifiuti_rec   = st.number_input("Di cui avviati a recupero (%)", 0.0, 100.0, 0.0, key="e5_rifr")
+        e5_oli_usati     = st.number_input("Oli e lubrificanti usati smaltiti (L/anno)", 0.0, 10000.0, 0.0, key="e5_oli")
+        e5_note          = st.text_area("Note E5 (per l'auditor)", height=70, key="e5_note")
+
+    # KPI circolarità
+    e5_en_rinnovabile = round((e5_fotovolt_kwh + e5_biogas_mwh*1000) / max(e5_elett_kwh + e5_gasolio_l*10, 1) * 100, 1)
+    st.markdown(f"""<div style="background:#161c16;border-radius:10px;padding:.7rem 1.1rem;
+      border:1px solid rgba(6,182,212,.3);font-size:.8rem">
+      ♻️ <b>Indice circolarità:</b> &nbsp;
+      Energia rinnovabile: <b style="color:#22d3ee">{e5_en_rinnovabile}%</b> &nbsp;·&nbsp;
+      Imballaggi riutilizzabili: <b style="color:#22d3ee">{e5_imb_riutiliz:.0f}%</b> &nbsp;·&nbsp;
+      Rifiuti a recupero: <b style="color:#22d3ee">{e5_rifiuti_rec:.0f}%</b>
+    </div>""", unsafe_allow_html=True)
+
+    st.session_state["esrs_e5"] = {
+        "gasolio_l": e5_gasolio_l, "elettricita_kwh": e5_elett_kwh,
+        "fotovoltaico_kwh": e5_fotovolt_kwh, "biogas_mwh": e5_biogas_mwh,
+        "imballaggi_kg": e5_imballaggi_kg, "imb_riutiliz_pct": e5_imb_riutiliz,
+        "residui_riutil_t": e5_residui_riutiL, "acqua_riusata_m3": e5_acqua_riuso,
+        "rifiuti_spec_t": e5_rifiuti_tot, "rifiuti_rec_pct": e5_rifiuti_rec,
+        "oli_smalt_l": e5_oli_usati, "en_rinnovabile_pct": e5_en_rinnovabile, "note": e5_note
+    }
+
+with st.expander("🏛️ ESRS 2 — General Disclosures (Governance & Strategia)", expanded=False):
+    st.markdown("""<div style="background:#161c16;border-left:4px solid #ec4899;
+      border-radius:8px;padding:.7rem 1rem;margin-bottom:.8rem;font-size:.78rem;color:#86efac">
+      <b style="color:#f472b6">ESRS 2</b> — Standard trasversale obbligatorio per tutte le aziende CSRD.
+      Copre governance, strategia, gestione degli impatti e informazioni generali sull'azienda.
+    </div>""", unsafe_allow_html=True)
+
+    g2_c1, g2_c2 = st.columns(2)
+    with g2_c1:
+        st.markdown("**Governance aziendale**")
+        g2_forma_giur   = st.selectbox("Forma giuridica", 
+                                        ["Ditta individuale","SRL","SNC","SAS","Società semplice",
+                                         "Cooperativa","Società agricola","ARL","Altro"], key="g2_fj")
+        g2_resp_sost    = st.selectbox("Responsabile sostenibilità formalmente nominato",
+                                        ["Sì — interno","Sì — consulente esterno","No"], key="g2_rs")
+        g2_cda_sost     = st.selectbox("Sostenibilità discussa a livello governance/CdA",
+                                        ["Sì — regolarmente","Sì — occasionalmente","No"], key="g2_cda")
+        g2_pol_sost     = st.selectbox("Politica di sostenibilità formalmente adottata",
+                                        ["Sì — pubblica","Sì — interna","No","In elaborazione"], key="g2_pol")
+        g2_obiettivi    = st.selectbox("Obiettivi di sostenibilità con target numerici",
+                                        ["Sì — verificabili","Sì — generici","No"], key="g2_obj")
+    with g2_c2:
+        st.markdown("**Strategia e Due Diligence**")
+        g2_strategia    = st.text_area("Strategia aziendale di sostenibilità (sintesi)", 
+                                        height=80, key="g2_str",
+                                        placeholder="Es: conversione progressiva al biologico entro 2030, riduzione fitofarmaci del 50%...")
+        g2_rischi_id    = st.multiselect("Principali rischi ESG identificati dal management", [
+            "Cambiamento climatico (siccità/alluvioni)","Perdita fertilità suolo",
+            "Restrizioni normative fitofarmaci","Pressione buyer su ESG",
+            "Costi crescenti fertilizzanti","Carenza manodopera","Volatilità prezzi CO₂",
+            "Rischio reputazionale","Accesso al credito green","Altro"], key="g2_risk")
+        g2_opport       = st.multiselect("Principali opportunità ESG identificate", [
+            "Crediti carbonio","PAC Eco-Scheme","Filiere premium/biologico",
+            "Finanziamenti green (PNRR/BEI)","Agriturismo/servizi ecosistemici",
+            "Export mercati ESG-sensitivi","Risparmio costi energetici","Altro"], key="g2_opp")
+
+    st.markdown("**Stakeholder Engagement — processo formale ESRS 1**")
+    se_c1, se_c2, se_c3 = st.columns(3)
+    with se_c1:
+        st.markdown("*Stakeholder coinvolti nell'analisi di materialità:*")
+        se_clienti      = st.checkbox("Clienti/buyer principali", key="se_cli")
+        se_fornitori    = st.checkbox("Fornitori/contoterzisti", key="se_for")
+        se_dipendenti   = st.checkbox("Dipendenti e lavoratori", key="se_dip")
+        se_comunita     = st.checkbox("Comunità locali", key="se_com")
+        se_enti_loc     = st.checkbox("Enti locali/PA", key="se_enti")
+        se_finanziatori = st.checkbox("Banche/finanziatori", key="se_fin")
+        se_cert         = st.checkbox("Enti certificatori", key="se_cert")
+    with se_c2:
+        se_metodo       = st.multiselect("Metodo engagement utilizzato", [
+            "Questionari strutturati","Interviste dirette","Focus group",
+            "Workshop","Consultazione pubblica","Email/comunicazione scritta",
+            "Nessuno ancora"], key="se_met")
+        se_data_ultima  = st.text_input("Data ultima consultazione (MM/AAAA)", key="se_data")
+        se_freq         = st.selectbox("Frequenza revisione materialità",
+                                        ["Annuale","Biennale","Ad hoc","Mai effettuata"], key="se_freq")
+    with se_c3:
+        se_risultati    = st.text_area("Sintesi risultati stakeholder engagement (per l'auditor)", 
+                                        height=110, key="se_ris",
+                                        placeholder="Es: I buyer hanno segnalato priorità su Scope 3 fertilizzanti e uso acqua...")
+
+    st.session_state["esrs_g2"] = {
+        "forma_giuridica": g2_forma_giur, "resp_sostenibilita": g2_resp_sost,
+        "governance_sost": g2_cda_sost, "politica_sost": g2_pol_sost,
+        "obiettivi_num": g2_obiettivi, "strategia": g2_strategia,
+        "rischi_identificati": g2_rischi_id, "opportunita": g2_opport,
+        "stakeholder_coinvolti": {
+            "clienti": se_clienti, "fornitori": se_fornitori, "dipendenti": se_dipendenti,
+            "comunita": se_comunita, "enti_loc": se_enti_loc, "finanziatori": se_finanziatori,
+            "certificatori": se_cert
+        },
+        "metodo_engagement": se_metodo, "data_ultima_cons": se_data_ultima,
+        "frequenza_revisione": se_freq, "risultati_engagement": se_risultati
+    }
+
+with st.expander("📊 Report di Impatto — Monetizzazione e Valore Ecosistemico", expanded=False):
+    st.markdown("""<div style="background:#161c16;border-left:4px solid #f59e0b;
+      border-radius:8px;padding:.7rem 1rem;margin-bottom:.8rem;font-size:.78rem;color:#86efac">
+      <b style="color:#fbbf24">Impact Report</b> — Quantificazione monetaria degli impatti positivi e negativi
+      generati dall'azienda. Metodologia: Social Cost of Carbon (SCC), TEEB Agri-Food, Natural Capital Protocol.
+    </div>""", unsafe_allow_html=True)
+
+    # Calcoli automatici impatto monetizzato
+    scc_per_ton     = 185.0   # Social Cost of Carbon EU 2024 (€/tCO₂eq)
+    valore_acqua    = 2.50    # €/m³ valore ecosistemico acqua
+    valore_suolo_ha = 18000   # €/ha valore capitale naturale suolo (CREA)
+    valore_biod_ha  = 800     # €/ha valore servizi biodiversità prati/cover crops
+
+    imp_co2_pos     = max(0, tot_seq) * scc_per_ton
+    imp_co2_neg     = (scope1_total + scope3_total) * scc_per_ton
+    imp_acqua_neg   = tot_spreco * valore_acqua
+    imp_suolo_pos   = float(df_edit["Ettari"].sum()) * (_so_media/2.0) * valore_suolo_ha * 0.01
+    imp_biod_pos    = ha_cover * valore_biod_ha
+
+    imp_totale = imp_co2_pos + imp_suolo_pos + imp_biod_pos - imp_co2_neg - imp_acqua_neg
+
+    ir_c1, ir_c2 = st.columns(2)
+    with ir_c1:
+        st.markdown("**Impatti positivi (benefici generati)**")
+        st.markdown(f"""<div style="font-size:.8rem;line-height:2;background:#0d2b1a;
+          border-radius:8px;padding:.7rem 1rem;border:1px solid rgba(34,197,94,.2)">
+          🌿 Sequestro CO₂ ({round(tot_seq,1)} t × €{scc_per_ton}/t SCC):
+          <b style="color:#4ade80">+€{int(imp_co2_pos):,}</b><br>
+          🌱 Valore capitale suolo (SO% {round(_so_media,1)}%):
+          <b style="color:#4ade80">+€{int(imp_suolo_pos):,}</b><br>
+          🦋 Servizi biodiversità cover crops ({ha_cover:.0f} ha):
+          <b style="color:#4ade80">+€{int(imp_biod_pos):,}</b><br>
+          <hr style="border:none;border-top:1px solid rgba(34,197,94,.2);margin:.3rem 0">
+          <b>Totale benefici: +€{int(imp_co2_pos+imp_suolo_pos+imp_biod_pos):,}</b>
+        </div>""", unsafe_allow_html=True)
+
+    with ir_c2:
+        st.markdown("**Impatti negativi (costi esternalizzati)**")
+        st.markdown(f"""<div style="font-size:.8rem;line-height:2;background:#2d0f0f;
+          border-radius:8px;padding:.7rem 1rem;border:1px solid rgba(239,68,68,.2)">
+          🏭 Emissioni GHG Scope 1+3 ({round(scope1_total+scope3_total,1)} t × €{scc_per_ton}/t):
+          <b style="color:#f87171">-€{int(imp_co2_neg):,}</b><br>
+          💧 Spreco idrico ({int(tot_spreco):,} m³ × €{valore_acqua}/m³):
+          <b style="color:#f87171">-€{int(imp_acqua_neg):,}</b><br>
+          🧪 Impatto fitofarmaci (stima qualitativa):
+          <b style="color:#fbbf24">da quantificare</b><br>
+          <hr style="border:none;border-top:1px solid rgba(239,68,68,.2);margin:.3rem 0">
+          <b>Totale costi: -€{int(imp_co2_neg+imp_acqua_neg):,}</b>
+        </div>""", unsafe_allow_html=True)
+
+    imp_clr = "#4ade80" if imp_totale >= 0 else "#f87171"
+    st.markdown(f"""<div style="background:linear-gradient(90deg,#0d1a0d,#0a2e0a);
+      border-radius:12px;padding:1rem 1.4rem;margin-top:.5rem;font-size:.85rem;
+      border:2px solid {'#22c55e' if imp_totale>=0 else '#ef4444'}">
+      💰 <b>Valore d'Impatto Netto (Natural Capital):</b>
+      <span style="color:{imp_clr};font-size:1.1rem;font-weight:700;margin-left:.5rem">
+      {"+" if imp_totale>=0 else ""}€{int(imp_totale):,}/anno</span>
+      &nbsp;·&nbsp;<span style="color:#86efac;font-size:.75rem">
+      SCC €{scc_per_ton}/t (EU 2024) · TEEB Agri-Food · Natural Capital Protocol</span>
+    </div>""", unsafe_allow_html=True)
+
+    st.caption("⚠️ I valori monetizzati sono stime indicative basate su coefficienti standard internazionali. Per un Impact Report certificabile è necessaria una valutazione da esperto di Natural Capital.")
+
+    # Campi aggiuntivi per l'auditor
+    ir_note = st.text_area("Note Impact Report (per l'auditor — metodologia, limitazioni, assunzioni)", 
+                             height=80, key="ir_note")
+    ir_verif = st.selectbox("Verifica esterna dell'impact report effettuata",
+                             ["No","In corso","Sì — consulente","Sì — Ente terzo accreditato"], key="ir_ver")
+
+    st.session_state["impact_report"] = {
+        "imp_co2_pos": round(imp_co2_pos, 0), "imp_co2_neg": round(imp_co2_neg, 0),
+        "imp_acqua_neg": round(imp_acqua_neg, 0), "imp_suolo_pos": round(imp_suolo_pos, 0),
+        "imp_biod_pos": round(imp_biod_pos, 0), "imp_netto": round(imp_totale, 0),
+        "scc_utilizzato": scc_per_ton, "verifica": ir_verif, "note": ir_note
+    }
+
+
 # ══════════════════════════════════════════════════════════════════════
 #  CERTIFICAZIONI
 # ══════════════════════════════════════════════════════════════════════
@@ -3580,7 +3960,128 @@ if RL_OK and gen_multi:
     story.append(Spacer(1,4*mm))
 
     # ══════════════════════════════════════════════════════════
-    # SEZIONE 6 — TAVOLA DI CONCORDANZA
+    # SEZIONE 6 — DATI AUDITOR: S1/S2/S3/E2/E5/ESRS2/IMPACT
+    # ══════════════════════════════════════════════════════════
+    story.append(PageBreak())
+    story.append(section_banner("SEZIONE 6 — DATI AUDITOR: ESRS S1 · S2 · S3 · E2 · E5 · ESRS 2 · IMPACT REPORT",
+                                rc.HexColor("#1E40AF"),
+                                "Dati inseriti dall'auditor per rendicontazione CSRD completa"))
+    story.append(Spacer(1,4*mm))
+
+    # ── S1 Forza lavoro ────────────────────────────────────────────────
+    _s1 = st.session_state.get("esrs_s1", {})
+    story.append(Paragraph("ESRS S1 — Forza Lavoro Propria", S("h_s1p",fontSize=10,textColor=rc.HexColor("#3B82F6"),fontName="Helvetica-Bold",spaceBefore=6,spaceAfter=3)))
+    s1_rows = [
+        [C("Indicatore",True),C("Valore",True),C("Indicatore",True),C("Valore",True)],
+        [C("Dipendenti totali"),C(str(_s1.get("tot_dip",0))),C("Di cui donne %"),C(f"{_s1.get('donne_pct',0):.0f}%")],
+        [C("Full-time/Part-time"),C(f"{_s1.get('ft',0)}/{_s1.get('pt',0)}"),C("Under 30 %"),C(f"{_s1.get('under30_pct',0):.0f}%")],
+        [C("Stagionali"),C(str(_s1.get("stagionali",0))),C("Salario medio €"),C(f"€{_s1.get('salario_med',0):,}")],
+        [C("Infortuni n°"),C(str(_s1.get("infortuni",0)),False,RED_C),C("Ore formazione/dip"),C(str(_s1.get("ore_formazione",0)))],
+        [C("CCNL"),C(str(_s1.get("ccnl","—"))),C("Dialogo sindacale"),C(str(_s1.get("dialogo_sind","—")))],
+    ]
+    t_s1p = Table(s1_rows, colWidths=[W*0.26,W*0.24,W*0.26,W*0.24])
+    t_s1p.setStyle(make_ts(rc.HexColor("#1E40AF"), rc.HexColor("#EFF6FF"), WH))
+    story.append(t_s1p)
+    story.append(Spacer(1,3*mm))
+
+    # ── S2 ─────────────────────────────────────────────────────────────
+    _s2 = st.session_state.get("esrs_s2", {})
+    story.append(Paragraph("ESRS S2 — Lavoratori Catena del Valore", S("h_s2p",fontSize=10,textColor=rc.HexColor("#7C3AED"),fontName="Helvetica-Bold",spaceBefore=6,spaceAfter=3)))
+    s2_rows = [
+        [C("Indicatore",True),C("Valore",True),C("Indicatore",True),C("Valore",True)],
+        [C("Terzisti/fornitori"),C(str(_s2.get("terzisti",0))),C("Stagionali esterni"),C(str(_s2.get("stagionali_ext",0)))],
+        [C("Due diligence"),C(str(_s2.get("due_diligence","—"))),C("Codice condotta"),C(str(_s2.get("codice_condotta","—")))],
+        [C("Whistleblowing"),C(str(_s2.get("whistleblowing","—"))),C("Alloggio stagionali"),C(str(_s2.get("alloggio","—")))],
+    ]
+    t_s2p = Table(s2_rows, colWidths=[W*0.26,W*0.24,W*0.26,W*0.24])
+    t_s2p.setStyle(make_ts(rc.HexColor("#7C3AED"), rc.HexColor("#F5F3FF"), WH))
+    story.append(t_s2p)
+    story.append(Spacer(1,3*mm))
+
+    # ── S3 ─────────────────────────────────────────────────────────────
+    _s3 = st.session_state.get("esrs_s3", {})
+    story.append(Paragraph("ESRS S3 — Comunità Locali", S("h_s3p",fontSize=10,textColor=MED_GN,fontName="Helvetica-Bold",spaceBefore=6,spaceAfter=3)))
+    s3_rows = [
+        [C("Indicatore S3",True),C("Valore",True)],
+        [C("Comuni interessati"),C(str(_s3.get("comuni","—")))],
+        [C("Impatti negativi"),C(", ".join(_s3.get("impatti_neg",[]) or ["Nessuno"]))],
+        [C("Impatti positivi"),C(", ".join(_s3.get("impatti_pos",[]) or ["—"]))],
+        [C("Consultazione comunità"),C(str(_s3.get("consultazione","—")))],
+    ]
+    t_s3p = Table(s3_rows, colWidths=[W*0.35,W*0.65])
+    t_s3p.setStyle(make_ts(MED_GN, LT_GN, WH))
+    story.append(t_s3p)
+    story.append(Spacer(1,3*mm))
+
+    # ── E2 ─────────────────────────────────────────────────────────────
+    _e2 = st.session_state.get("esrs_e2", {})
+    story.append(Paragraph("ESRS E2 — Inquinamento", S("h_e2p",fontSize=10,textColor=GLD_C,fontName="Helvetica-Bold",spaceBefore=6,spaceAfter=3)))
+    e2_rows = [
+        [C("Indicatore E2",True),C("Valore",True),C("Indicatore E2",True),C("Valore",True)],
+        [C("N applicato kg/anno"),C(f"{_e2.get('n_applicato',0):.0f}",True,GLD_C),C("Zona vulnerabile nitrati"),C(str(_e2.get("zona_vulnerabile","—")))],
+        [C("Piano fertilizzazione"),C(str(_e2.get("piano_fertilizzazione","—"))),C("Analisi acque"),C(str(_e2.get("analisi_acque","—")))],
+        [C("Fitofarmaci kg p.a."),C(f"{_e2.get('pesticidi_kg',0):.1f}",True,GLD_C),C("NH₃ kg/anno"),C(f"{_e2.get('nh3_kg',0):.0f}")],
+        [C("Buffer corsi acqua m"),C(f"{_e2.get('buffer_m',0):.0f}"),C("Indice conformità E2"),C(f"{_e2.get('indice_e2',0)}/100",True,MED_GN if _e2.get('indice_e2',0)>=80 else GLD_C)],
+    ]
+    t_e2p = Table(e2_rows, colWidths=[W*0.26,W*0.24,W*0.26,W*0.24])
+    t_e2p.setStyle(make_ts(rc.HexColor("#B45309"), rc.HexColor("#FFFBEB"), WH))
+    story.append(t_e2p)
+    story.append(Spacer(1,3*mm))
+
+    # ── E5 ─────────────────────────────────────────────────────────────
+    _e5 = st.session_state.get("esrs_e5", {})
+    story.append(Paragraph("ESRS E5 — Risorse & Circolarità", S("h_e5p",fontSize=10,textColor=rc.HexColor("#06B6D4"),fontName="Helvetica-Bold",spaceBefore=6,spaceAfter=3)))
+    e5_rows = [
+        [C("Indicatore E5",True),C("Valore",True),C("Indicatore E5",True),C("Valore",True)],
+        [C("Gasolio L/anno"),C(f"{_e5.get('gasolio_l',0):,.0f}"),C("Elettricità kWh"),C(f"{_e5.get('elettricita_kwh',0):,.0f}")],
+        [C("Fotovoltaico kWh"),C(f"{_e5.get('fotovoltaico_kwh',0):,.0f}",False,MED_GN),C("Biogas MWh"),C(f"{_e5.get('biogas_mwh',0):.1f}",False,MED_GN)],
+        [C("Energia rinnovabile %"),C(f"{_e5.get('en_rinnovabile_pct',0):.1f}%",True,MED_GN),C("Rifiuti a recupero %"),C(f"{_e5.get('rifiuti_rec_pct',0):.0f}%",True,MED_GN)],
+    ]
+    t_e5p = Table(e5_rows, colWidths=[W*0.26,W*0.24,W*0.26,W*0.24])
+    t_e5p.setStyle(make_ts(rc.HexColor("#0891B2"), rc.HexColor("#ECFEFF"), WH))
+    story.append(t_e5p)
+    story.append(Spacer(1,3*mm))
+
+    # ── ESRS 2 Governance ─────────────────────────────────────────────
+    _g2 = st.session_state.get("esrs_g2", {})
+    story.append(Paragraph("ESRS 2 — Governance & Stakeholder Engagement", S("h_g2p",fontSize=10,textColor=rc.HexColor("#EC4899"),fontName="Helvetica-Bold",spaceBefore=6,spaceAfter=3)))
+    g2_rows = [
+        [C("Indicatore ESRS 2",True),C("Valore",True),C("Indicatore ESRS 2",True),C("Valore",True)],
+        [C("Forma giuridica"),C(str(_g2.get("forma_giuridica","—"))),C("Resp. sostenibilità"),C(str(_g2.get("resp_sostenibilita","—")))],
+        [C("Sost. in governance"),C(str(_g2.get("governance_sost","—"))),C("Politica sostenibilità"),C(str(_g2.get("politica_sost","—")))],
+        [C("Obiettivi numerici"),C(str(_g2.get("obiettivi_num","—"))),C("Frequenza revisione"),C(str(_g2.get("frequenza_revisione","—")))],
+    ]
+    t_g2p = Table(g2_rows, colWidths=[W*0.26,W*0.24,W*0.26,W*0.24])
+    t_g2p.setStyle(make_ts(rc.HexColor("#BE185D"), rc.HexColor("#FDF2F8"), WH))
+    story.append(t_g2p)
+    _se = _g2.get("stakeholder_coinvolti", {})
+    coinvolti = [k for k,v in _se.items() if v]
+    story.append(Spacer(1,2*mm))
+    story.append(Paragraph(f"Stakeholder coinvolti: {', '.join(coinvolti) or 'Non effettuato'} · Metodo: {', '.join(_g2.get('metodo_engagement',[]) or ['—'])}", S_sm))
+    if _g2.get("risultati_engagement"):
+        story.append(Paragraph(f"Risultati engagement: {_g2['risultati_engagement'][:250]}", S_sm))
+    story.append(Spacer(1,4*mm))
+
+    # ── Impact Report ──────────────────────────────────────────────────
+    _ir = st.session_state.get("impact_report", {})
+    story.append(Paragraph("Report di Impatto — Valore Capitale Naturale", S("h_irp",fontSize=10,textColor=GLD_C,fontName="Helvetica-Bold",spaceBefore=6,spaceAfter=3)))
+    ir_rows = [
+        [C("Voce impatto",True),C("Tipo",True),C("Valore €/anno",True),C("Metodo",True)],
+        [C("Sequestro CO₂"),C("BENEFICIO",False,MED_GN),C(f"+€{int(_ir.get('imp_co2_pos',0)):,}",True,MED_GN),C("SCC €185/t EU2024")],
+        [C("Capitale suolo SOM"),C("BENEFICIO",False,MED_GN),C(f"+€{int(_ir.get('imp_suolo_pos',0)):,}",True,MED_GN),C("CREA-AA")],
+        [C("Biodiversità cover"),C("BENEFICIO",False,MED_GN),C(f"+€{int(_ir.get('imp_biod_pos',0)):,}",True,MED_GN),C("TEEB €800/ha")],
+        [C("Emissioni GHG Sc.1+3"),C("COSTO",False,RED_C),C(f"-€{int(_ir.get('imp_co2_neg',0)):,}",True,RED_C),C("SCC €185/t")],
+        [C("Spreco idrico"),C("COSTO",False,RED_C),C(f"-€{int(_ir.get('imp_acqua_neg',0)):,}",True,RED_C),C("€2,50/m³")],
+        [C("IMPATTO NETTO",True),C(""),C(f'{"+" if _ir.get("imp_netto",0)>=0 else ""}{int(_ir.get("imp_netto",0)):,}',True,MED_GN if _ir.get("imp_netto",0)>=0 else RED_C),C("Natural Capital")],
+    ]
+    t_irp = Table(ir_rows, colWidths=[W*0.30,W*0.15,W*0.25,W*0.30])
+    t_irp.setStyle(total_row_style(make_ts(rc.HexColor("#92400E"), rc.HexColor("#FFFBEB"), WH), rc.HexColor("#92400E")))
+    story.append(t_irp)
+    story.append(Paragraph("Valori monetizzati indicativi — certificazione richiede valutazione esperto Natural Capital.", S_sm))
+    story.append(Spacer(1,5*mm))
+
+    # ══════════════════════════════════════════════════════════
+    # SEZIONE 7 — TAVOLA DI CONCORDANZA
     # ══════════════════════════════════════════════════════════
     story.append(PageBreak())
     story.append(section_banner("SEZIONE 6 — TAVOLA DI CONCORDANZA MULTI-STANDARD",DK_GN,
