@@ -4936,7 +4936,316 @@ if RL_OK and gen_multi:
     story.append(t_fields)
     story.append(Spacer(1,5*mm))
 
-    # ── DISCLAIMER E FIRMA ─────────────────────────────────
+    # ══════════════════════════════════════════════════════════
+    # SEZIONE 8 — GRI CONTENT INDEX (formato ufficiale GRI)
+    # ══════════════════════════════════════════════════════════
+    story.append(PageBreak())
+    story.append(section_banner("SEZIONE 8 — GRI CONTENT INDEX",
+                                rc.HexColor("#166534"),
+                                "Conforme GRI Standards 2021 · GRI 1 Foundation · GRI 2 General Disclosures · "
+                                "GRI 3 Material Topics · GRI 13 Agriculture 2022"))
+    story.append(Spacer(1,3*mm))
+    story.append(Paragraph(
+        "Questo GRI Content Index è preparato in conformità allo standard GRI 1: Foundation 2021. "
+        "L'organizzazione ha seguito i principi di rendicontazione GRI per determinare i contenuti "
+        "del report e la qualità delle informazioni riportate. "
+        "Colonna 'Omission': indica dove un requisito non è applicabile (NA) o dove le informazioni "
+        "non sono disponibili (ND) con relativa motivazione.", S_sm))
+    story.append(Spacer(1,4*mm))
+
+    # Helper per celle GRI
+    def GC(txt, bold=False, clr=None, size=7.5, omission=False):
+        if omission:
+            clr = rc.HexColor("#6B7280")
+            size = 7
+        return Paragraph(
+            f"<b>{txt}</b>" if bold else str(txt),
+            ParagraphStyle("gc", fontName="Helvetica-Bold" if bold else "Helvetica",
+                           fontSize=size, textColor=clr or rc.HexColor("#111827"),
+                           leading=size*1.3, wordWrap="CJK"))
+
+    def GRI_header(title, color=rc.HexColor("#166534")):
+        return Paragraph(f"<b>{title}</b>",
+            ParagraphStyle("gh", fontName="Helvetica-Bold", fontSize=9,
+                           textColor=color, leading=11, spaceBefore=6, spaceAfter=2))
+
+    GRI_COL = [W*0.10, W*0.30, W*0.22, W*0.12, W*0.26]
+    GRI_HDR = [GC("Disclosure",True,WH), GC("Titolo requisito",True,WH),
+               GC("Dato / Risposta AgroLog",True,WH), GC("Pag./Sez.",True,WH),
+               GC("Omission",True,WH)]
+    HDR_STYLE = [
+        ("BACKGROUND",(0,0),(-1,0),rc.HexColor("#166534")),
+        ("TEXTCOLOR",(0,0),(-1,0),WH),
+        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
+        ("FONTSIZE",(0,0),(-1,-1),7.5),
+        ("GRID",(0,0),(-1,-1),0.3,rc.HexColor("#D1FAE5")),
+        ("ROWBACKGROUNDS",(0,1),(-1,-1),[rc.HexColor("#F0FDF4"),WH]),
+        ("VALIGN",(0,0),(-1,-1),"TOP"),
+        ("TOPPADDING",(0,0),(-1,-1),4),
+        ("BOTTOMPADDING",(0,0),(-1,-1),4),
+        ("LEFTPADDING",(0,0),(-1,-1),5),
+        ("RIGHTPADDING",(0,0),(-1,-1),5),
+    ]
+
+    _s1d  = st.session_state.get("esrs_s1", {})
+    _s2d  = st.session_state.get("esrs_s2", {})
+    _s3d  = st.session_state.get("esrs_s3", {})
+    _e2d  = st.session_state.get("esrs_e2", {})
+    _e5d  = st.session_state.get("esrs_e5", {})
+    _g2d  = st.session_state.get("esrs_g2", {})
+    _d14d = st.session_state.get("esrs_s1_d14", {})
+    _wfd  = st.session_state.get("esrs_welfare", {})
+    _s4d  = st.session_state.get("esrs_s4", {})
+    _govd = st.session_state.get("esrs_governance", {})
+    _etd  = st.session_state.get("esrs_etica", {})
+    _zood = st.session_state.get("esrs_zoo", {})
+    _n2kd = st.session_state.get("esrs_n2k", {})
+    _ird  = st.session_state.get("impact_report", {})
+
+    NA = "NA — Non applicabile"
+    ND = "ND — Non disponibile"
+
+    # ── GRI 2: GENERAL DISCLOSURES ────────────────────────────
+    story.append(GRI_header("GRI 2: General Disclosures 2021"))
+    gri2_rows = [GRI_HDR[:],
+        [GC("2-1"),GC("Dettagli organizzativi"),
+         GC(f"{nome_az} · {_g2d.get('forma_giuridica','—')}"),GC("Sez.6"),GC("")],
+        [GC("2-2"),GC("Entità incluse nella rendicontazione"),
+         GC("Azienda agricola singola — perimetro coincide con l'unità produttiva"),GC("Sez.1"),GC("")],
+        [GC("2-3"),GC("Periodo, frequenza e contatto"),
+         GC(f"Anno {anno_r} · Frequenza annuale · {agronomo}"),GC("Cop."),GC("")],
+        [GC("2-4"),GC("Rettifiche di informazioni"),
+         GC("Prima rendicontazione — nessuna rettifica precedente"),GC("—"),GC("Prima emissione")],
+        [GC("2-5"),GC("Verifica esterna"),
+         GC(f"{_govd.get('revisione_esterna','Non ancora effettuata')}"),GC("Sez.7"),GC("" if _govd.get('revisione_esterna','No')!='No' else "ND — In programma")],
+        [GC("2-6"),GC("Attività, catena del valore, rapporti commerciali"),
+         GC(f"Canali vendita: {', '.join(_s4d.get('canali_vendita',[]) or ['—'])}"),GC("Sez.7"),GC("")],
+        [GC("2-7"),GC("Dipendenti"),
+         GC(f"Totale: {_s1d.get('tot_dip',0)} · FT: {_s1d.get('ft',0)} · PT: {_s1d.get('pt',0)} · F: {_s1d.get('donne_pct',0):.0f}%"),GC("Sez.6"),GC("" if _s1d.get('tot_dip',0)>0 else ND)],
+        [GC("2-8"),GC("Lavoratori non dipendenti"),
+         GC(f"Terzisti: {_s2d.get('terzisti',0)} · Stagionali ext: {_s2d.get('stagionali_ext',0)}"),GC("Sez.6"),GC("")],
+        [GC("2-9"),GC("Struttura e composizione della governance"),
+         GC(f"Forma: {_g2d.get('forma_giuridica','—')} · Resp.sost: {_g2d.get('resp_sostenibilita','—')}"),GC("Sez.6"),GC("")],
+        [GC("2-12"),GC("Ruolo dell'organo di governo nella supervisione degli impatti"),
+         GC(f"Sost. in governance: {_g2d.get('governance_sost','—')} · Delibere: {_govd.get('delibere_formali','—')}"),GC("Sez.7"),GC("")],
+        [GC("2-14"),GC("Ruolo nella rendicontazione di sostenibilità"),
+         GC(f"Responsabile: {_g2d.get('resp_sostenibilita','—')} · Relazione annuale: {_govd.get('relazione_annuale','—')}"),GC("Sez.7"),GC("")],
+        [GC("2-16"),GC("Comunicazione delle preoccupazioni critiche"),
+         GC(f"Whistleblowing: {_etd.get('whistleblowing','—')}"),GC("Sez.7"),GC("")],
+        [GC("2-22"),GC("Dichiarazione sulla strategia di sviluppo sostenibile"),
+         GC(str(_g2d.get('strategia','—'))[:80] if _g2d.get('strategia') else ND),GC("Sez.6"),GC("" if _g2d.get('strategia') else ND)],
+        [GC("2-25"),GC("Processi per porre rimedio agli impatti negativi"),
+         GC(f"Mitigazioni piano azioni: {len(st.session_state.get('tutti_rischi',[]))} rischi con piano mitigazione"),GC("Reg.Rischi"),GC("")],
+        [GC("2-26"),GC("Meccanismi di consulenza e preoccupazione"),
+         GC(f"Whistleblowing: {_s2d.get('whistleblowing','—')} · Canale reclami S4: disponibile"),GC("Sez.6-7"),GC("")],
+        [GC("2-29"),GC("Approccio al coinvolgimento degli stakeholder"),
+         GC(f"Metodo: {', '.join(_g2d.get('metodo_engagement',[]) or ['—'])} · Ultima: {_g2d.get('data_ultima_cons','—')}"),GC("Sez.6"),GC("")],
+        [GC("2-30"),GC("Accordi di contrattazione collettiva"),
+         GC(f"CCNL: {_s1d.get('ccnl','—')} · Dialogo sind.: {_s1d.get('dialogo_sind','—')}"),GC("Sez.6"),GC("")],
+    ]
+    t_gri2 = Table(gri2_rows, colWidths=GRI_COL, repeatRows=1)
+    t_gri2.setStyle(TableStyle(HDR_STYLE))
+    story.append(t_gri2)
+    story.append(Spacer(1,4*mm))
+
+    # ── GRI 3: MATERIAL TOPICS ─────────────────────────────────
+    story.append(GRI_header("GRI 3: Material Topics 2021"))
+    _temi_mat = [t for t in _temi if t["impatto"] >= _sog or t["finanziario"] >= _sog]
+    gri3_rows = [GRI_HDR[:],
+        [GC("3-1"),GC("Processo per determinare i temi materiali"),
+         GC(f"Analisi Doppia Materialità ESRS 1 · {len(_temi_mat)}/{len(_temi)} temi materiali · Soglia: {_sog}/10"),GC("Sez.5"),GC("")],
+        [GC("3-2"),GC("Elenco dei temi materiali"),
+         GC(", ".join([t['tema'].replace('\n',' ') for t in _temi_mat]) or ND),GC("Sez.5"),GC("")],
+        [GC("3-3"),GC("Gestione dei temi materiali"),
+         GC(f"Piano azioni prioritario · Registro IRO · {len(st.session_state.get('tutti_rischi',[]))} rischi gestiti"),GC("Sez.5"),GC("")],
+    ]
+    t_gri3 = Table(gri3_rows, colWidths=GRI_COL, repeatRows=1)
+    t_gri3.setStyle(TableStyle(HDR_STYLE))
+    story.append(t_gri3)
+    story.append(Spacer(1,4*mm))
+
+    # ── GRI 305: EMISSIONS ─────────────────────────────────────
+    story.append(GRI_header("GRI 305: Emissions 2016"))
+    gri305_rows = [GRI_HDR[:],
+        [GC("305-1"),GC("Emissioni GHG Scope 1 dirette"),
+         GC(f"{round(scope1_total,3)} tCO₂eq · CH₄ enter.: {_zood.get('ch4_fermentazione_t',0)} t · N₂O: {round(sum(r['n2o'] for r in res_att),3)} t"),GC("Sez.2"),GC("")],
+        [GC("305-2"),GC("Emissioni GHG Scope 2 indirette da energia"),
+         GC(f"{round(scope2_total,3)} tCO₂eq · {_e5d.get('elettricita_kwh',0):,.0f} kWh · FE: 0.233 kgCO₂/kWh (IT 2024)"),GC("Sez.2"),GC("")],
+        [GC("305-3"),GC("Altre emissioni GHG Scope 3 indirette"),
+         GC(f"{round(scope3_total,3)} tCO₂eq · Fertilizzanti: {round(co2_fert_prod,3)} t · Trasporti: {round(co2_trasp,3)} t"),GC("Sez.2"),GC("")],
+        [GC("305-4"),GC("Intensità delle emissioni GHG"),
+         GC(f"{round((scope1_total+scope3_total)/max(tot_ha,1),4)} tCO₂eq/ha · {round((scope1_total+scope3_total)/max(fatturato/1000,1),4)} tCO₂eq/k€"),GC("Sez.2"),GC("")],
+        [GC("305-5"),GC("Riduzione delle emissioni GHG"),
+         GC(f"Sequestro SOC: +{round(tot_seq,3)} tCO₂/anno · RothC Tier 1 IPCC"),GC("Sez.2"),GC("")],
+        [GC("305-6"),GC("Emissioni di sostanze che riducono l'ozono"),
+         GC("Attività agricola non produce ODS in quantità significative"),GC("—"),GC(NA)],
+        [GC("305-7"),GC("NOx, SOx e altre emissioni atmosferiche significative"),
+         GC(f"NH₃: {_e2d.get('nh3_kg',0):.0f} kg/anno (da fertilizzanti e deiezioni) · NOx: ND"),GC("Sez.6"),GC("NOx: "+ND)],
+    ]
+    t_gri305 = Table(gri305_rows, colWidths=GRI_COL, repeatRows=1)
+    t_gri305.setStyle(TableStyle(HDR_STYLE))
+    story.append(t_gri305)
+    story.append(Spacer(1,4*mm))
+
+    # ── GRI 303: WATER ─────────────────────────────────────────
+    story.append(GRI_header("GRI 303: Water and Effluents 2018"))
+    gri303_rows = [GRI_HDR[:],
+        [GC("303-1"),GC("Interazioni con l'acqua come risorsa condivisa"),
+         GC(f"Fabbisogno: {int(tot_irr):,} m³/anno · Spreco: {int(tot_spreco):,} m³ · Stress: {round(stress_idx*100,1)}%"),GC("Sez.2"),GC("")],
+        [GC("303-2"),GC("Gestione degli impatti legati all'acqua"),
+         GC(f"{'Micro-irrigazione attiva' if inv_drip else 'Irrigazione tradizionale'} · Acqua riusata: {_e5d.get('acqua_riusata_m3',0):,.0f} m³"),GC("Sez.6"),GC("")],
+        [GC("303-3"),GC("Prelievo idrico"),
+         GC(f"Totale: {int(tot_irr):,} m³/a · Fonte: acque superficiali/falda (specificare)"),GC("Sez.2"),GC("")],
+        [GC("303-4"),GC("Scarico idrico"),
+         GC(f"Percolato: {_e2d.get('percolato','—')}"),GC("Sez.6"),GC("")],
+        [GC("303-5"),GC("Consumo idrico"),
+         GC(f"Consumo netto: {int(tot_irr - st.session_state.get('tot_drenato',0)):,} m³/a (stima)"),GC("Sez.2"),GC("")],
+    ]
+    t_gri303 = Table(gri303_rows, colWidths=GRI_COL, repeatRows=1)
+    t_gri303.setStyle(TableStyle(HDR_STYLE))
+    story.append(t_gri303)
+    story.append(Spacer(1,4*mm))
+
+    # ── GRI 304: BIODIVERSITY ──────────────────────────────────
+    story.append(GRI_header("GRI 304: Biodiversity 2016"))
+    gri304_rows = [GRI_HDR[:],
+        [GC("304-1"),GC("Siti operativi in aree protette o adiacenti"),
+         GC(f"Campi in Natura 2000: {_n2kd.get('campi_in_n2k',0)} · VINCA: {_n2kd.get('vinca','—')}"),GC("Sez.7"),GC("")],
+        [GC("304-2"),GC("Impatti significativi su biodiversità"),
+         GC(f"Impatto habitat: {_n2kd.get('impatto_habitat','—')} · Fitofarmaci: {_e2d.get('pesticidi_kg',0):.1f} kg p.a./anno"),GC("Sez.6-7"),GC("")],
+        [GC("304-3"),GC("Habitat protetti o ripristinati"),
+         GC(f"Cover crops: {ha_cover:.1f} ha · Misure tutela: {', '.join(_n2kd.get('misure_tutela',[]) or ['—'])[:60]}"),GC("Sez.7"),GC("")],
+        [GC("304-4"),GC("Specie IUCN nelle aree di influenza aziendale"),
+         GC(str(_n2kd.get('specie_protette','Non rilevate o non verificate'))[:80]),GC("Sez.7"),GC("" if _n2kd.get('specie_protette') else ND)],
+    ]
+    t_gri304 = Table(gri304_rows, colWidths=GRI_COL, repeatRows=1)
+    t_gri304.setStyle(TableStyle(HDR_STYLE))
+    story.append(t_gri304)
+    story.append(Spacer(1,4*mm))
+
+    # ── GRI 401: EMPLOYMENT ────────────────────────────────────
+    story.append(GRI_header("GRI 401: Employment 2016"))
+    gri401_rows = [GRI_HDR[:],
+        [GC("401-1"),GC("Nuove assunzioni e turnover dei dipendenti"),
+         GC(ND),GC("—"),GC(ND+" — dato non raccolto")],
+        [GC("401-2"),GC("Benefit per i dipendenti a tempo pieno"),
+         GC(f"Welfare: €{_wfd.get('valore_totale_annuo',0):,}/anno · {', '.join([b for b,v in [('Assic.int.',_wfd.get('assic_integrativa')),('Prev.compl.',_wfd.get('prev_complementare')),('Alloggio',_wfd.get('alloggio'))] if v])or 'Base CCNL'}"),GC("Sez.7"),GC("")],
+        [GC("401-3"),GC("Congedo parentale"),
+         GC(f"Congedo extra vs legge: {'Sì' if _wfd.get('congedo_extra') else 'No — solo obbligatorio di legge'}"),GC("Sez.7"),GC("")],
+    ]
+    t_gri401 = Table(gri401_rows, colWidths=GRI_COL, repeatRows=1)
+    t_gri401.setStyle(TableStyle(HDR_STYLE))
+    story.append(t_gri401)
+    story.append(Spacer(1,4*mm))
+
+    # ── GRI 403: OCCUPATIONAL HEALTH & SAFETY ─────────────────
+    story.append(GRI_header("GRI 403: Occupational Health and Safety 2018"))
+    gri403_rows = [GRI_HDR[:],
+        [GC("403-1"),GC("Sistema di gestione salute e sicurezza sul lavoro"),
+         GC("D.Lgs. 81/2008 — DVR obbligatorio per tutte le aziende agricole con dipendenti"),GC("Sez.6"),GC("")],
+        [GC("403-2"),GC("Identificazione pericoli, valutazione e incidenti"),
+         GC(f"Infortuni: {_s1d.get('infortuni',0)} · Giornate perse: {_s1d.get('giorni_persi',0)}"),GC("Sez.6"),GC("")],
+        [GC("403-5"),GC("Formazione dei lavoratori su salute e sicurezza"),
+         GC(f"Ore formazione/dip/anno: {_s1d.get('ore_formazione',0)} (include sicurezza)"),GC("Sez.6"),GC("")],
+        [GC("403-9"),GC("Infortuni sul lavoro"),
+         GC(f"N°: {_s1d.get('infortuni',0)} · Giornate perse: {_s1d.get('giorni_persi',0)} · Tasso: ND"),GC("Sez.6"),GC("Tasso freq.: "+ND)],
+    ]
+    t_gri403 = Table(gri403_rows, colWidths=GRI_COL, repeatRows=1)
+    t_gri403.setStyle(TableStyle(HDR_STYLE))
+    story.append(t_gri403)
+    story.append(Spacer(1,4*mm))
+
+    # ── GRI 405: DIVERSITY & EQUAL OPPORTUNITY ─────────────────
+    story.append(GRI_header("GRI 405: Diversity and Equal Opportunity 2016"))
+    gri405_rows = [GRI_HDR[:],
+        [GC("405-1"),GC("Diversità degli organi di governo e dei dipendenti"),
+         GC(f"Donne: {_s1d.get('donne_pct',0):.0f}% · Under 30: {_s1d.get('under30_pct',0):.0f}% · Stagionali: {_s1d.get('stagionali',0)}"),GC("Sez.6"),GC("")],
+        [GC("405-2"),GC("Rapporto dello stipendio base uomini/donne"),
+         GC(f"Gender pay gap: {_d14d.get('gender_pay_gap_pct',0):+.1f}% · Parità retributiva: {_d14d.get('parita_retributiva','—')}"),GC("Sez.7"),GC("" if _d14d.get('gender_pay_gap_pct',0)==0 else "")],
+    ]
+    t_gri405 = Table(gri405_rows, colWidths=GRI_COL, repeatRows=1)
+    t_gri405.setStyle(TableStyle(HDR_STYLE))
+    story.append(t_gri405)
+    story.append(Spacer(1,4*mm))
+
+    # ── GRI 406: NON-DISCRIMINATION ───────────────────────────
+    story.append(GRI_header("GRI 406: Non-discrimination 2016"))
+    gri406_rows = [GRI_HDR[:],
+        [GC("406-1"),GC("Casi di discriminazione e azioni correttive"),
+         GC(f"Segnalazioni: {_d14d.get('segnalazioni_disc',0)} · Procedimenti: {_d14d.get('procedimenti_disc',0)} · Politica antidisc.: {_d14d.get('politica_antidisc','—')}"),GC("Sez.7"),GC("")],
+    ]
+    t_gri406 = Table(gri406_rows, colWidths=GRI_COL, repeatRows=1)
+    t_gri406.setStyle(TableStyle(HDR_STYLE))
+    story.append(t_gri406)
+    story.append(Spacer(1,4*mm))
+
+    # ── GRI 408-409: CHILD/FORCED LABOUR ──────────────────────
+    story.append(GRI_header("GRI 408-409: Child Labour & Forced Labour"))
+    gri408_rows = [GRI_HDR[:],
+        [GC("408-1"),GC("Operazioni e fornitori a rischio lavoro minorile"),
+         GC(f"Verifica lavoro forzato/minorile: {_d14d.get('verifica_lavoro_forzato','—')}"),GC("Sez.7"),GC("")],
+        [GC("409-1"),GC("Operazioni e fornitori a rischio lavoro forzato"),
+         GC(f"Paesi provenienza lavoratori: {', '.join(_s2d.get('paesi_provenienza',[]) or ['—'])} · DD: {_s2d.get('due_diligence','—')}"),GC("Sez.6"),GC("")],
+    ]
+    t_gri408 = Table(gri408_rows, colWidths=GRI_COL, repeatRows=1)
+    t_gri408.setStyle(TableStyle(HDR_STYLE))
+    story.append(t_gri408)
+    story.append(Spacer(1,4*mm))
+
+    # ── GRI 13: AGRICULTURE 2022 ───────────────────────────────
+    story.append(GRI_header("GRI 13: Agriculture, Aquaculture and Fishing Sectors 2022",
+                             rc.HexColor("#14532D")))
+    gri13_rows = [GRI_HDR[:],
+        [GC("13.1"),GC("Emissioni di GHG (settore agricolo)"),
+         GC(f"Scope 1: {round(scope1_total,2)} · Scope 3: {round(scope3_total,2)} · Zootecnia: {_zood.get('co2eq_totale',0):.2f} tCO₂eq"),GC("Sez.2,7"),GC("")],
+        [GC("13.2"),GC("Uso di pesticidi"),
+         GC(f"Fitofarmaci: {_e2d.get('pesticidi_kg',0):.1f} kg p.a./anno · Lista nera UE: {_e2d.get('lista_nera','—')}"),GC("Sez.6"),GC("")],
+        [GC("13.3"),GC("Sostanza organica del suolo"),
+         GC(f"SOM media: {round(_so_media,2)}% · Obiettivo 4‰/anno · Δ SOM stimato: {round(sum(r.get('dsom_year',0) for r in res_att),3)}%/anno"),GC("Sez.2"),GC("")],
+        [GC("13.4"),GC("Uso dell'acqua"),
+         GC(f"Irrigazione: {int(tot_irr):,} m³/anno · Indice stress: {round(stress_idx*100,1)}% · Efficienza: {round((1-tot_spreco/max(tot_irr,1))*100,1)}%"),GC("Sez.2"),GC("")],
+        [GC("13.5"),GC("Biodiversità"),
+         GC(f"Cover crops: {ha_cover:.1f} ha · Natura 2000: {_n2kd.get('campi_in_n2k',0)} campi · Misure: {len(_n2kd.get('misure_tutela',[]))}"),GC("Sez.7"),GC("")],
+        [GC("13.6"),GC("Benessere animale"),
+         GC(f"Gestione deiezioni: {_zood.get('gestione_deiezioni','NA')} · Giorni pascolo: {_zood.get('giorni_pascolo',0)} · Piano nutrizione: {_zood.get('piano_nutrizione','NA')}"),GC("Sez.7"),GC("" if _zood.get('bovini_latte',0)+_zood.get('bovini_carne',0)>0 else NA)],
+        [GC("13.7"),GC("Sicurezza alimentare e accessibilità"),
+         GC(f"HACCP: {_s4d.get('haccp','—')} · Tracciabilità: {_s4d.get('tracciabilita','—')} · Cert. qualità: {', '.join(_s4d.get('cert_qualita',[]) or ['—'])}"),GC("Sez.7"),GC("")],
+        [GC("13.8"),GC("Lavoro e diritti umani nella catena del valore"),
+         GC(f"Terzisti: {_s2d.get('terzisti',0)} · DD: {_s2d.get('due_diligence','—')} · Cod.condotta: {_s2d.get('codice_condotta','—')}"),GC("Sez.6"),GC("")],
+        [GC("13.9"),GC("Salute e sicurezza di comunità locali e lavoratori"),
+         GC(f"Infortuni: {_s1d.get('infortuni',0)} · Buffer pesticidi: {_e2d.get('buffer_m',0):.0f} m · Comunità: {_s3d.get('consultazione','—')}"),GC("Sez.6-7"),GC("")],
+    ]
+    t_gri13 = Table(gri13_rows, colWidths=GRI_COL, repeatRows=1)
+    t_gri13.setStyle(TableStyle(HDR_STYLE))
+    story.append(t_gri13)
+    story.append(Spacer(1,4*mm))
+
+    # ── GRI 205: ANTI-CORRUPTION ───────────────────────────────
+    story.append(GRI_header("GRI 205: Anti-corruption 2016"))
+    gri205_rows = [GRI_HDR[:],
+        [GC("205-1"),GC("Operazioni valutate per rischi di corruzione"),
+         GC(f"Politica anticorruzione: {_etd.get('politica_anticorruz','—')} · Conflitti interesse: {_etd.get('gestione_conflitti','—')}"),GC("Sez.7"),GC("")],
+        [GC("205-2"),GC("Comunicazione e formazione su anti-corruzione"),
+         GC(f"Formazione etica: {'Sì' if _etd.get('formazione_etica') else 'No'} · Codice etico: {_etd.get('codice_etico','—')}"),GC("Sez.7"),GC("")],
+        [GC("205-3"),GC("Casi di corruzione confermati e azioni adottate"),
+         GC(f"Casi corruzione: {_etd.get('casi_corruzione',0)} · Sanzioni amm.: {_etd.get('sanzioni_amm',0)}"),GC("Sez.7"),GC("")],
+    ]
+    t_gri205 = Table(gri205_rows, colWidths=GRI_COL, repeatRows=1)
+    t_gri205.setStyle(TableStyle(HDR_STYLE))
+    story.append(t_gri205)
+    story.append(Spacer(1,4*mm))
+
+    # Nota finale GRI
+    story.append(Paragraph(
+        "Nota metodologica GRI: Questo GRI Content Index è preparato 'in conformità' con GRI 1: Foundation 2021. "
+        "Le omissioni indicate come ND (Non Disponibile) sono dovute a limitazioni nella raccolta dati "
+        "per le caratteristiche strutturali di piccole e medie imprese agricole. "
+        "L'organizzazione si impegna a colmare le lacune informative nelle prossime rendicontazioni. "
+        "Per registrazione ufficiale nel GRI Sustainability Disclosure Database: "
+        "www.globalreporting.org/search/?query=disclosure+database", S_sm))
+    story.append(Spacer(1,5*mm))
+
+    # ── DISCLAIMER E FIRMA ─────────────────────────────────────────────
     story.append(HRFlowable(width=W, thickness=1.5, color=EU_BL, spaceAfter=5))
     story.append(Paragraph(
         "Questo documento è redatto in conformità a: CSRD/ESRS (Direttiva UE 2022/2464, standard EFRAG 2023); "
