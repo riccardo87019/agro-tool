@@ -4791,6 +4791,459 @@ if selezionati:
         "tot_costo": tot_costo, "tot_roi": tot_roi, "payback_mesi": payback_mesi
     }
 
+# ══════════════════════════════════════════════════════════════════════
+#  BLOCKCHAIN — Certificato NFT · Crediti CO₂ · Tracciabilità QR
+# ══════════════════════════════════════════════════════════════════════
+st.markdown('<div class="sec">⛓️ Blockchain & Web3 — Certificato ESG · Crediti CO₂ · Tracciabilità</div>', unsafe_allow_html=True)
+st.caption("Step 1: Certificato NFT immutabile del report ESG · Step 2: Collegamento Verra VCS crediti CO₂ · Step 3: QR tracciabilità prodotto")
+
+bc_tab1, bc_tab2, bc_tab3 = st.tabs([
+    "🔏 Step 1 — Certificato NFT ESG",
+    "🌿 Step 2 — Crediti CO₂ Verra VCS",
+    "📦 Step 3 — Tracciabilità QR Filiera"
+])
+
+# ── STEP 1: NFT CERTIFICATO ESG ───────────────────────────────────────
+with bc_tab1:
+    st.markdown("""<div style="background:#161c16;border-left:4px solid #22c55e;
+      border-radius:8px;padding:.8rem 1.1rem;margin-bottom:.8rem;font-size:.78rem;color:#86efac">
+      <b style="color:#4ade80">Come funziona:</b> AgroLog calcola un hash crittografico (SHA-256) di tutti
+      i dati ESG dell'azienda. Questo hash viene registrato su blockchain Polygon (costo ~€0.50)
+      creando un <b>certificato immutabile e verificabile da chiunque</b> — buyer, banche, enti certificatori —
+      senza poter alterare retroattivamente i dati. Non è una moneta: è una firma digitale certificata.
+    </div>""", unsafe_allow_html=True)
+
+    import hashlib, json as _json_bc
+    from datetime import datetime as _dt_bc
+
+    # Costruisce il payload dati ESG da certificare
+    def build_esg_payload():
+        return {
+            "azienda": nome_az,
+            "agronomo": agronomo,
+            "regione": regione,
+            "data_certificazione": _dt_bc.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "versione_protocollo": "AgroLog-ESG-v1.0",
+            "bilancio_ghg": {
+                "scope1_tco2eq": round(scope1_total, 3),
+                "scope2_tco2eq": round(scope2_total, 3),
+                "scope3_tco2eq": round(scope3_total, 3),
+                "sequestro_tco2": round(tot_seq, 3),
+                "netto_tco2eq": round(tot_netto, 3),
+            },
+            "score_esg": score,
+            "rating": rcls,
+            "superfice_ha": round(tot_ha, 2),
+            "coltura_principale": coltura_principale,
+            "certificazioni": {
+                "biologico": cert_bio, "sqnpi": cert_sqnpi,
+                "globalgap": cert_gap, "iso14064": cert_iso, "csrd": cert_csrd
+            },
+            "stress_idrico_pct": round(stress_idx * 100, 1),
+            "pac_eco_scheme_eur": int(pac_totale),
+            "valore_crediti_co2_eur": int(val_cred),
+            "so_media_pct": round(float(df_edit["SO %"].mean()), 2),
+            "appezzamenti": [
+                {
+                    "campo": str(r.get("Campo","")),
+                    "ha": float(r.get("Ettari",0)),
+                    "so_pct": float(r.get("SO %",0)),
+                    "protocollo": str(r.get("Protocollo","")),
+                    "co2_netto": res_att[i]["co2_netto"]
+                }
+                for i, (_, r) in enumerate(df_edit.iterrows())
+            ],
+            "standard_applicati": ["CSRD/ESRS EFRAG 2023","GRI Standards 2021","VSME EFRAG 2024","ISO 14064-1:2018"],
+            "metodologia_ghg": "IPCC 2006 Tier 1 · AR5 GWP100 · GHG Protocol Corporate Standard · ecoinvent 3.9 · DEFRA 2024",
+        }
+
+    payload = build_esg_payload()
+    payload_json = _json_bc.dumps(payload, ensure_ascii=False, sort_keys=True)
+    hash_sha256 = hashlib.sha256(payload_json.encode("utf-8")).hexdigest()
+    hash_short  = hash_sha256[:16] + "..." + hash_sha256[-8:]
+
+    bc_c1, bc_c2 = st.columns([3, 2])
+    with bc_c1:
+        st.markdown(f"""<div style="background:#0d1a0d;border:2px solid #22c55e;border-radius:14px;
+          padding:1.2rem 1.4rem;font-size:.8rem">
+          <div style="color:#4ade80;font-weight:700;font-size:.95rem;margin-bottom:.8rem">
+            🔏 Certificato ESG — {nome_az}</div>
+          <div style="font-family:monospace;font-size:.72rem;color:#86efac;
+            background:#050f05;padding:.6rem;border-radius:8px;margin-bottom:.7rem;
+            word-break:break-all;border:1px solid rgba(34,197,94,.2)">
+            <span style="color:#4a5e4e">SHA-256:</span><br>
+            <span style="color:#4ade80">{hash_sha256}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;font-size:.75rem">
+            <div><span style="color:#4a5e4e">Azienda:</span><br>
+                 <b style="color:#e8f5e9">{nome_az}</b></div>
+            <div><span style="color:#4a5e4e">Data:</span><br>
+                 <b style="color:#e8f5e9">{_dt_bc.now().strftime("%d/%m/%Y %H:%M")}</b></div>
+            <div><span style="color:#4a5e4e">Score ESG:</span><br>
+                 <b style="color:#4ade80">{score}/100 — {rcls}</b></div>
+            <div><span style="color:#4a5e4e">Bilancio GHG:</span><br>
+                 <b style="color:{'#4ade80' if tot_netto>=0 else '#f87171'}">
+                 {"+" if tot_netto>=0 else ""}{round(tot_netto,2)} tCO₂eq/a</b></div>
+            <div><span style="color:#4a5e4e">Standard:</span><br>
+                 <b style="color:#e8f5e9">CSRD · GRI · VSME · ISO 14064</b></div>
+            <div><span style="color:#4a5e4e">Rete blockchain:</span><br>
+                 <b style="color:#a78bfa">Polygon PoS · EVM compatible</b></div>
+          </div>
+        </div>""", unsafe_allow_html=True)
+
+        # Download payload JSON certificabile
+        st.download_button(
+            "⬇️ Scarica payload JSON da certificare",
+            data=payload_json.encode("utf-8"),
+            file_name=f"AgroLog_ESG_payload_{nome_az.replace(' ','_')}_{_dt_bc.now().strftime('%Y%m%d')}.json",
+            mime="application/json",
+            help="Questo file JSON contiene tutti i dati ESG. Il suo hash SHA-256 viene registrato on-chain."
+        )
+
+    with bc_c2:
+        st.markdown("""<div style="background:#161c16;border-radius:12px;padding:1rem;
+          font-size:.77rem;color:#86efac;border:1px solid rgba(167,139,250,.3)">
+          <b style="color:#a78bfa">Come registrare on-chain</b><br><br>
+          <b style="color:#e8f5e9">Opzione A — Polygon (consigliata)</b><br>
+          1. Vai su <a href="https://polygonscan.com" target="_blank" style="color:#60a5fa">polygonscan.com</a><br>
+          2. Connetti MetaMask con ~1 MATIC (≈€0.50)<br>
+          3. Funzione "Write Contract" → store(hash)<br>
+          4. Ottieni TX hash come prova immutabile<br><br>
+          <b style="color:#e8f5e9">Opzione B — Ethereum Attestation Service</b><br>
+          1. <a href="https://attest.sh" target="_blank" style="color:#60a5fa">attest.sh</a> — gratuito su testnet<br>
+          2. Schema personalizzato AgroLog ESG<br>
+          3. Attestazione firmata da agronomo<br><br>
+          <b style="color:#e8f5e9">Opzione C — IPFS + timestamp</b><br>
+          1. Carica il JSON su <a href="https://web3.storage" target="_blank" style="color:#60a5fa">web3.storage</a><br>
+          2. Ottieni CID immutabile gratuito<br>
+          3. Inserisci CID nel report PDF<br><br>
+          <span style="color:#4a5e4e;font-size:.7rem">Costo stimato Polygon: €0.20-1.00 per certificato</span>
+        </div>""", unsafe_allow_html=True)
+
+        # QR del hash per verifica rapida
+        st.markdown(f"""<div style="background:#161c16;border-radius:10px;padding:.8rem;
+          margin-top:.5rem;text-align:center;border:1px solid rgba(34,197,94,.2)">
+          <div style="font-size:.72rem;color:#86efac;margin-bottom:.4rem">
+            Hash breve per verifica rapida:</div>
+          <div style="font-family:monospace;font-size:.8rem;color:#4ade80;
+            word-break:break-all;padding:.4rem;background:#050f05;border-radius:6px">
+            {hash_short}
+          </div>
+          <div style="font-size:.68rem;color:#4a5e4e;margin-top:.4rem">
+            Inserisci l'hash completo su polygonscan.com per verificare
+          </div>
+        </div>""", unsafe_allow_html=True)
+
+    # Verifica hash esterno
+    st.markdown("**🔍 Verifica un certificato esistente**")
+    hash_input = st.text_input("Incolla hash SHA-256 da verificare:", placeholder="es: 3a7f2b...", key="bc_hash_input")
+    if hash_input and len(hash_input) == 64:
+        if hash_input.lower() == hash_sha256.lower():
+            st.success(f"✅ **Hash verificato** — corrisponde ai dati ESG attuali di {nome_az}. Il certificato è autentico.")
+        else:
+            st.warning("⚠️ L'hash non corrisponde ai dati attuali. Il report potrebbe essere stato aggiornato dopo la certificazione.")
+    elif hash_input and len(hash_input) != 64:
+        st.error("❌ Hash non valido — deve essere 64 caratteri esadecimali (SHA-256).")
+
+    st.session_state["bc_hash"] = hash_sha256
+    st.session_state["bc_payload"] = payload
+
+# ── STEP 2: CREDITI CO₂ VERRA VCS ────────────────────────────────────
+with bc_tab2:
+    st.markdown("""<div style="background:#161c16;border-left:4px solid #22c55e;
+      border-radius:8px;padding:.8rem 1.1rem;margin-bottom:.8rem;font-size:.78rem;color:#86efac">
+      <b style="color:#4ade80">Come funziona:</b> Se il bilancio GHG è positivo, i crediti carbonio calcolati
+      da AgroLog possono essere registrati sui mercati regolamentati già esistenti (Verra VCS, Gold Standard,
+      KlimaDAO). Non si crea un nuovo token: si usano protocolli già accettati dal mercato a €25-65/t.
+    </div>""", unsafe_allow_html=True)
+
+    vcs_c1, vcs_c2 = st.columns(2)
+    with vcs_c1:
+        st.markdown("**📊 Stato crediti carbonio AgroLog**")
+
+        col_netto_bc = "#4ade80" if tot_netto >= 0 else "#f87171"
+        st.markdown(f"""<div style="background:#0d1a0d;border:1.5px solid {'#22c55e' if tot_netto>=0 else '#ef4444'};
+          border-radius:12px;padding:1rem 1.2rem;font-size:.8rem">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.8rem">
+            <div style="text-align:center;background:#161c16;border-radius:8px;padding:.6rem">
+              <div style="font-size:1.3rem;font-weight:700;color:{col_netto_bc}">
+                {"+" if tot_netto>=0 else ""}{round(tot_netto,1)} t</div>
+              <div style="font-size:.65rem;color:#86efac">Bilancio GHG netto/anno</div>
+            </div>
+            <div style="text-align:center;background:#161c16;border-radius:8px;padding:.6rem">
+              <div style="font-size:1.3rem;font-weight:700;color:#4ade80">
+                €{int(val_cred):,}</div>
+              <div style="font-size:.65rem;color:#86efac">Valore crediti @ €{prezzo_co2}/t</div>
+            </div>
+          </div>
+          {"<div style='color:#4ade80;font-weight:700'>✅ Bilancio positivo — ammissibile ai mercati volontari CO₂</div>" if tot_netto > 0 else "<div style='color:#f87171;font-weight:700'>⚠️ Bilancio negativo — lavorare prima sulla riduzione emissioni</div>"}
+        </div>""", unsafe_allow_html=True)
+
+        if tot_netto > 0:
+            st.markdown("**Registri compatibili con AgroLog:**")
+            registri = [
+                ("🌿 Verra VCS (Verified Carbon Standard)",
+                 f"Metodologia VM0042 · Crediti verificabili · {round(tot_netto,1)} VCU/anno",
+                 "https://verra.org/programs/verified-carbon-standard/", "#22c55e"),
+                ("⭐ Gold Standard",
+                 "Focus co-benefit biodiversità · Premium price +15-20%",
+                 "https://www.goldstandard.org", "#f59e0b"),
+                ("🔗 KlimaDAO / Toucan Protocol",
+                 "Token BCT/NCT su Polygon · Mercato DeFi · liquidità immediata",
+                 "https://www.klimadao.finance", "#a78bfa"),
+                ("🇮🇹 CMCC Carbon Market (Italia)",
+                 "Mercato volontario italiano · CMCC Foundation · più vicino",
+                 "https://www.cmcc.it", "#3b82f6"),
+            ]
+            for nome_r, desc_r, url_r, clr_r in registri:
+                st.markdown(f"""<div style="background:#161c16;border-left:3px solid {clr_r};
+                  border-radius:0 8px 8px 0;padding:.6rem .9rem;margin:.25rem 0;font-size:.77rem">
+                  <b style="color:{clr_r}">{nome_r}</b><br>
+                  <span style="color:#86efac">{desc_r}</span><br>
+                  <a href="{url_r}" target="_blank" style="color:#60a5fa;font-size:.7rem">{url_r}</a>
+                </div>""", unsafe_allow_html=True)
+
+    with vcs_c2:
+        st.markdown("**📋 Checklist prerequisiti Verra VCS**")
+        prereq = [
+            ("Bilancio GHG positivo (Scope 1+3)", tot_netto > 0),
+            ("Inventario GHG documentato (ISO 14064)", True),
+            ("Storico dati ≥ 3 anni", len(st.session_state.get("storico_analisi", pd.DataFrame())) > 2),
+            ("Analisi suolo con SO% misurata", "Analisi suolo" in df_edit.columns),
+            ("Protocollo colturale documentato", len(df_edit) > 0),
+            ("Coordinate GPS appezzamenti", "Lat" in df_edit.columns),
+            ("Certificazione ISO 14064-1", cert_iso),
+            ("Verifica terza parte (ISO 14064-3)", False),
+        ]
+        completati = sum(1 for _, v in prereq if v)
+        st.markdown(f"""<div style="background:#161c16;border-radius:8px;padding:.5rem .8rem;
+          margin-bottom:.6rem;font-size:.78rem;border:1px solid rgba(34,197,94,.2)">
+          Checklist: <b style="color:#4ade80">{completati}/{len(prereq)}</b> prerequisiti soddisfatti
+          {"✅ Pronto per candidatura" if completati>=6 else "⚠️ Completa i prerequisiti mancanti"}
+        </div>""", unsafe_allow_html=True)
+        for nome_p, ok_p in prereq:
+            st.markdown(f"""<div style="font-size:.76rem;padding:.25rem .4rem;
+              color:{'#4ade80' if ok_p else '#6b7280'}">
+              {"✅" if ok_p else "○"} {nome_p}
+            </div>""", unsafe_allow_html=True)
+
+        st.markdown("**📅 Percorso di certificazione stimato**")
+        fasi_vcs = [
+            ("Mese 1-2", "Selezione metodologia VM0042 + validatore accreditato"),
+            ("Mese 3-4", "Raccolta dati storici + documentazione MRV"),
+            ("Mese 5-6", "Validazione terza parte (DOE accreditato UNFCCC)"),
+            ("Mese 7-9", "Registrazione Verra Registry + prima emissione VCU"),
+            ("Anno 1+", "Monitoraggio annuale + verifica + emissione crediti"),
+        ]
+        for fase, desc in fasi_vcs:
+            st.markdown(f"""<div style="background:#161c16;border-radius:6px;
+              padding:.4rem .7rem;margin:.2rem 0;font-size:.72rem;display:flex;gap:.5rem">
+              <span style="color:#fbbf24;min-width:70px;font-weight:600">{fase}</span>
+              <span style="color:#86efac">{desc}</span>
+            </div>""", unsafe_allow_html=True)
+
+        st.markdown(f"""<div style="background:#0d2b1a;border-radius:8px;padding:.6rem .9rem;
+          margin-top:.5rem;font-size:.77rem;border:1px solid rgba(34,197,94,.3)">
+          💶 <b style="color:#4ade80">Costo stimato certificazione:</b> €3.000-8.000<br>
+          💰 <b style="color:#4ade80">Ricavo annuo stimato:</b> €{int(val_cred):,}<br>
+          📅 <b style="color:#fbbf24">Payback:</b> {round(6000/max(val_cred,1)*12,0):.0f} mesi
+        </div>""", unsafe_allow_html=True)
+
+    # Genera MRV report base
+    st.markdown("**📄 MRV Report Base (Monitoring, Reporting & Verification)**")
+    st.caption("Documento base per la candidatura Verra VCS — generato automaticamente da AgroLog")
+
+    if st.button("📄 Genera MRV Report Base", key="btn_mrv"):
+        mrv_content = f"""# MRV REPORT — MONITORING, REPORTING & VERIFICATION
+## Progetto Sequestro Carbonio Agricolo
+**Metodologia:** Verra VCS VM0042 — Agricultural Land Management
+**Versione:** 1.0 | **Data:** {_dt_bc.now().strftime("%d/%m/%Y")}
+
+---
+
+## 1. IDENTIFICAZIONE PROGETTO
+- **Proponente:** {nome_az}
+- **Responsabile tecnico:** {agronomo} (Dottore Agronomo)
+- **Regione/Zona:** {regione} / {zona}
+- **Superficie totale:** {round(tot_ha, 2)} ha
+- **Coltura principale:** {coltura_principale}
+
+## 2. BASELINE E ADDIZIONALITÀ
+- **Scenario baseline:** Lavorazione convenzionale ({round(float(df_edit[df_edit['Protocollo']=='Convenzionale']['Ettari'].sum()) if 'Protocollo' in df_edit.columns else 0, 1)} ha)
+- **Emissioni baseline stimate:** {round(scope1_total + scope3_total, 2)} tCO₂eq/anno
+- **Attività di progetto:** Pratiche rigenerative, cover crops, fertilizzazione organica
+
+## 3. QUANTIFICAZIONE CREDITI
+- **Sequestro SOC:** +{round(tot_seq, 3)} tCO₂eq/anno
+- **Riduzione emissioni Scope 1:** {round(scope1_total, 3)} tCO₂eq/anno  
+- **Riduzione emissioni Scope 3:** {round(scope3_total, 3)} tCO₂eq/anno
+- **Bilancio netto:** {"+" if tot_netto>=0 else ""}{round(tot_netto, 3)} tCO₂eq/anno
+- **VCU candidabili (80% del netto):** {round(max(0, tot_netto)*0.8, 2)} VCU/anno
+
+## 4. INVENTARIO GHG (ISO 14064-1:2018)
+- **Scope 1 (dirette):** {round(scope1_total, 3)} tCO₂eq/anno
+- **Scope 2 (energia indiretta):** {round(scope2_total, 3)} tCO₂eq/anno
+- **Scope 3 (catena del valore):** {round(scope3_total, 3)} tCO₂eq/anno
+- **Rimozioni SOC:** -{round(tot_seq, 3)} tCO₂eq/anno
+- **Hash certificato dati:** {hash_sha256}
+
+## 5. APPEZZAMENTI
+"""
+        for i, (_, r) in enumerate(df_edit.iterrows()):
+            mrv_content += f"- **{r.get('Campo','')}:** {r.get('Ettari',0)} ha · {r.get('Coltura','')} · {r.get('Protocollo','')} · SO% {r.get('SO %',0)} · CO₂ netto: {res_att[i]['co2_netto']} t/a\n"
+
+        mrv_content += f"""
+## 6. PIANO DI MONITORAGGIO
+- **Frequenza analisi suolo:** Ogni 2 anni per appezzamento
+- **Parametri monitorati:** SO%, N tot, pH, Argilla, Densità
+- **Metodo calcolo SOC:** IPCC 2006 Vol.4 Tier 1 · RothC semplificato
+- **Dati meteo:** Open-Meteo ERA5 live · FAO-56 Penman-Monteith
+- **Validazione satellite:** Sentinel-2 Copernicus · BSI/NDVI vs analisi suolo
+
+## 7. STANDARD E METODOLOGIA
+- IPCC 2006 Tier 1 · AR5 GWP100
+- GHG Protocol Corporate Standard
+- ecoinvent 3.9 · DEFRA 2024
+- FAO-56 Penman-Monteith (dati idrici)
+- RothC Coleman & Jenkinson 1996
+
+## 8. FIRMA
+**Dottore Agronomo:** {agronomo}
+**Data:** {_dt_bc.now().strftime("%d/%m/%Y")}
+**Hash certificato AgroLog:** {hash_sha256[:32]}...
+"""
+        st.download_button(
+            "⬇️ Scarica MRV Report Base (.md)",
+            data=mrv_content.encode("utf-8"),
+            file_name=f"MRV_Report_{nome_az.replace(' ','_')}_{_dt_bc.now().strftime('%Y%m%d')}.md",
+            mime="text/markdown"
+        )
+        st.success("✅ MRV Report generato — da completare con validatore accreditato Verra")
+
+# ── STEP 3: TRACCIABILITÀ QR FILIERA ─────────────────────────────────
+with bc_tab3:
+    st.markdown("""<div style="background:#161c16;border-left:4px solid #3b82f6;
+      border-radius:8px;padding:.8rem 1.1rem;margin-bottom:.8rem;font-size:.78rem;color:#86efac">
+      <b style="color:#60a5fa">Come funziona:</b> Per ogni lotto di prodotto AgroLog genera una
+      scheda di tracciabilità completa (campo, pratiche, analisi suolo, impatto GHG, certificazioni).
+      Il consumatore finale scansiona il QR code sull'etichetta e vede tutta la storia del prodotto.
+      Compatibile con OriginTrail, AgriLedger e GS1 Digital Link.
+    </div>""", unsafe_allow_html=True)
+
+    qr_c1, qr_c2 = st.columns(2)
+    with qr_c1:
+        st.markdown("**📦 Configura lotto da tracciare**")
+        qr_campo = st.selectbox("Campo/appezzamento", df_edit["Campo"].tolist() if len(df_edit)>0 else ["—"], key="qr_campo")
+        qr_prodotto = st.text_input("Prodotto (es: Grano Tenero BIO)", key="qr_prod")
+        qr_lotto = st.text_input("N° lotto", value=f"LOT-{_dt_bc.now().strftime('%Y%m%d')}-001", key="qr_lotto")
+        qr_data_rac = st.text_input("Data raccolta (AAAA-MM-GG)", key="qr_data")
+        qr_quantita = st.number_input("Quantità (kg)", 0, 1000000, 0, key="qr_qty")
+        qr_dest = st.text_input("Destinatario/buyer", key="qr_dest")
+
+    with qr_c2:
+        st.markdown("**📊 Scheda tracciabilità generata**")
+        if qr_prodotto:
+            # Recupera dati campo selezionato
+            campo_row = df_edit[df_edit["Campo"]==qr_campo]
+            campo_data = campo_row.iloc[0].to_dict() if len(campo_row)>0 else {}
+            idx_campo = df_edit[df_edit["Campo"]==qr_campo].index
+            res_campo = res_att[list(df_edit.index).index(idx_campo[0])] if len(idx_campo)>0 else {}
+
+            scheda = {
+                "lotto": qr_lotto,
+                "prodotto": qr_prodotto,
+                "produttore": nome_az,
+                "agronomo": agronomo,
+                "campo": qr_campo,
+                "regione": regione,
+                "data_raccolta": qr_data_rac,
+                "quantita_kg": qr_quantita,
+                "destinatario": qr_dest,
+                "sostenibilita": {
+                    "so_suolo_pct": float(campo_data.get("SO %", 0)),
+                    "protocollo": str(campo_data.get("Protocollo", "")),
+                    "cover_crops": bool(campo_data.get("Cover crops", False)),
+                    "co2_netto_tha": res_campo.get("co2_netto", 0) if res_campo else 0,
+                    "score_esg": score,
+                },
+                "certificazioni": {
+                    "biologico": cert_bio, "sqnpi": cert_sqnpi,
+                    "globalgap": cert_gap, "iso14064": cert_iso,
+                },
+                "impronta_carbonio": {
+                    "co2_produzione": round(scope1_total/max(qr_quantita/1000,0.001), 3) if qr_quantita>0 else 0,
+                    "unita": "kgCO2eq/kg prodotto",
+                    "metodologia": "GHG Protocol · IPCC Tier 1"
+                },
+                "hash_certificato": hash_sha256[:32] + "...",
+                "timestamp": _dt_bc.now().isoformat(),
+            }
+            scheda_json = _json_bc.dumps(scheda, ensure_ascii=False, indent=2)
+            scheda_hash = hashlib.sha256(scheda_json.encode()).hexdigest()
+
+            st.markdown(f"""<div style="background:#0d1117;border:1.5px solid #3b82f6;
+              border-radius:12px;padding:1rem 1.2rem;font-size:.76rem">
+              <div style="color:#60a5fa;font-weight:700;margin-bottom:.6rem">
+                📦 Lotto: {qr_lotto}</div>
+              <div style="line-height:2;color:#93c5fd">
+                🌾 Prodotto: <b style="color:#fff">{qr_prodotto}</b><br>
+                🏭 Produttore: <b style="color:#fff">{nome_az}</b><br>
+                📍 Campo: <b style="color:#fff">{qr_campo} — {regione}</b><br>
+                🌱 Protocollo: <b style="color:#4ade80">{campo_data.get('Protocollo','—')}</b>
+                {"· Bio ✅" if cert_bio else ""}<br>
+                🌿 SO% suolo: <b style="color:#4ade80">{campo_data.get('SO %','—')}%</b><br>
+                ♻️ CO₂ netto: <b style="color:#4ade80">{res_campo.get('co2_netto',0) if res_campo else 0} t/ha/a</b><br>
+                📊 Score ESG: <b style="color:#4ade80">{score}/100</b><br>
+                🔏 Hash lotto: <b style="color:#a78bfa;font-family:monospace;font-size:.68rem">{scheda_hash[:24]}...</b>
+              </div>
+            </div>""", unsafe_allow_html=True)
+
+            st.download_button(
+                "⬇️ Scarica scheda tracciabilità JSON",
+                data=scheda_json.encode("utf-8"),
+                file_name=f"Tracciabilita_{qr_lotto}.json",
+                mime="application/json"
+            )
+        else:
+            st.info("Inserisci il nome del prodotto per generare la scheda di tracciabilità.")
+
+    # Piattaforme compatibili
+    st.markdown("**🔗 Piattaforme blockchain già operative per tracciabilità agricola**")
+    piatt_cols = st.columns(3)
+    piattaforme = [
+        ("OriginTrail (OT)", "Standard GS1 · DID · Supply chain trusted",
+         "Adatto per DOP/IGP e filiere GDO internazionali",
+         "https://origintrail.io", "#22c55e"),
+        ("AgriLedger", "Blockchain per agricoltori smallholder · FAO partner",
+         "Usato in progetti Africa/Asia · open standard",
+         "https://www.agriledger.io", "#3b82f6"),
+        ("Farmer Connect / IBM", "IBM Food Trust · Walmart · Carrefour",
+         "Per filiere GDO strutturate — richiede partner buyer",
+         "https://farmerconnect.com", "#a78bfa"),
+    ]
+    for i, (nome_p, sub_p, desc_p, url_p, clr_p) in enumerate(piattaforme):
+        with piatt_cols[i]:
+            st.markdown(f"""<div style="background:#161c16;border:1px solid {clr_p};
+              border-radius:10px;padding:.8rem;font-size:.75rem">
+              <b style="color:{clr_p}">{nome_p}</b><br>
+              <span style="color:#93c5fd">{sub_p}</span><br>
+              <span style="color:#86efac;font-size:.7rem">{desc_p}</span><br>
+              <a href="{url_p}" target="_blank" style="color:#60a5fa;font-size:.68rem">{url_p}</a>
+            </div>""", unsafe_allow_html=True)
+
+    # Riepilogo valore commerciale
+    st.markdown(f"""<div style="background:linear-gradient(90deg,#0d1117,#0a1a2e);
+      border-radius:12px;padding:1rem 1.4rem;margin-top:.8rem;font-size:.8rem;
+      border:1px solid rgba(59,130,246,.3)">
+      💶 <b style="color:#60a5fa">Valore commerciale della tracciabilità blockchain:</b><br>
+      <span style="color:#93c5fd">
+      · Premium price per GDO: <b style="color:#4ade80">+8-15%</b> sul prezzo base per prodotti tracciati<br>
+      · Accesso a filiere internazionali che richiedono tracciabilità (Barilla, Ferrero, Carrefour)<br>
+      · Conformità CSRD Scope 3 supply chain per buyer obbligati<br>
+      · Differenziazione competitiva documentabile e verificabile da auditor
+      </span>
+    </div>""", unsafe_allow_html=True)
+
 # METODOLOGIA
 with st.expander("🔬 Metodologia Scientifica Completa — IPCC + GHG Protocol + FAO"):
     st.markdown("""
