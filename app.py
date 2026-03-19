@@ -1091,6 +1091,619 @@ if not errori_input and not avvisi_input:
     st.success("✅ Tutti i dati sono coerenti e nei range scientifici attesi.")
 
 
+
+# ══════════════════════════════════════════════════════════════════════
+#  STORICO QUADERNO DI CAMPAGNA — Analisi suolo & confronto satellite
+# ══════════════════════════════════════════════════════════════════════
+st.markdown('<div class="sec">📒 Storico Quaderno di Campagna — Analisi Suolo & Confronto Satellite</div>', unsafe_allow_html=True)
+st.caption("Inserisci lo storico delle analisi del suolo e delle operazioni colturali per studiare l'evoluzione della fertilità e confrontarla con i dati satellitari.")
+
+tab_analisi, tab_operazioni, tab_rese, tab_confronto = st.tabs([
+    "🔬 Analisi Suolo Storiche",
+    "🚜 Operazioni Colturali",
+    "📈 Rese & Produzioni",
+    "📊 Analisi & Confronto Satellite"
+])
+
+# ── Struttura dati storici ─────────────────────────────────────────────
+if "storico_analisi" not in st.session_state:
+    st.session_state["storico_analisi"] = pd.DataFrame([
+        {"Campo":"Nord A1","Anno":2021,"Mese":"Ottobre","SO %":1.4,"Argilla %":26,
+         "Limo %":30,"pH":6.7,"N tot (‰)":1.1,"P ass. (ppm)":18,"K scamb. (meq/100g)":0.28,
+         "CSC (meq/100g)":15.2,"CaCO3 %":2.1,"Densità":1.35,"Profondità cm":30,
+         "Laboratorio":"—","Note":""},
+        {"Campo":"Nord A1","Anno":2024,"Mese":"Marzo","SO %":1.6,"Argilla %":26,
+         "Limo %":30,"pH":6.8,"N tot (‰)":1.3,"P ass. (ppm)":21,"K scamb. (meq/100g)":0.31,
+         "CSC (meq/100g)":15.8,"CaCO3 %":2.0,"Densità":1.32,"Profondità cm":30,
+         "Laboratorio":"CREA-AA","Note":"Dopo cover crops"},
+        {"Campo":"Vigneto Est","Anno":2022,"Mese":"Novembre","SO %":1.2,"Argilla %":17,
+         "Limo %":42,"pH":7.1,"N tot (‰)":0.9,"P ass. (ppm)":14,"K scamb. (meq/100g)":0.35,
+         "CSC (meq/100g)":12.4,"CaCO3 %":5.2,"Densità":1.46,"Profondità cm":30,
+         "Laboratorio":"—","Note":""},
+        {"Campo":"Oliveto Sud","Anno":2023,"Mese":"Settembre","SO %":2.1,"Argilla %":23,
+         "Limo %":36,"pH":7.0,"N tot (‰)":1.8,"P ass. (ppm)":28,"K scamb. (meq/100g)":0.42,
+         "CSC (meq/100g)":18.1,"CaCO3 %":1.8,"Densità":1.25,"Profondità cm":30,
+         "Laboratorio":"UNIAN","Note":"Rigenerativo 2° anno"},
+    ])
+
+if "storico_operazioni" not in st.session_state:
+    st.session_state["storico_operazioni"] = pd.DataFrame([
+        {"Campo":"Nord A1","Data":"2021-10-15","Operazione":"Aratura","Prodotto/Dose":"—",
+         "Quantità":"—","Unità":"—","Macchina":"Trattore 120cv","Note":"Profondità 30cm"},
+        {"Campo":"Nord A1","Data":"2022-03-10","Operazione":"Concimazione","Prodotto/Dose":"Urea 46%",
+         "Quantità":"150","Unità":"kg/ha","Macchina":"Spandiconcime","Note":"Pre-semina"},
+        {"Campo":"Nord A1","Data":"2022-10-20","Operazione":"Cover crop","Prodotto/Dose":"Mix leguminose",
+         "Quantità":"30","Unità":"kg/ha","Macchina":"Seminatrice","Note":"Primo anno cover"},
+        {"Campo":"Oliveto Sud","Data":"2022-03-01","Operazione":"Compostaggio","Prodotto/Dose":"Compost maturo",
+         "Quantità":"5000","Unità":"kg/ha","Macchina":"Spandiletame","Note":"Avvio rigenerativo"},
+        {"Campo":"Vigneto Est","Data":"2023-04-05","Operazione":"Trattamento","Prodotto/Dose":"Rame idrossido",
+         "Quantità":"3","Unità":"kg/ha","Macchina":"Irroratrice","Note":"Peronospora"},
+    ])
+
+if "storico_rese" not in st.session_state:
+    st.session_state["storico_rese"] = pd.DataFrame([
+        {"Campo":"Nord A1","Anno":2020,"Coltura":"Cereali","Resa (t/ha)":5.2,
+         "Prezzo (€/t)":210,"Ricavo (€/ha)":1092,"NDVI medio (satellite)":0.62,"Note":"Annata secca"},
+        {"Campo":"Nord A1","Anno":2021,"Coltura":"Cereali","Resa (t/ha)":5.8,
+         "Prezzo (€/t)":220,"Ricavo (€/ha)":1276,"NDVI medio (satellite)":0.68,"Note":""},
+        {"Campo":"Nord A1","Anno":2022,"Coltura":"Cereali","Resa (t/ha)":6.1,
+         "Prezzo (€/t)":280,"Ricavo (€/ha)":1708,"NDVI medio (satellite)":0.71,"Note":"Cover crops inizio"},
+        {"Campo":"Nord A1","Anno":2023,"Coltura":"Cereali","Resa (t/ha)":6.4,
+         "Prezzo (€/t)":240,"Ricavo (€/ha)":1536,"NDVI medio (satellite)":0.74,"Note":"SO% +0.2%"},
+        {"Campo":"Vigneto Est","Anno":2021,"Coltura":"Vite (DOC/IGT)","Resa (t/ha)":7.8,
+         "Prezzo (€/t)":1800,"Ricavo (€/ha)":14040,"NDVI medio (satellite)":0.55,"Note":""},
+        {"Campo":"Vigneto Est","Anno":2022,"Coltura":"Vite (DOC/IGT)","Resa (t/ha)":8.2,
+         "Prezzo (€/t)":1900,"Ricavo (€/ha)":15580,"NDVI medio (satellite)":0.58,"Note":""},
+        {"Campo":"Oliveto Sud","Anno":2022,"Coltura":"Olivo","Resa (t/ha)":2.8,
+         "Prezzo (€/t)":4200,"Ricavo (€/ha)":11760,"NDVI medio (satellite)":0.48,"Note":"Avvio compostaggio"},
+        {"Campo":"Oliveto Sud","Anno":2023,"Coltura":"Olivo","Resa (t/ha)":3.4,
+         "Prezzo (€/t)":4400,"Ricavo (€/ha)":14960,"NDVI medio (satellite)":0.53,"Note":"2° anno rigenerativo"},
+    ])
+
+# ── TAB 1: Analisi suolo storiche ─────────────────────────────────────
+with tab_analisi:
+    st.markdown("**Storico analisi del suolo per campo — inserisci tutti i dati disponibili dai referti di laboratorio**")
+    st.caption("Ogni riga = un'analisi. Più anni inserisci, più precisa diventa la curva di evoluzione della fertilità.")
+
+    df_analisi = st.data_editor(
+        st.session_state["storico_analisi"],
+        num_rows="dynamic",
+        use_container_width=True,
+        column_config={
+            "Campo": st.column_config.SelectboxColumn(
+                options=df_edit["Campo"].tolist() if len(df_edit)>0 else ["Campo 1"],
+                required=True),
+            "Anno": st.column_config.NumberColumn(min_value=1990, max_value=2030, format="%d"),
+            "Mese": st.column_config.SelectboxColumn(
+                options=["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno",
+                         "Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"]),
+            "SO %": st.column_config.NumberColumn(min_value=0.1, max_value=10.0, format="%.2f",
+                help="Sostanza Organica % — dato principale per il carbonio"),
+            "Argilla %": st.column_config.NumberColumn(min_value=1, max_value=80),
+            "Limo %": st.column_config.NumberColumn(min_value=1, max_value=80),
+            "pH": st.column_config.NumberColumn(min_value=4.0, max_value=9.0, format="%.1f"),
+            "N tot (‰)": st.column_config.NumberColumn(min_value=0.0, max_value=20.0, format="%.2f",
+                help="Azoto totale in grammi per kg (‰)"),
+            "P ass. (ppm)": st.column_config.NumberColumn(min_value=0, max_value=500,
+                help="Fosforo assimilabile Olsen o Mehlich-3 in ppm"),
+            "K scamb. (meq/100g)": st.column_config.NumberColumn(min_value=0.0, max_value=5.0, format="%.3f",
+                help="Potassio scambiabile in meq/100g"),
+            "CSC (meq/100g)": st.column_config.NumberColumn(min_value=0.0, max_value=60.0, format="%.1f",
+                help="Capacità di Scambio Cationico — indica la fertilità potenziale"),
+            "CaCO3 %": st.column_config.NumberColumn(min_value=0.0, max_value=80.0, format="%.1f"),
+            "Densità": st.column_config.NumberColumn(min_value=0.7, max_value=1.9, format="%.2f"),
+            "Profondità cm": st.column_config.NumberColumn(min_value=10, max_value=60),
+        },
+        key="editor_storico_analisi"
+    )
+    st.session_state["storico_analisi"] = df_analisi
+
+    # Calcola indice fertilità per ogni record
+    if len(df_analisi) > 0:
+        st.markdown("**Indice di Fertilità Integrato (IFI) — calcolato automaticamente**")
+        st.caption("IFI combina SO%, N, P, K, CSC e pH secondo il modello CREA-AA per suoli italiani.")
+
+        campi_analisi = df_analisi["Campo"].unique().tolist()
+        campo_sel_an = st.selectbox("Visualizza evoluzione per campo:", campi_analisi,
+                                     key="campo_sel_analisi")
+        df_campo = df_analisi[df_analisi["Campo"]==campo_sel_an].sort_values("Anno")
+
+        if len(df_campo) > 0:
+            # Calcolo IFI
+            def calcola_ifi(row):
+                # Pesi CREA-AA: SO% 35%, N 20%, P 15%, K 10%, CSC 15%, pH 5%
+                so  = min(100, float(row.get("SO %", 1.5)) / 4.0 * 100)        # ottimale 4%
+                n   = min(100, float(row.get("N tot (‰)", 1.0)) / 2.0 * 100)   # ottimale 2‰
+                p   = min(100, float(row.get("P ass. (ppm)", 15)) / 40.0 * 100) # ottimale 40ppm
+                k   = min(100, float(row.get("K scamb. (meq/100g)", 0.3)) / 0.5 * 100)
+                csc = min(100, float(row.get("CSC (meq/100g)", 15)) / 30.0 * 100)
+                ph  = float(row.get("pH", 6.8))
+                ph_score = max(0, 100 - abs(ph - 6.7) * 25)  # ottimale 6.5-7.0
+                ifi = so*0.35 + n*0.20 + p*0.15 + k*0.10 + csc*0.15 + ph_score*0.05
+                return round(ifi, 1)
+
+            df_campo = df_campo.copy()
+            df_campo["IFI"] = df_campo.apply(calcola_ifi, axis=1)
+            df_campo["SOC stock (t/ha)"] = df_campo.apply(
+                lambda r: round(
+                    (r.get("Profondità cm",30)/100) * 10000 *
+                    float(r.get("Densità",1.3)) * (float(r.get("SO %",1.5))/100) * 0.58, 1), axis=1)
+            df_campo["Rapporto C/N"] = df_campo.apply(
+                lambda r: round(
+                    float(r.get("SO %",1.5))*0.58*10 /
+                    max(float(r.get("N tot (‰)",1.0))*0.1, 0.01), 1), axis=1)
+
+            # Grafici evoluzione
+            an_c1, an_c2 = st.columns(2)
+            with an_c1:
+                import plotly.graph_objects as go_an
+                fig_an = go_an.Figure()
+                fig_an.add_trace(go_an.Scatter(
+                    x=df_campo["Anno"], y=df_campo["SO %"],
+                    mode="lines+markers+text",
+                    name="SO% analisi suolo",
+                    line=dict(color="#22c55e", width=3),
+                    marker=dict(size=10, symbol="circle"),
+                    text=[f"{v:.2f}%" for v in df_campo["SO %"]],
+                    textposition="top center",
+                    textfont=dict(size=9, color="#4ade80"),
+                ))
+                # Linea obiettivo 4‰
+                fig_an.add_hline(y=2.5, line_dash="dot", line_color="#fbbf24",
+                                  annotation_text="Obiettivo 4‰ (2.5%)",
+                                  annotation_position="top right")
+                fig_an.add_hline(y=1.5, line_dash="dash", line_color="#ef4444",
+                                  annotation_text="Soglia critica 1.5%",
+                                  annotation_position="bottom right")
+                fig_an.update_layout(
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="#0d1a0d",
+                    font=dict(family="Lexend", color="#e8f5e9"),
+                    title=dict(text=f"📈 Evoluzione SO% — {campo_sel_an}", font=dict(size=12,color="#4ade80")),
+                    xaxis=dict(title="Anno", color="#86efac", gridcolor="rgba(34,197,94,.1)"),
+                    yaxis=dict(title="SO %", color="#86efac", gridcolor="rgba(34,197,94,.1)"),
+                    height=320, margin=dict(t=50,b=40,l=50,r=20),
+                    showlegend=False
+                )
+                st.plotly_chart(fig_an, use_container_width=True)
+
+            with an_c2:
+                fig_ifi = go_an.Figure()
+                colors_ifi = ["#4ade80" if v>=70 else "#fbbf24" if v>=50 else "#f87171"
+                              for v in df_campo["IFI"]]
+                fig_ifi.add_trace(go_an.Bar(
+                    x=df_campo["Anno"], y=df_campo["IFI"],
+                    marker_color=colors_ifi,
+                    text=[f"IFI {v:.0f}" for v in df_campo["IFI"]],
+                    textposition="outside",
+                    textfont=dict(size=9, color="#e8f5e9"),
+                    name="IFI"
+                ))
+                fig_ifi.add_hline(y=70, line_dash="dot", line_color="#4ade80",
+                                   annotation_text="IFI ottimale ≥70")
+                fig_ifi.update_layout(
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="#0d1a0d",
+                    font=dict(family="Lexend", color="#e8f5e9"),
+                    title=dict(text=f"📊 Indice Fertilità Integrato — {campo_sel_an}",
+                               font=dict(size=12,color="#4ade80")),
+                    xaxis=dict(title="Anno", color="#86efac", gridcolor="rgba(34,197,94,.1)"),
+                    yaxis=dict(title="IFI /100", range=[0,105], color="#86efac",
+                               gridcolor="rgba(34,197,94,.1)"),
+                    height=320, margin=dict(t=50,b=40,l=50,r=20),
+                    showlegend=False
+                )
+                st.plotly_chart(fig_ifi, use_container_width=True)
+
+            # Tabella riepilogativa con trend
+            st.markdown("**Riepilogo parametri — tendenza nel tempo**")
+            cols_show = ["Anno","SO %","N tot (‰)","P ass. (ppm)","K scamb. (meq/100g)",
+                         "pH","CSC (meq/100g)","SOC stock (t/ha)","Rapporto C/N","IFI"]
+            df_show = df_campo[cols_show].copy()
+
+            # Aggiunge frecce trend
+            def trend_arrow(series):
+                if len(series) < 2: return ""
+                delta = series.iloc[-1] - series.iloc[0]
+                if abs(delta) < 0.01: return "→"
+                return f"↑ +{round(delta,2)}" if delta > 0 else f"↓ {round(delta,2)}"
+
+            trend_html = ""
+            for col in ["SO %","N tot (‰)","IFI","SOC stock (t/ha)"]:
+                if col in df_show.columns and len(df_show)>1:
+                    arr = trend_arrow(df_show[col])
+                    clr = "#4ade80" if "↑" in arr else "#f87171" if "↓" in arr else "#fbbf24"
+                    trend_html += f'<span style="background:#161c16;border:1px solid {clr};border-radius:20px;padding:2px 10px;font-size:.72rem;color:{clr};margin:2px;display:inline-block"><b>{col}:</b> {arr}</span> '
+
+            if trend_html:
+                st.markdown(f'<div style="margin:.4rem 0">{trend_html}</div>', unsafe_allow_html=True)
+
+            st.dataframe(df_show.style.format({
+                "SO %": "{:.2f}", "N tot (‰)": "{:.2f}", "P ass. (ppm)": "{:.0f}",
+                "K scamb. (meq/100g)": "{:.3f}", "pH": "{:.1f}",
+                "CSC (meq/100g)": "{:.1f}", "SOC stock (t/ha)": "{:.1f}",
+                "Rapporto C/N": "{:.1f}", "IFI": "{:.1f}"
+            }), use_container_width=True)
+
+            # Interpretazione automatica C/N
+            ultimo = df_campo.iloc[-1]
+            cn = float(df_campo["Rapporto C/N"].iloc[-1]) if "Rapporto C/N" in df_campo.columns else 10
+            cn_msg = ("✅ Ottimale (10-12): decomposizione bilanciata" if 10<=cn<=12
+                      else "⚠️ Basso (<10): mineralizzazione rapida, rischio perdita N" if cn<10
+                      else "⚠️ Alto (>15): decomposizione lenta, N immobilizzato")
+            st.markdown(f"""<div style="background:#161c16;border-radius:10px;padding:.7rem 1.2rem;
+              border:1px solid rgba(34,197,94,.3);font-size:.8rem;margin-top:.3rem">
+              🔬 <b>Ultimo referto ({int(ultimo.get('Anno',2024))}):</b> &nbsp;
+              SO%: <b style="color:#4ade80">{ultimo.get('SO %','—'):.2f}%</b> &nbsp;·&nbsp;
+              SOC stock: <b style="color:#4ade80">{df_campo['SOC stock (t/ha)'].iloc[-1]:.1f} t/ha</b> &nbsp;·&nbsp;
+              Rapporto C/N: <b style="color:#fbbf24">{cn:.1f}</b> → {cn_msg} &nbsp;·&nbsp;
+              IFI: <b style="color:{'#4ade80' if float(df_campo['IFI'].iloc[-1])>=70 else '#fbbf24'}">{df_campo['IFI'].iloc[-1]:.0f}/100</b>
+            </div>""", unsafe_allow_html=True)
+
+# ── TAB 2: Operazioni colturali ────────────────────────────────────────
+with tab_operazioni:
+    st.markdown("**Registro operazioni colturali — digitali il quaderno di campagna**")
+    st.caption("Lavorazioni, fertilizzazioni, trattamenti, semine, raccolti. Più è completo, più precisa è l'analisi dell'impatto delle pratiche sulla fertilità.")
+
+    df_oper = st.data_editor(
+        st.session_state["storico_operazioni"],
+        num_rows="dynamic",
+        use_container_width=True,
+        column_config={
+            "Campo": st.column_config.SelectboxColumn(
+                options=df_edit["Campo"].tolist() if len(df_edit)>0 else ["Campo 1"],
+                required=True),
+            "Data": st.column_config.TextColumn(help="Formato: AAAA-MM-GG"),
+            "Operazione": st.column_config.SelectboxColumn(options=[
+                "Aratura","Erpicatura","Fresatura","Rullatura","Semina","Trapianto",
+                "Concimazione","Fertirrigazione","Irrigazione","Trattamento fitosanitario",
+                "Cover crop","Sfalcio/interramento","Raccolta","Potatura",
+                "Compostaggio","Letamazione","Digestato","Biochar",
+                "Analisi suolo","Altro"], required=True),
+            "Quantità": st.column_config.TextColumn(help="Es: 150 o 3.5"),
+            "Unità": st.column_config.SelectboxColumn(options=[
+                "kg/ha","L/ha","m³/ha","t/ha","kg/pianta","n° passaggi","—"]),
+        },
+        key="editor_storico_oper"
+    )
+    st.session_state["storico_operazioni"] = df_oper
+
+    if len(df_oper) > 0:
+        # Analisi frequenza operazioni
+        op_c1, op_c2 = st.columns(2)
+        with op_c1:
+            st.markdown("**Frequenza operazioni per tipo**")
+            op_count = df_oper["Operazione"].value_counts().reset_index()
+            op_count.columns = ["Operazione","Conteggio"]
+            import plotly.express as px_op
+            fig_op = px_op.bar(op_count, x="Conteggio", y="Operazione", orientation="h",
+                               color="Conteggio", color_continuous_scale="Greens",
+                               title="Operazioni più frequenti")
+            fig_op.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="#0d1a0d",
+                                  font=dict(family="Lexend",color="#e8f5e9"),
+                                  height=300, margin=dict(t=40,b=20,l=140,r=20),
+                                  showlegend=False, coloraxis_showscale=False,
+                                  yaxis=dict(color="#86efac"), xaxis=dict(color="#86efac"))
+            st.plotly_chart(fig_op, use_container_width=True)
+
+        with op_c2:
+            st.markdown("**Timeline operazioni (ultimi record)**")
+            df_oper_sort = df_oper.sort_values("Data", ascending=False).head(10)
+            for _, row_op in df_oper_sort.iterrows():
+                ico_op = {"Aratura":"⚙️","Concimazione":"🌿","Cover crop":"🌱",
+                          "Trattamento fitosanitario":"💊","Raccolta":"🌾",
+                          "Compostaggio":"♻️","Analisi suolo":"🔬",
+                          "Irrigazione":"💧","Potatura":"✂️"}.get(row_op.get("Operazione",""),"📋")
+                st.markdown(f"""<div style="background:#161c16;border-left:3px solid #22c55e;
+                  padding:.4rem .8rem;margin:.2rem 0;border-radius:0 8px 8px 0;font-size:.77rem">
+                  {ico_op} <b style="color:#4ade80">{row_op.get('Data','—')}</b> ·
+                  {row_op.get('Campo','—')} ·
+                  <b style="color:#e8f5e9">{row_op.get('Operazione','—')}</b>
+                  {' · ' + str(row_op.get('Prodotto/Dose','')) if row_op.get('Prodotto/Dose','—') != '—' else ''}
+                  {' ' + str(row_op.get('Quantità','')) + ' ' + str(row_op.get('Unità','')) if row_op.get('Quantità','—') != '—' else ''}
+                </div>""", unsafe_allow_html=True)
+
+        # Identifica operazioni che influenzano SO%
+        op_so = df_oper[df_oper["Operazione"].isin([
+            "Cover crop","Compostaggio","Letamazione","Digestato","Biochar",
+            "Sfalcio/interramento","Aratura"])]
+        if len(op_so) > 0:
+            n_virtuose = len(op_so[op_so["Operazione"].isin([
+                "Cover crop","Compostaggio","Letamazione","Digestato","Biochar","Sfalcio/interramento"])])
+            n_degrad = len(op_so[op_so["Operazione"].isin(["Aratura"])])
+            st.markdown(f"""<div style="background:#161c16;border-radius:10px;
+              padding:.6rem 1.1rem;border:1px solid rgba(34,197,94,.3);font-size:.8rem;margin-top:.4rem">
+              🌱 <b>Operazioni favorevoli alla SO%:</b> <span style="color:#4ade80">{n_virtuose}</span> &nbsp;·&nbsp;
+              ⚠️ <b>Operazioni degradative (arature profonde):</b> <span style="color:#f87171">{n_degrad}</span>
+            </div>""", unsafe_allow_html=True)
+
+# ── TAB 3: Rese & produzioni ───────────────────────────────────────────
+with tab_rese:
+    st.markdown("**Storico rese e produzioni — con NDVI satellite per confronto**")
+    st.caption("Inserisci le rese storiche e il valore NDVI medio stagionale (da Sentinel-2) per studiare la correlazione resa-satellite.")
+
+    df_rese = st.data_editor(
+        st.session_state["storico_rese"],
+        num_rows="dynamic",
+        use_container_width=True,
+        column_config={
+            "Campo": st.column_config.SelectboxColumn(
+                options=df_edit["Campo"].tolist() if len(df_edit)>0 else ["Campo 1"],
+                required=True),
+            "Anno": st.column_config.NumberColumn(min_value=2000, max_value=2030, format="%d"),
+            "Coltura": st.column_config.SelectboxColumn(options=list(KC.keys()), required=True),
+            "Resa (t/ha)": st.column_config.NumberColumn(min_value=0.0, max_value=100.0, format="%.2f"),
+            "Prezzo (€/t)": st.column_config.NumberColumn(min_value=0, max_value=100000),
+            "Ricavo (€/ha)": st.column_config.NumberColumn(min_value=0, max_value=500000),
+            "NDVI medio (satellite)": st.column_config.NumberColumn(min_value=0.0, max_value=1.0,
+                format="%.3f", help="Valore NDVI medio stagionale da Sentinel-2 (0-1). Inserisci 0 se non disponibile."),
+        },
+        key="editor_storico_rese"
+    )
+    st.session_state["storico_rese"] = df_rese
+
+    if len(df_rese) > 1:
+        re_c1, re_c2 = st.columns(2)
+        campi_rese = df_rese["Campo"].unique().tolist()
+        campo_rese_sel = st.selectbox("Campo da analizzare:", campi_rese, key="campo_rese")
+        df_r = df_rese[df_rese["Campo"]==campo_rese_sel].sort_values("Anno")
+
+        with re_c1:
+            import plotly.graph_objects as go_re
+            fig_re = go_re.Figure()
+            fig_re.add_trace(go_re.Bar(
+                x=df_r["Anno"], y=df_r["Resa (t/ha)"],
+                marker_color="#22c55e", opacity=0.8,
+                name="Resa t/ha", text=[f"{v:.1f}" for v in df_r["Resa (t/ha)"]],
+                textposition="outside", textfont=dict(size=9,color="#e8f5e9")
+            ))
+            if df_r["NDVI medio (satellite)"].sum() > 0:
+                fig_re.add_trace(go_re.Scatter(
+                    x=df_r["Anno"], y=df_r["NDVI medio (satellite)"],
+                    mode="lines+markers", name="NDVI satellite",
+                    line=dict(color="#3b82f6", width=2.5, dash="dot"),
+                    marker=dict(size=8),
+                    yaxis="y2"
+                ))
+            fig_re.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="#0d1a0d",
+                font=dict(family="Lexend", color="#e8f5e9"),
+                title=dict(text=f"Resa vs NDVI satellite — {campo_rese_sel}",
+                           font=dict(size=11,color="#4ade80")),
+                xaxis=dict(color="#86efac", gridcolor="rgba(34,197,94,.1)"),
+                yaxis=dict(title="Resa (t/ha)", color="#86efac", gridcolor="rgba(34,197,94,.1)"),
+                yaxis2=dict(title="NDVI", overlaying="y", side="right",
+                            range=[0,1], showgrid=False, color="#60a5fa"),
+                height=330, margin=dict(t=44,b=40,l=50,r=60),
+                legend=dict(orientation="h", y=-0.25, font=dict(size=9))
+            )
+            st.plotly_chart(fig_re, use_container_width=True)
+
+        with re_c2:
+            # Correlazione NDVI vs Resa
+            df_r_ndvi = df_r[df_r["NDVI medio (satellite)"]>0]
+            if len(df_r_ndvi) >= 3:
+                import numpy as np_corr
+                corr = np_corr.corrcoef(df_r_ndvi["NDVI medio (satellite)"],
+                                         df_r_ndvi["Resa (t/ha)"])[0,1]
+                clr_corr = "#4ade80" if abs(corr)>0.7 else "#fbbf24" if abs(corr)>0.4 else "#f87171"
+                st.markdown(f"""<div style="background:#161c16;border-radius:12px;
+                  padding:1rem;border:1px solid rgba(59,130,246,.3);margin-top:.5rem">
+                  <div style="font-size:.85rem;font-weight:700;color:#60a5fa;margin-bottom:.5rem">
+                    📡 Correlazione NDVI → Resa</div>
+                  <div style="font-size:1.8rem;font-weight:700;color:{clr_corr};text-align:center">
+                    r = {corr:.3f}</div>
+                  <div style="font-size:.75rem;color:#86efac;text-align:center;margin-top:.3rem">
+                    {"Correlazione forte ✅" if abs(corr)>0.7 else "Correlazione moderata ⚠️" if abs(corr)>0.4 else "Correlazione debole — inserisci più anni"}
+                  </div>
+                  <div style="font-size:.72rem;color:#4a5e4e;margin-top:.8rem">
+                    {'Il satellite stima bene la resa su questo campo — NDVI affidabile come proxy.' if abs(corr)>0.7 else 'Aggiungi più anni storici per rafforzare la correlazione.'}
+                  </div>
+                </div>""", unsafe_allow_html=True)
+
+                # Stima resa attuale da NDVI satellite
+                if st.session_state.get("sentinel_risultato"):
+                    ndvi_att = st.session_state["sentinel_risultato"].get("ndvi", 0)
+                    if ndvi_att > 0 and len(df_r_ndvi) >= 2:
+                        # Regressione lineare semplice
+                        x = df_r_ndvi["NDVI medio (satellite)"].values
+                        y = df_r_ndvi["Resa (t/ha)"].values
+                        m = np_corr.polyfit(x, y, 1)
+                        resa_stimata = np_corr.polyval(m, ndvi_att)
+                        st.markdown(f"""<div style="background:#0d2b1a;border-radius:10px;
+                          padding:.8rem;border:1px solid rgba(34,197,94,.4);margin-top:.6rem;
+                          text-align:center">
+                          🛰️ <b style="color:#4ade80">Stima resa da NDVI live:</b><br>
+                          <span style="font-size:1.4rem;font-weight:700;color:#fff">
+                            {round(max(0,resa_stimata),2)} t/ha</span><br>
+                          <span style="font-size:.7rem;color:#86efac">
+                            NDVI Sentinel-2 attuale: {ndvi_att:.3f} → regressione lineare su storico
+                          </span>
+                        </div>""", unsafe_allow_html=True)
+            else:
+                st.info("Inserisci almeno 3 anni con NDVI satellite per calcolare la correlazione resa-satellite.")
+
+# ── TAB 4: Confronto & Analisi integrata ──────────────────────────────
+with tab_confronto:
+    st.markdown("**Analisi integrata: Quaderno di campagna + Satellite + Calcolo carbonio**")
+    st.caption("Il sistema incrocia lo storico manuale con i dati satellitari per identificare pattern, anomalie e zone di miglioramento.")
+
+    if len(st.session_state["storico_analisi"]) > 0 and len(st.session_state["storico_rese"]) > 0:
+        campi_tutti = df_edit["Campo"].unique().tolist()
+        campo_cfr = st.selectbox("Campo da analizzare in dettaglio:", campi_tutti, key="campo_cfr")
+
+        df_an_cfr = st.session_state["storico_analisi"][
+            st.session_state["storico_analisi"]["Campo"]==campo_cfr].sort_values("Anno")
+        df_re_cfr = st.session_state["storico_rese"][
+            st.session_state["storico_rese"]["Campo"]==campo_cfr].sort_values("Anno")
+        df_op_cfr = st.session_state["storico_operazioni"][
+            st.session_state["storico_operazioni"]["Campo"]==campo_cfr]
+
+        cfr_c1, cfr_c2 = st.columns([3,2])
+        with cfr_c1:
+            if len(df_an_cfr) > 0 and len(df_re_cfr) > 0:
+                import plotly.graph_objects as go_cfr
+                anni_comuni = sorted(set(df_an_cfr["Anno"].tolist()) | set(df_re_cfr["Anno"].tolist()))
+                fig_cfr = go_cfr.Figure()
+
+                # SO% da analisi
+                fig_cfr.add_trace(go_cfr.Scatter(
+                    x=df_an_cfr["Anno"], y=df_an_cfr["SO %"],
+                    mode="lines+markers", name="SO% analisi suolo",
+                    line=dict(color="#22c55e",width=3),
+                    marker=dict(size=12, symbol="circle"),
+                    yaxis="y"
+                ))
+                # NDVI satellite
+                df_re_ndvi_cfr = df_re_cfr[df_re_cfr["NDVI medio (satellite)"]>0]
+                if len(df_re_ndvi_cfr)>0:
+                    fig_cfr.add_trace(go_cfr.Scatter(
+                        x=df_re_ndvi_cfr["Anno"], y=df_re_ndvi_cfr["NDVI medio (satellite)"],
+                        mode="lines+markers", name="NDVI Sentinel-2",
+                        line=dict(color="#3b82f6",width=2.5,dash="dot"),
+                        marker=dict(size=10, symbol="diamond"),
+                        yaxis="y2"
+                    ))
+                # Resa
+                if len(df_re_cfr)>0:
+                    fig_cfr.add_trace(go_cfr.Bar(
+                        x=df_re_cfr["Anno"], y=df_re_cfr["Resa (t/ha)"],
+                        name="Resa t/ha", marker_color="rgba(251,191,36,.4)",
+                        yaxis="y3"
+                    ))
+                # Marcatori operazioni chiave
+                for _, op in df_op_cfr.iterrows():
+                    try:
+                        anno_op = int(str(op.get("Data",""))[:4])
+                        if op.get("Operazione") in ["Cover crop","Compostaggio","Letamazione","Biochar"]:
+                            fig_cfr.add_vline(x=anno_op, line_dash="dash",
+                                              line_color="rgba(34,197,94,.4)",
+                                              annotation_text=op.get("Operazione","")[:8],
+                                              annotation_font=dict(size=8,color="#4ade80"))
+                    except: pass
+
+                fig_cfr.update_layout(
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="#0d1a0d",
+                    font=dict(family="Lexend",color="#e8f5e9"),
+                    title=dict(text=f"🔬 Dashboard integrato — {campo_cfr}",
+                               font=dict(size=12,color="#4ade80")),
+                    xaxis=dict(color="#86efac",gridcolor="rgba(34,197,94,.1)"),
+                    yaxis=dict(title="SO%",color="#22c55e",gridcolor="rgba(34,197,94,.1)",
+                               titlefont=dict(color="#22c55e")),
+                    yaxis2=dict(title="NDVI",overlaying="y",side="right",
+                                range=[0,1],color="#3b82f6",
+                                titlefont=dict(color="#3b82f6"),showgrid=False),
+                    yaxis3=dict(title="Resa t/ha",overlaying="y",side="right",
+                                position=0.85,color="#fbbf24",
+                                titlefont=dict(color="#fbbf24"),showgrid=False),
+                    height=420,margin=dict(t=50,b=50,l=60,r=100),
+                    legend=dict(orientation="h",y=-0.22,font=dict(size=9))
+                )
+                st.plotly_chart(fig_cfr, use_container_width=True)
+
+        with cfr_c2:
+            # Diagnosi automatica
+            st.markdown("**🤖 Diagnosi automatica**")
+            diagnosi = []
+
+            if len(df_an_cfr) >= 2:
+                delta_so = float(df_an_cfr["SO %"].iloc[-1]) - float(df_an_cfr["SO %"].iloc[0])
+                anni_span = int(df_an_cfr["Anno"].iloc[-1]) - int(df_an_cfr["Anno"].iloc[0])
+                rate_so = round(delta_so/max(anni_span,1)*100, 2)
+                if delta_so > 0:
+                    diagnosi.append(("✅","SO% in aumento",f"+{round(delta_so,2)}% in {anni_span} anni → rate: +{rate_so}%/anno","#4ade80"))
+                else:
+                    diagnosi.append(("⚠️","SO% in calo",f"{round(delta_so,2)}% in {anni_span} anni → verificare pratiche","#f87171"))
+
+            if len(df_re_cfr) >= 2:
+                delta_resa = float(df_re_cfr["Resa (t/ha)"].iloc[-1]) - float(df_re_cfr["Resa (t/ha)"].iloc[0])
+                if delta_resa > 0:
+                    diagnosi.append(("✅","Resa in crescita",f"+{round(delta_resa,2)} t/ha nel periodo analizzato","#4ade80"))
+                else:
+                    diagnosi.append(("⚠️","Resa stagnante/calo",f"{round(delta_resa,2)} t/ha → analizzare cause","#fbbf24"))
+
+            if len(df_op_cfr) > 0:
+                n_cov = len(df_op_cfr[df_op_cfr["Operazione"]=="Cover crop"])
+                n_org = len(df_op_cfr[df_op_cfr["Operazione"].isin(["Compostaggio","Letamazione","Digestato"])])
+                if n_cov > 0 or n_org > 0:
+                    diagnosi.append(("✅","Pratiche migliorative registrate",
+                                     f"{n_cov} cover crops + {n_org} apporti organici nel quaderno","#4ade80"))
+
+            if st.session_state.get("sentinel_risultato"):
+                res_sat = st.session_state["sentinel_risultato"]
+                if res_sat.get("nome") == campo_cfr:
+                    so_sat = res_sat.get("so_pct",0)
+                    so_man = float(df_an_cfr["SO %"].iloc[-1]) if len(df_an_cfr)>0 else 0
+                    delta_sat = round(so_sat - so_man, 2)
+                    if abs(delta_sat) > 0.3:
+                        diagnosi.append(("📡","Discrepanza satellite vs analisi",
+                                         f"Satellite: {so_sat}% vs Analisi: {so_man}% (Δ{delta_sat:+.2f}%) → considera nuovo campionamento","#fbbf24"))
+                    else:
+                        diagnosi.append(("📡","Coerenza satellite/analisi",
+                                         f"Satellite {so_sat}% vs Analisi {so_man}% — differenza <0.3%","#4ade80"))
+
+            for ico, tit, desc, clr in diagnosi:
+                st.markdown(f"""<div style="background:#161c16;border-left:3px solid {clr};
+                  border-radius:0 8px 8px 0;padding:.5rem .8rem;margin:.3rem 0">
+                  <div style="font-size:.8rem;font-weight:700;color:{clr}">{ico} {tit}</div>
+                  <div style="font-size:.72rem;color:#86efac;margin-top:.2rem">{desc}</div>
+                </div>""", unsafe_allow_html=True)
+
+            if not diagnosi:
+                st.info("Inserisci almeno 2 anni di analisi suolo e rese per la diagnosi automatica.")
+
+        # Raccomandazioni personalizzate
+        if len(diagnosi) > 0:
+            st.markdown("**💡 Raccomandazioni basate sullo storico**")
+            raccomandazioni = []
+
+            if len(df_an_cfr) >= 2:
+                so_ult = float(df_an_cfr["SO %"].iloc[-1])
+                if so_ult < 1.5:
+                    raccomandazioni.append("🔴 SO% critica: avviare subito protocollo rigenerativo (cover crops + compost). Target +0.1%/anno.")
+                elif so_ult < 2.0:
+                    raccomandazioni.append("🟡 SO% bassa: aumentare apporti organici e ridurre arature. Obiettivo 2.5% entro 5 anni.")
+                else:
+                    raccomandazioni.append("🟢 SO% buona: mantenere pratiche attuali e monitorare ogni 2-3 anni.")
+
+                # Rapporto C/N
+                if "N tot (‰)" in df_an_cfr.columns:
+                    cn_ult = float(df_an_cfr["SO %"].iloc[-1])*0.58*10 / max(float(df_an_cfr["N tot (‰)"].iloc[-1])*0.1, 0.01)
+                    if cn_ult < 8:
+                        raccomandazioni.append("⚠️ Rapporto C/N basso: mineralizzazione rapida. Aggiungere materiale carboniosa (paglia, cippato).")
+                    elif cn_ult > 15:
+                        raccomandazioni.append("⚠️ Rapporto C/N alto: N immobilizzato. Integrare azoto minerale o letame maturo.")
+
+            for r in raccomandazioni:
+                st.markdown(f'<div style="font-size:.8rem;color:#e8f5e9;padding:.3rem .6rem;border-bottom:1px solid rgba(34,197,94,.1)">{r}</div>', unsafe_allow_html=True)
+
+    else:
+        st.info("Inserisci dati nelle tab 'Analisi Suolo' e 'Rese & Produzioni' per attivare l'analisi integrata.")
+
+    # Export dati completi
+    st.markdown("---")
+    exp_c1, exp_c2, exp_c3 = st.columns(3)
+    with exp_c1:
+        if len(st.session_state["storico_analisi"]) > 0:
+            csv_an = st.session_state["storico_analisi"].to_csv(index=False)
+            st.download_button("⬇️ Esporta analisi suolo (.csv)", csv_an,
+                               f"analisi_suolo_{nome_az.replace(' ','_')}.csv", "text/csv")
+    with exp_c2:
+        if len(st.session_state["storico_operazioni"]) > 0:
+            csv_op = st.session_state["storico_operazioni"].to_csv(index=False)
+            st.download_button("⬇️ Esporta quaderno campagna (.csv)", csv_op,
+                               f"quaderno_{nome_az.replace(' ','_')}.csv", "text/csv")
+    with exp_c3:
+        if len(st.session_state["storico_rese"]) > 0:
+            csv_re = st.session_state["storico_rese"].to_csv(index=False)
+            st.download_button("⬇️ Esporta storico rese (.csv)", csv_re,
+                               f"rese_{nome_az.replace(' ','_')}.csv", "text/csv")
+
+    # Salva in session_state per PDF e agronomo IA
+    st.session_state["quaderno_campagna"] = {
+        "analisi": st.session_state["storico_analisi"].to_dict(orient="records"),
+        "operazioni": st.session_state["storico_operazioni"].to_dict(orient="records"),
+        "rese": st.session_state["storico_rese"].to_dict(orient="records"),
+    }
+
 # ══════════════════════════════════════════════════════════════════════
 #  SENTINEL-2 — Stima SO% da satellite (Copernicus ESA)
 # ══════════════════════════════════════════════════════════════════════
@@ -1709,6 +2322,8 @@ for _, tr in df_trasporti.iterrows():
     co2_t = qty * ef / 1000
     co2_trasporti += co2_t
     trasporti_detail.append({"voce":voce,"qty":qty,"co2":round(co2_t,3),"ef":ef})
+
+co2_trasp = co2_trasporti  # alias aggiornato dopo calcolo completo
 
 # ══════════════════════════════════════════════════════════════════════
 #  CALCOLI AGGREGATI
@@ -5427,7 +6042,7 @@ if RL_OK and gen_multi:
         [GC("303-4"),GC("Scarico idrico"),
          GC(f"Percolato: {_e2d.get('percolato','—')}"),GC("Sez.6"),GC("")],
         [GC("303-5"),GC("Consumo idrico"),
-         GC(f"Consumo netto: {int(tot_irr - st.session_state.get('tot_drenato',0)):,} m³/a (stima)"),GC("Sez.2"),GC("")],
+         GC(f"Consumo netto: {int(tot_irr):,} m³/a (coincide con prelievo — no riuso formale)"),GC("Sez.2"),GC("")],
     ]
     t_gri303 = Table(gri303_rows, colWidths=GRI_COL, repeatRows=1)
     t_gri303.setStyle(TableStyle(HDR_STYLE))
