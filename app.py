@@ -1567,7 +1567,7 @@ with tab_confronto:
                     fig_cfr.add_trace(go_cfr.Bar(
                         x=df_re_cfr["Anno"], y=df_re_cfr["Resa (t/ha)"],
                         name="Resa t/ha", marker_color="rgba(251,191,36,.4)",
-                        yaxis="y3"
+                        yaxis="y"
                     ))
                 # Marcatori operazioni chiave
                 for _, op in df_op_cfr.iterrows():
@@ -1586,16 +1586,14 @@ with tab_confronto:
                     title=dict(text=f"🔬 Dashboard integrato — {campo_cfr}",
                                font=dict(size=12,color="#4ade80")),
                     xaxis=dict(color="#86efac",gridcolor="rgba(34,197,94,.1)"),
-                    yaxis=dict(title="SO%",color="#22c55e",gridcolor="rgba(34,197,94,.1)",
-                               titlefont=dict(color="#22c55e")),
+                    yaxis=dict(title="SO% / Resa t/ha",color="#22c55e",
+                               gridcolor="rgba(34,197,94,.1)"),
                     yaxis2=dict(title="NDVI",overlaying="y",side="right",
-                                range=[0,1],color="#3b82f6",
-                                titlefont=dict(color="#3b82f6"),showgrid=False),
-                    yaxis3=dict(title="Resa t/ha",overlaying="y",side="right",
-                                position=0.85,color="#fbbf24",
-                                titlefont=dict(color="#fbbf24"),showgrid=False),
-                    height=420,margin=dict(t=50,b=50,l=60,r=100),
-                    legend=dict(orientation="h",y=-0.22,font=dict(size=9))
+                                range=[0,1],showgrid=False,
+                                tickfont=dict(color="#3b82f6"),
+                                title_font=dict(color="#3b82f6")),
+                    height=420,margin=dict(t=50,b=50,l=60,r=80),
+                    legend=dict(orientation="h",y=-0.25,font=dict(size=9))
                 )
                 st.plotly_chart(fig_cfr, use_container_width=True)
 
