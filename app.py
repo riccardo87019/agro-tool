@@ -3850,6 +3850,334 @@ Cita i valori esatti dei campi (SO%, protocollo, irrigazione) quando fai raccoma
                 st.error(f"❌ Errore connessione: {e}")
 
 
+# ══════════════════════════════════════════════════════════════════════
+#  PIANO IA & INVESTIMENTI TECNOLOGICI
+# ══════════════════════════════════════════════════════════════════════
+st.markdown('<div class="sec">🚀 Piano IA & Investimenti Tecnologici</div>', unsafe_allow_html=True)
+st.caption("Seleziona i moduli tecnologici più adatti alla tua azienda per generare un piano di investimento personalizzato con ROI, fasi e fonti di finanziamento.")
+
+# ── Moduli IA disponibili ──────────────────────────────────────────────
+moduli_ia = [
+    {
+        "id": "report_ia",
+        "label": "📊 Reportistica ESG automatizzata",
+        "badge": "✅ Già attivo",
+        "badge_color": "#0d2b1a", "badge_border": "#22c55e", "badge_text": "#4ade80",
+        "phase": 1, "cost": 0, "roi": 4000, "time": "Già attivo", "payback": "Immediato",
+        "desc": "AgroLog genera report CSRD/ESRS, GRI Content Index, ISO 14064, VSME in 15 secondi. Risparmio 40+ ore/anno di consulenza agronomica.",
+        "kpi": ["Report CSRD in 15 sec", "GRI Content Index ufficiale", "Risparmio consulenza €3-5k/a"],
+        "fondi": "Incluso in AgroLog IA",
+        "req": "Nessun requisito aggiuntivo — già operativo"
+    },
+    {
+        "id": "agronomo_ia",
+        "label": "🤖 Agronomo Virtuale IA",
+        "badge": "✅ Già attivo",
+        "badge_color": "#0d2b1a", "badge_border": "#22c55e", "badge_text": "#4ade80",
+        "phase": 1, "cost": 0, "roi": 3000, "time": "Già attivo", "payback": "Immediato",
+        "desc": "Consulenza agronomica H24 con Claude AI: analisi ESG personalizzata, suggerimenti pratiche, normativa CSRD, ottimizzazione colturale.",
+        "kpi": ["Consulenza H24 illimitata", "Analisi dati aziendali real-time", "Risparmio consulenze €2-4k/a"],
+        "fondi": "Incluso in AgroLog IA",
+        "req": "API key Anthropic — già configurata"
+    },
+    {
+        "id": "satellite",
+        "label": "🛰️ Telerilevamento Sentinel-2 IA",
+        "badge": "✅ Già attivo",
+        "badge_color": "#0d2b1a", "badge_border": "#22c55e", "badge_text": "#4ade80",
+        "phase": 1, "cost": 0, "roi": 5000, "time": "Già attivo", "payback": "Immediato",
+        "desc": "Analisi immagini Copernicus Sentinel-2 con ML per NDVI, NDWI, stress colturale, stima biomassa su ogni appezzamento con coordinate GPS.",
+        "kpi": ["NDVI per appezzamento", "Stress idrico automatico", "Gratuito (ESA Copernicus)"],
+        "fondi": "Gratuito — dati ESA open access",
+        "req": "Coordinate GPS campi inserite nella tabella appezzamenti"
+    },
+    {
+        "id": "irr_pred",
+        "label": "💧 Irrigazione Predittiva IA",
+        "badge": "Alta priorità",
+        "badge_color": "#1a2b0d", "badge_border": "#84cc16", "badge_text": "#a3e635",
+        "phase": 1, "cost": 4500, "roi": 6500, "time": "2-3 mesi", "payback": "8 mesi",
+        "desc": "Modelli LSTM che combinano meteo forecast 7gg, ETo Penman-Monteith live e sensori umidità suolo per attivare l'irrigazione solo quando necessario (-35% acqua).",
+        "kpi": ["Risparmio acqua -35%", "Riduzione costi irrigazione -30%", "Alert automatici"],
+        "fondi": "PSR Mis. 4.1 (40%) · Credito agevolato ISMEA",
+        "req": "Sensori umidità suolo (€800-1.200) · Attuatori irrigazione compatibili · WiFi/GSM in campo"
+    },
+    {
+        "id": "fert_prec",
+        "label": "🌱 Fertilizzazione di Precisione VRT",
+        "badge": "Alta priorità",
+        "badge_color": "#1a2b0d", "badge_border": "#84cc16", "badge_text": "#a3e635",
+        "phase": 1, "cost": 3500, "roi": 5500, "time": "2-3 mesi", "payback": "7 mesi",
+        "desc": "Mappe di prescrizione variabile (VRT) generate da ML su NDVI, analisi suolo e storico colturale. Riduzione fertilizzanti -20%, meno N₂O, meno Scope 3.",
+        "kpi": ["Risparmio fertilizzanti -20%", "Riduzione N₂O Scope 1", "Meno Scope 3 da produzione"],
+        "fondi": "PSR Mis. 4.1 (40%) · PNRR Agritech",
+        "req": "Analisi suolo per zona (€500-800) · GPS sub-metrico · Spandiconcime VRT compatibile"
+    },
+    {
+        "id": "resa_ml",
+        "label": "📈 Previsione Resa con Machine Learning",
+        "badge": "Media priorità",
+        "badge_color": "#2a1a00", "badge_border": "#f59e0b", "badge_text": "#fbbf24",
+        "phase": 2, "cost": 5000, "roi": 7000, "time": "3-6 mesi", "payback": "9 mesi",
+        "desc": "Random Forest/XGBoost addestrati su dati aziendali + satellite + meteo per prevedere la resa campo per campo con 60-90 giorni di anticipo. Ottimizza logistica e stoccaggio.",
+        "kpi": ["Previsione resa 60gg anticipo", "Errore medio < 12%", "Ottimizzazione raccolta e stoccaggio"],
+        "fondi": "PNRR Mis. 2 Agritech · Voucher digitalizzazione",
+        "req": "Storico dati 3+ anni · Dati satellite · Partner data science"
+    },
+    {
+        "id": "fitosan_cv",
+        "label": "🔬 Difesa Fitosanitaria con Computer Vision",
+        "badge": "Media priorità",
+        "badge_color": "#2a1a00", "badge_border": "#f59e0b", "badge_text": "#fbbf24",
+        "phase": 2, "cost": 3000, "roi": 4500, "time": "2-4 mesi", "payback": "8 mesi",
+        "desc": "Modelli CNN su immagini da smartphone o drone per identificazione precoce di malattie e parassiti. Alert automatico con indicazione trattamento e dose minima efficace.",
+        "kpi": ["Rilevamento precoce -7 giorni", "Riduzione trattamenti -25%", "Meno residui su prodotto"],
+        "fondi": "PSR Mis. 4.1 · Bandi regionali precision farming",
+        "req": "Smartphone con camera 12MP+ · (opzionale) drone con camera multispettrale · Connettività campo"
+    },
+    {
+        "id": "blockchain",
+        "label": "🔗 Tracciabilità Blockchain Filiera",
+        "badge": "Media priorità",
+        "badge_color": "#2a1a00", "badge_border": "#f59e0b", "badge_text": "#fbbf24",
+        "phase": 2, "cost": 8000, "roi": 12000, "time": "4-6 mesi", "payback": "8 mesi",
+        "desc": "Registro immutabile su blockchain (Hyperledger Fabric) di ogni operazione colturale, input, certificazione e trasporto. QR code prodotto consultabile dal consumatore. CSRD supply chain.",
+        "kpi": ["Trasparenza filiera 100%", "Premium price +8-15%", "CSRD Scope 3 supply chain"],
+        "fondi": "PNRR Agritech · Filiera (buyer può co-finanziare)",
+        "req": "Partnership con buyer/distributore · Certificazioni attive · Connettività · Integratore IT"
+    },
+    {
+        "id": "iot_sensori",
+        "label": "📡 Rete IoT Sensori in Campo",
+        "badge": "Media priorità",
+        "badge_color": "#2a1a00", "badge_border": "#f59e0b", "badge_text": "#fbbf24",
+        "phase": 2, "cost": 6000, "roi": 8000, "time": "2-3 mesi", "payback": "9 mesi",
+        "desc": "Rete di sensori LoRaWAN per temperatura, umidità aria/suolo, pH, conducibilità elettrica e bagnatura fogliare. Dashboard live integrata in AgroLog con alert automatici.",
+        "kpi": ["Monitoraggio H24 in campo", "Alert soglie automatici", "Dati per modelli ML"],
+        "fondi": "PSR Mis. 4.1 · Bandi regionali IoT agricoltura",
+        "req": "Gateway LoRaWAN (€300-500) · Sensori nodo (€100-200/cad) · Connettività GSM/WiFi"
+    },
+    {
+        "id": "digital_twin",
+        "label": "🌐 Digital Twin Aziendale",
+        "badge": "Avanzato",
+        "badge_color": "#0a1a2e", "badge_border": "#3b82f6", "badge_text": "#60a5fa",
+        "phase": 3, "cost": 15000, "roi": 20000, "time": "6-12 mesi", "payback": "9 mesi",
+        "desc": "Replica digitale completa dell'azienda: simulazione scenari climatici RCP4.5/8.5, test pratiche colturali, ottimizzazione rotazioni, carbon tracking live per mercati regolamentati.",
+        "kpi": ["Simulazione scenari climatici", "Ottimizzazione rotazioni colturali", "Carbon tracking certificabile"],
+        "fondi": "PNRR Mis. 2 Agritech · BEI Green Agriculture Loan",
+        "req": "IoT completo in campo · Storico dati 5+ anni · Cloud computing · Partner tech specializzato"
+    },
+    {
+        "id": "droni_ia",
+        "label": "🚁 Droni Autonomi con IA",
+        "badge": "Avanzato",
+        "badge_color": "#0a1a2e", "badge_border": "#3b82f6", "badge_text": "#60a5fa",
+        "phase": 3, "cost": 12000, "roi": 15000, "time": "3-6 mesi", "payback": "10 mesi",
+        "desc": "Flotta droni con missioni autonome programmate per mappatura NDVI, irrorazione di precisione, conta piante, rilievo danni. IA a bordo per analisi real-time.",
+        "kpi": ["Mappatura settimanale campi", "Irrorazione precisione -40% prodotto", "Conta piante automatica"],
+        "fondi": "PSR Mis. 4.1 (50%) · Noleggio operativo disponibile",
+        "req": "Patentino ENAC droni · Assicurazione · Area operativa sicura · Software missioni"
+    },
+    {
+        "id": "mercati_co2",
+        "label": "💹 Accesso Mercati CO₂ Volontari",
+        "badge": "Alta priorità" if tot_netto > 0 else "Media priorità",
+        "badge_color": "#1a2b0d" if tot_netto > 0 else "#2a1a00",
+        "badge_border": "#84cc16" if tot_netto > 0 else "#f59e0b",
+        "badge_text": "#a3e635" if tot_netto > 0 else "#fbbf24",
+        "phase": 1 if tot_netto > 0 else 2,
+        "cost": 3500, "roi": int(max(0, tot_netto) * prezzo_co2 * 0.85),
+        "time": "6-9 mesi", "payback": "12 mesi",
+        "desc": f"Certificazione ISO 14064-1 + verifica ISO 14064-3 per accesso a Verra VCS, Gold Standard o Xpansiv CBL. Bilancio attuale: {round(tot_netto,1)} tCO₂eq/anno.",
+        "kpi": [f"Crediti attuali: ~{round(max(0,tot_netto),1)} tCO₂eq/a",
+                f"Valore potenziale: €{int(max(0,tot_netto)*prezzo_co2):,}/a",
+                "Accesso mercati regolamentati"],
+        "fondi": "Autofinanziato dai ricavi crediti · Prima certificazione: €2.000-4.000",
+        "req": "Bilancio GHG positivo (verificare) · Ente certificatore accreditato · MRV plan"
+    },
+]
+
+# Stato selezione
+if "moduli_selezionati" not in st.session_state:
+    st.session_state["moduli_selezionati"] = {"report_ia", "agronomo_ia", "satellite"}
+
+# ── Filtri ────────────────────────────────────────────────────────────
+ia_f1, ia_f2, ia_f3 = st.columns(3)
+with ia_f1:
+    filtro_fase = st.selectbox("Filtra per fase", ["Tutte le fasi","Fase 1 — Anno 1","Fase 2 — Anno 2","Fase 3 — Anno 3+"], key="ia_fase_filter")
+with ia_f2:
+    filtro_budget = st.selectbox("Budget disponibile", ["Qualsiasi","Solo gratuiti","Fino a €5.000","Fino a €10.000","Oltre €10.000"], key="ia_budget_filter")
+with ia_f3:
+    ordine = st.selectbox("Ordina per", ["Fase implementazione","ROI stimato","Costo crescente","Payback"], key="ia_ordine")
+
+# Filtraggio
+moduli_filtrati = moduli_ia[:]
+if filtro_fase == "Fase 1 — Anno 1":    moduli_filtrati = [m for m in moduli_filtrati if m["phase"]==1]
+elif filtro_fase == "Fase 2 — Anno 2":  moduli_filtrati = [m for m in moduli_filtrati if m["phase"]==2]
+elif filtro_fase == "Fase 3 — Anno 3+": moduli_filtrati = [m for m in moduli_filtrati if m["phase"]==3]
+if filtro_budget == "Solo gratuiti":      moduli_filtrati = [m for m in moduli_filtrati if m["cost"]==0]
+elif filtro_budget == "Fino a €5.000":   moduli_filtrati = [m for m in moduli_filtrati if m["cost"]<=5000]
+elif filtro_budget == "Fino a €10.000":  moduli_filtrati = [m for m in moduli_filtrati if m["cost"]<=10000]
+elif filtro_budget == "Oltre €10.000":   moduli_filtrati = [m for m in moduli_filtrati if m["cost"]>10000]
+if ordine == "ROI stimato":              moduli_filtrati.sort(key=lambda x: -x["roi"])
+elif ordine == "Costo crescente":        moduli_filtrati.sort(key=lambda x: x["cost"])
+elif ordine == "Payback":                moduli_filtrati.sort(key=lambda x: x["payback"])
+
+# ── Griglia moduli ─────────────────────────────────────────────────────
+cols_ia = st.columns(3)
+for i, m in enumerate(moduli_filtrati):
+    sel = m["id"] in st.session_state["moduli_selezionati"]
+    with cols_ia[i % 3]:
+        brd = "2px solid #22c55e" if sel else f"1px solid {m['badge_border']}"
+        bg  = "#0a1f0a" if sel else "#0d1117"
+        st.markdown(f"""<div style="background:{bg};border:{brd};border-radius:12px;
+          padding:.9rem 1rem;margin-bottom:.5rem;min-height:220px">
+          <div style="background:{m['badge_color']};border:1px solid {m['badge_border']};
+            border-radius:20px;display:inline-block;padding:2px 10px;
+            font-size:.7rem;font-weight:600;color:{m['badge_text']};margin-bottom:.5rem">
+            {m['badge']}
+          </div>
+          <div style="font-size:.82rem;font-weight:600;color:#e8f5e9;margin-bottom:.4rem;line-height:1.3">
+            {m['label']}
+          </div>
+          <div style="font-size:.72rem;color:#86efac;line-height:1.4;margin-bottom:.5rem">
+            {m['desc'][:100]}…
+          </div>
+          <div style="font-size:.7rem;color:#4ade80;margin-bottom:.4rem">
+            {"  ·  ".join(m['kpi'][:2])}
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.72rem;
+            border-top:1px solid rgba(255,255,255,.08);padding-top:.4rem;margin-top:.2rem">
+            <span style="color:#86efac">Inv: <b style="color:#fff">{('Incluso' if m['cost']==0 else f"€{m['cost']:,}")}</b></span>
+            <span style="color:#86efac">ROI: <b style="color:#4ade80">€{m['roi']:,}/a</b></span>
+            <span style="color:#86efac">PB: <b style="color:#fbbf24">{m['payback']}</b></span>
+          </div>
+        </div>""", unsafe_allow_html=True)
+        btn_label = "✅ Selezionato — rimuovi" if sel else "➕ Aggiungi al piano"
+        if st.button(btn_label, key=f"ia_btn_{m['id']}", use_container_width=True):
+            if sel:
+                st.session_state["moduli_selezionati"].discard(m["id"])
+            else:
+                st.session_state["moduli_selezionati"].add(m["id"])
+            st.rerun()
+
+# ── Piano investimenti personalizzato ─────────────────────────────────
+selezionati = [m for m in moduli_ia if m["id"] in st.session_state["moduli_selezionati"]]
+if selezionati:
+    st.markdown("---")
+    st.markdown("### 📋 Il tuo Piano di Investimento IA Personalizzato")
+
+    tot_costo = sum(m["cost"] for m in selezionati)
+    tot_roi   = sum(m["roi"]  for m in selezionati)
+    n_attivi  = sum(1 for m in selezionati if m["cost"]==0)
+    n_invest  = len(selezionati) - n_attivi
+
+    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+    with kpi1:
+        st.markdown(f"""<div style="background:#0d1117;border:1px solid rgba(34,197,94,.3);
+          border-radius:10px;padding:.8rem;text-align:center">
+          <div style="font-size:1.3rem;font-weight:700;color:#4ade80">{len(selezionati)}</div>
+          <div style="font-size:.72rem;color:#86efac">Moduli selezionati</div>
+        </div>""", unsafe_allow_html=True)
+    with kpi2:
+        st.markdown(f"""<div style="background:#0d1117;border:1px solid rgba(34,197,94,.3);
+          border-radius:10px;padding:.8rem;text-align:center">
+          <div style="font-size:1.3rem;font-weight:700;color:#fff">€{tot_costo:,}</div>
+          <div style="font-size:.72rem;color:#86efac">Investimento totale</div>
+        </div>""", unsafe_allow_html=True)
+    with kpi3:
+        st.markdown(f"""<div style="background:#0d1117;border:1px solid rgba(34,197,94,.3);
+          border-radius:10px;padding:.8rem;text-align:center">
+          <div style="font-size:1.3rem;font-weight:700;color:#4ade80">€{tot_roi:,}</div>
+          <div style="font-size:.72rem;color:#86efac">Benefici stimati/anno</div>
+        </div>""", unsafe_allow_html=True)
+    with kpi4:
+        payback_mesi = round(tot_costo / max(tot_roi/12, 1)) if tot_costo > 0 else 0
+        st.markdown(f"""<div style="background:#0d1117;border:1px solid rgba(34,197,94,.3);
+          border-radius:10px;padding:.8rem;text-align:center">
+          <div style="font-size:1.3rem;font-weight:700;color:#fbbf24">{payback_mesi if tot_costo>0 else '∞'} mesi</div>
+          <div style="font-size:.72rem;color:#86efac">Payback medio</div>
+        </div>""", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Piano per fasi
+    ph_tab1, ph_tab2, ph_tab3 = st.tabs(["📅 Fase 1 — Anno 1", "📅 Fase 2 — Anno 2", "📅 Fase 3 — Anno 3+"])
+    for tab, fase_n in zip([ph_tab1, ph_tab2, ph_tab3], [1,2,3]):
+        with tab:
+            fase_mods = [m for m in selezionati if m["phase"]==fase_n]
+            if not fase_mods:
+                st.info("Nessun modulo selezionato per questa fase.")
+            else:
+                for m in fase_mods:
+                    with st.expander(f"{m['label']} — €{m['cost']:,} inv · €{m['roi']:,} ROI/a"):
+                        dc1, dc2 = st.columns(2)
+                        with dc1:
+                            st.markdown(f"**Descrizione completa**\n\n{m['desc']}")
+                            st.markdown(f"**KPI attesi:**\n" + "\n".join([f"- {k}" for k in m['kpi']]))
+                        with dc2:
+                            st.markdown(f"**Tempo implementazione:** {m['time']}")
+                            st.markdown(f"**Payback:** {m['payback']}")
+                            st.markdown(f"**Fonti finanziamento:** {m['fondi']}")
+                            st.markdown(f"**Requisiti tecnici:** {m['req']}")
+
+    # ── Finanziamenti disponibili ──────────────────────────────────────
+    st.markdown("### 💶 Fonti di Finanziamento Disponibili")
+    fondi_cols = st.columns(3)
+    fondi_list = [
+        ("🇪🇺 PSR / CSR 2023-2027 Mis. 4.1",
+         "Investimenti in innovazione e digitale nelle aziende agricole. Contributo 40-50% spesa ammissibile.",
+         "Domanda tramite CAA/patronato · Bandi regionali aperti"),
+        ("🇮🇹 PNRR — Agritech & Missione 2",
+         "Fondo innovazione per agricoltura di precisione, IoT, telerilevamento, digital twin. Fino a €200k.",
+         "Soggetti aggregatori (università, centri ricerca, partenariati)"),
+        ("🏦 ISMEA Credito Agevolato",
+         "Mutui a tasso agevolato per investimenti in tecnologia e innovazione nelle imprese agricole.",
+         "Sportello ISMEA · Istituto bancario convenzionato"),
+        ("📊 Crediti Carbonio (Verra VCS)",
+         f"Se bilancio GHG positivo ({round(tot_netto,1)} tCO₂eq/a), vendita crediti su mercato volontario a €{prezzo_co2}/t.",
+         "Certificazione ISO 14064-3 · Ente accreditato"),
+        ("🏛️ Banca Europea Investimenti (BEI)",
+         "Prestiti BEI per agricoltura sostenibile e transizione verde. Tasso preferenziale, durata 10-15 anni.",
+         "Tramite banca partner BEI in Italia (Intesa, UniCredit, BNL...)"),
+        ("🌿 Eco-Scheme PAC 2023-2027",
+         f"Pagamenti aggiuntivi PAC già accessibili: €{int(pac_totale):,}/anno stimati con le pratiche attuali.",
+         "Domanda PAC tramite CAA · Campagna in corso"),
+    ]
+    for i, (titolo, desc, come) in enumerate(fondi_list):
+        with fondi_cols[i % 3]:
+            st.markdown(f"""<div style="background:#0d1117;border:1px solid rgba(59,130,246,.3);
+              border-radius:10px;padding:.8rem;margin-bottom:.5rem;font-size:.77rem">
+              <b style="color:#60a5fa">{titolo}</b><br>
+              <span style="color:#93c5fd">{desc}</span><br>
+              <span style="color:#6b7280;font-size:.7rem">📌 {come}</span>
+            </div>""", unsafe_allow_html=True)
+
+    # ── Prossimi passi ─────────────────────────────────────────────────
+    st.markdown("### 🎯 Prossimi Passi Consigliati")
+    st.markdown(f"""<div style="background:#0d2b1a;border:1px solid rgba(34,197,94,.3);
+      border-radius:12px;padding:1rem 1.2rem;font-size:.8rem;line-height:2">
+      <b style="color:#4ade80">Azioni immediate (questa settimana):</b><br>
+      <span style="color:#86efac">
+      1. Inserire le coordinate GPS di tutti gli appezzamenti → abilita Sentinel-2 e previsione resa<br>
+      2. Generare il Report Multi-Standard PDF → documentazione per bandi PSR e buyer<br>
+      3. Verificare score ESG ({score}/100) → prerequisito per molti bandi di finanziamento<br>
+      </span>
+      <b style="color:#4ade80">Azioni a breve (1-3 mesi):</b><br>
+      <span style="color:#86efac">
+      4. Contattare il CAA per verificare bandi PSR aperti nella tua regione<br>
+      5. Avviare analisi suolo per zona → prerequisito per fertilizzazione VRT<br>
+      6. Valutare certificazione ISO 14064 se bilancio GHG positivo ({round(tot_netto,1)} tCO₂eq/a)<br>
+      </span>
+    </div>""", unsafe_allow_html=True)
+
+    # Salva per PDF
+    st.session_state["piano_ia"] = {
+        "moduli": [m["id"] for m in selezionati],
+        "tot_costo": tot_costo, "tot_roi": tot_roi, "payback_mesi": payback_mesi
+    }
+
 # METODOLOGIA
 with st.expander("🔬 Metodologia Scientifica Completa — IPCC + GHG Protocol + FAO"):
     st.markdown("""
