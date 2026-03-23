@@ -5244,6 +5244,501 @@ with bc_tab3:
       </span>
     </div>""", unsafe_allow_html=True)
 
+
+# ══════════════════════════════════════════════════════════════════════
+#  REPORT CARBON FARMING — Documento commerciale per il cliente
+# ══════════════════════════════════════════════════════════════════════
+st.markdown('<div class="sec">💰 Report Carbon Farming — Analisi Crediti CO₂ & Opportunità Economiche</div>', unsafe_allow_html=True)
+st.caption("Il documento professionale che porta soldi nuovi all'azienda agricola — generato in 30 secondi, vale come 6 settimane di consulenza.")
+
+with st.expander("💰 Genera Report Carbon Farming Personalizzato", expanded=True):
+
+    cf_c1, cf_c2 = st.columns([2, 1])
+
+    with cf_c1:
+        st.markdown("**Configura il report per il tuo cliente**")
+        cf_nome_cliente = st.text_input("Nome azienda cliente", value=nome_az, key="cf_nome")
+        cf_col1, cf_col2 = st.columns(2)
+        with cf_col1:
+            cf_prezzo_base = st.number_input("Prezzo CO₂ base (€/t)", 20.0, 120.0, 40.0, 5.0, key="cf_pbase")
+            cf_prezzo_prem = st.number_input("Prezzo Gold Standard premium (€/t)", 30.0, 150.0, 60.0, 5.0, key="cf_pprem")
+            cf_anni_contr  = st.number_input("Anni contratto pluriennale", 3, 15, 7, 1, key="cf_anni")
+        with cf_col2:
+            cf_perc_cert   = st.slider("% crediti certificabili su totale", 50, 100, 80, 5, key="cf_cert",
+                                        help="Verra trattiene 10-20% come buffer. Inserisci 80% come stima prudente.")
+            cf_costo_cert  = st.number_input("Costo certificazione stimato (€)", 0, 30000, 4500, 500, key="cf_costo")
+            cf_aggregaz    = st.checkbox("Aggregazione con altre aziende (abbatte costi -60%)", key="cf_agg")
+
+    with cf_c2:
+        st.markdown("""<div style="background:#0d1a0d;border:1.5px solid #22c55e;border-radius:12px;
+          padding:1rem;font-size:.77rem;color:#86efac">
+          <b style="color:#4ade80;font-size:.88rem">💡 Perché questo report vale oro</b><br><br>
+          Non stai vendendo un documento — stai portando al cliente:<br><br>
+          <b style="color:#fff">• Denaro nuovo</b> dai crediti CO₂<br>
+          <b style="color:#fff">• Premium price</b> dalle filiere ESG<br>
+          <b style="color:#fff">• PAC aggiuntivi</b> non richiesti<br>
+          <b style="color:#fff">• Finanziamenti</b> green agevolati<br>
+          <b style="color:#fff">• Contratti pluriennali</b> a prezzo fisso<br><br>
+          Il cliente paga il tuo servizio una volta.<br>
+          Incassa i benefici per 10+ anni.
+        </div>""", unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # ── CALCOLI PERSONALIZZATI ─────────────────────────────────────
+    cred_lordi    = max(0.0, float(tot_netto))
+    cred_netti    = round(cred_lordi * cf_perc_cert / 100, 2)
+    cred_cert_eff = cf_costo_cert * (0.40 if cf_aggregaz else 1.0)
+    payback_mesi  = round(cred_cert_eff / max(cred_netti * cf_prezzo_base / 12, 0.1))
+    ricavo_base   = round(cred_netti * cf_prezzo_base, 0)
+    ricavo_prem   = round(cred_netti * cf_prezzo_prem, 0)
+    ricavo_7anni  = round(cred_netti * cf_prezzo_base * cf_anni_contr, 0)
+    ricavo_7prem  = round(cred_netti * cf_prezzo_prem * cf_anni_contr, 0)
+
+    # Benefici aggiuntivi
+    premium_filiera = round(fatturato * 0.12, 0)   # +12% filiera ESG
+    pac_eco_benefit = int(pac_totale)
+    risparmio_fert  = round(co2_fert_prod * 0.2 * 500, 0)  # riduzione fertilizzanti
+    accesso_bei     = round(fatturato * 0.008, 0)   # risparmio interessi BEI
+
+    tot_beneficio_anno = ricavo_base + premium_filiera * 0.3 + pac_eco_benefit + risparmio_fert
+    tot_beneficio_7    = tot_beneficio_anno * cf_anni_contr
+
+    # ── DASHBOARD NUMERI ──────────────────────────────────────────
+    st.markdown("### 📊 Il tuo potenziale economico — numeri reali")
+    dash_c1, dash_c2, dash_c3, dash_c4 = st.columns(4)
+
+    with dash_c1:
+        clr_netto = "#4ade80" if tot_netto > 0 else "#f87171"
+        st.markdown(f"""<div style="background:#0d1a0d;border:2px solid {'#22c55e' if tot_netto>0 else '#ef4444'};
+          border-radius:14px;padding:1.1rem;text-align:center">
+          <div style="font-size:1.6rem;font-weight:700;color:{clr_netto}">
+            {round(cred_netti, 1)} t</div>
+          <div style="font-size:.68rem;color:#86efac;text-transform:uppercase;margin-top:.3rem">
+            Crediti CO₂ certificabili/anno</div>
+          <div style="font-size:.65rem;color:#4a5e4e;margin-top:.2rem">
+            {cf_perc_cert}% del bilancio netto {round(tot_netto,1)} t</div>
+        </div>""", unsafe_allow_html=True)
+
+    with dash_c2:
+        st.markdown(f"""<div style="background:#0d1a0d;border:2px solid #22c55e;
+          border-radius:14px;padding:1.1rem;text-align:center">
+          <div style="font-size:1.6rem;font-weight:700;color:#4ade80">
+            €{int(ricavo_base):,}</div>
+          <div style="font-size:.68rem;color:#86efac;text-transform:uppercase;margin-top:.3rem">
+            Ricavo crediti/anno @ €{cf_prezzo_base}/t</div>
+          <div style="font-size:.65rem;color:#4a5e4e;margin-top:.2rem">
+            Gold Standard: €{int(ricavo_prem):,}/anno</div>
+        </div>""", unsafe_allow_html=True)
+
+    with dash_c3:
+        st.markdown(f"""<div style="background:#0d1a0d;border:2px solid #fbbf24;
+          border-radius:14px;padding:1.1rem;text-align:center">
+          <div style="font-size:1.6rem;font-weight:700;color:#fbbf24">
+            €{int(tot_beneficio_anno):,}</div>
+          <div style="font-size:.68rem;color:#86efac;text-transform:uppercase;margin-top:.3rem">
+            Beneficio economico totale/anno</div>
+          <div style="font-size:.65rem;color:#4a5e4e;margin-top:.2rem">
+            Crediti + filiere + PAC + risparmio</div>
+        </div>""", unsafe_allow_html=True)
+
+    with dash_c4:
+        st.markdown(f"""<div style="background:#0d1a0d;border:2px solid #60a5fa;
+          border-radius:14px;padding:1.1rem;text-align:center">
+          <div style="font-size:1.6rem;font-weight:700;color:#60a5fa">
+            €{int(tot_beneficio_7):,}</div>
+          <div style="font-size:.68rem;color:#86efac;text-transform:uppercase;margin-top:.3rem">
+            Valore cumulato {cf_anni_contr} anni</div>
+          <div style="font-size:.65rem;color:#4a5e4e;margin-top:.2rem">
+            Contratto pluriennale @ €{cf_prezzo_base}/t</div>
+        </div>""", unsafe_allow_html=True)
+
+    st.markdown("")
+
+    # ── ANALISI DETTAGLIATA ────────────────────────────────────────
+    anal_c1, anal_c2 = st.columns(2)
+
+    with anal_c1:
+        st.markdown("**💶 Analisi flussi economici annui**")
+        voci_economiche = [
+            ("Crediti CO₂ @ €{:.0f}/t (Verra VCS)".format(cf_prezzo_base), f"€{int(ricavo_base):,}", "#4ade80" if ricavo_base>0 else "#6b7280", ricavo_base > 0),
+            ("Crediti CO₂ @ €{:.0f}/t (Gold Standard)".format(cf_prezzo_prem), f"€{int(ricavo_prem):,}", "#22c55e", ricavo_prem > 0),
+            ("Premium filiera ESG (stima 12% fatturato)", f"€{int(premium_filiera):,}", "#fbbf24", True),
+            ("PAC Eco-Scheme accessibili ora", f"€{int(pac_eco_benefit):,}", "#4ade80" if pac_eco_benefit>0 else "#6b7280", pac_eco_benefit>0),
+            ("Risparmio fertilizzanti (riduzione 20%)", f"€{int(risparmio_fert):,}", "#86efac", True),
+            ("Risparmio interessi BEI green loan (stima)", f"€{int(accesso_bei):,}/anno", "#60a5fa", True),
+        ]
+        for voce, valore, clr, ok in voci_economiche:
+            st.markdown(f"""<div style="display:flex;justify-content:space-between;align-items:center;
+              padding:.4rem .6rem;border-bottom:1px solid rgba(34,197,94,.1);font-size:.78rem;
+              {'background:rgba(34,197,94,.05);' if ok else 'opacity:.5;'}">
+              <span style="color:#e8f5e9">{'✅' if ok and int(valore.replace('€','').replace(',','').replace('/anno',''))>0 else '○'} {voce}</span>
+              <b style="color:{clr}">{valore}</b>
+            </div>""", unsafe_allow_html=True)
+
+        st.markdown(f"""<div style="background:#0d2b1a;border-radius:8px;padding:.7rem .9rem;
+          margin-top:.5rem;font-size:.82rem;border:1px solid rgba(34,197,94,.3)">
+          💰 <b style="color:#4ade80">BENEFICIO ECONOMICO ANNUO TOTALE:</b>
+          <span style="font-size:1.1rem;font-weight:700;color:#fff"> €{int(tot_beneficio_anno):,}</span>
+        </div>""", unsafe_allow_html=True)
+
+    with anal_c2:
+        st.markdown("**📅 Analisi investimento e payback**")
+        costo_cert_eff_display = round(cred_cert_eff, 0)
+        roi_5 = round((tot_beneficio_anno * 5 - costo_cert_eff_display) / max(costo_cert_eff_display, 1) * 100, 0)
+        roi_7 = round((tot_beneficio_anno * 7 - costo_cert_eff_display) / max(costo_cert_eff_display, 1) * 100, 0)
+
+        st.markdown(f"""<div style="background:#161c16;border-radius:12px;padding:1rem;
+          border:1px solid rgba(34,197,94,.2)">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+            <div style="background:#0d1a0d;border-radius:8px;padding:.7rem;text-align:center">
+              <div style="font-size:1.2rem;font-weight:700;color:#fbbf24">€{int(costo_cert_eff_display):,}</div>
+              <div style="font-size:.63rem;color:#86efac">Costo certificazione{' (aggregato)' if cf_aggregaz else ''}</div>
+            </div>
+            <div style="background:#0d1a0d;border-radius:8px;padding:.7rem;text-align:center">
+              <div style="font-size:1.2rem;font-weight:700;color:#4ade80">{payback_mesi} mesi</div>
+              <div style="font-size:.63rem;color:#86efac">Payback certificazione</div>
+            </div>
+            <div style="background:#0d1a0d;border-radius:8px;padding:.7rem;text-align:center">
+              <div style="font-size:1.2rem;font-weight:700;color:#4ade80">{roi_5:.0f}%</div>
+              <div style="font-size:.63rem;color:#86efac">ROI su 5 anni</div>
+            </div>
+            <div style="background:#0d1a0d;border-radius:8px;padding:.7rem;text-align:center">
+              <div style="font-size:1.2rem;font-weight:700;color:#22c55e">{roi_7:.0f}%</div>
+              <div style="font-size:.63rem;color:#86efac">ROI su {cf_anni_contr} anni</div>
+            </div>
+          </div>
+          <div style="margin-top:.8rem;font-size:.75rem;color:#86efac;line-height:1.7">
+            📋 <b style="color:#fff">Contratto pluriennale {cf_anni_contr} anni:</b><br>
+            · Prezzo base: €{int(ricavo_7anni):,} totali<br>
+            · Gold Standard: €{int(ricavo_7prem):,} totali<br>
+            · Con benefici totali: €{int(tot_beneficio_7):,} cumulati<br>
+            {'· Aggregazione attiva: risparmio costi -60%' if cf_aggregaz else '· Attiva aggregazione per risparmiare €' + str(int(cred_cert_eff * 0.6)) + ' sui costi'}
+          </div>
+        </div>""", unsafe_allow_html=True)
+
+    st.markdown("")
+
+    # ── PERCORSO CERTIFICAZIONE ────────────────────────────────────
+    st.markdown("**🗺️ Percorso verso i primi crediti — timeline personalizzata**")
+    fasi_cert = [
+        ("Mese 1-2", "🔬 Analisi & Baseline", f"Analisi suolo ({len(df_edit)} campi), caricamento in AgroLog IA, calcolo bilancio GHG. Il Report ISO 14064-1 è già pronto.", "#22c55e"),
+        ("Mese 2-6", "🌱 Pratiche rigenerative", "Avvio cover crops, compostaggio o riduzione lavorazioni. Documentazione operazioni in Quaderno di Campagna.", "#3b82f6"),
+        ("Mese 3-6", "📋 Certificazione ISO 14064", f"Ente terzo accreditato verifica l'inventario GHG. Costo: €{int(costo_cert_eff_display):,}{'(aggregato)' if cf_aggregaz else ''}. Report AgroLog già pronto.", "#8b5cf6"),
+        ("Mese 6-12","📝 Registrazione Verra VCS", "Project Design Document (già in bozza nel MRV Report AgroLog) + validazione DOE. Prima emissione VCU.", "#f59e0b"),
+        ("Anno 1+",  "💰 Prima vendita crediti", f"Prima emissione: ~{round(cred_netti,1)} VCU. Vendita: €{int(ricavo_base):,}. Monitoraggio annuale e rinnovo.", "#4ade80"),
+    ]
+    for fase, titolo, desc, clr in fasi_cert:
+        st.markdown(f"""<div style="display:flex;gap:1rem;align-items:flex-start;margin:.3rem 0;
+          background:#161c16;border-radius:10px;padding:.7rem 1rem;
+          border-left:4px solid {clr}">
+          <div style="min-width:80px;font-size:.72rem;font-weight:700;color:{clr};margin-top:.1rem">{fase}</div>
+          <div>
+            <div style="font-size:.82rem;font-weight:700;color:#e8f5e9">{titolo}</div>
+            <div style="font-size:.73rem;color:#86efac;margin-top:.2rem">{desc}</div>
+          </div>
+        </div>""", unsafe_allow_html=True)
+
+    st.markdown("")
+
+    # ── GENERA IL REPORT PDF CARBON FARMING ───────────────────────
+    st.markdown("**📄 Genera il Report Carbon Farming da consegnare al cliente**")
+    st.caption("Un documento professionale di 3-4 pagine con tutti i numeri personalizzati — da stampare o inviare via email al cliente finale.")
+
+    if st.button("📄 Genera Report Carbon Farming PDF", key="btn_cf_pdf"):
+        if not RL_OK:
+            st.error("❌ Aggiungi 'reportlab' al requirements.txt per generare il PDF.")
+        else:
+            from io import BytesIO as _CF_BytesIO
+            from reportlab.lib.pagesizes import A4 as _CF_A4
+            from reportlab.lib.styles import getSampleStyleSheet as _CF_GSS, ParagraphStyle as _CF_PS
+            from reportlab.lib.units import cm as _CF_CM
+            from reportlab.lib import colors as _CF_CLR
+            from reportlab.platypus import (SimpleDocTemplate as _CF_DOC, Paragraph as _CF_P,
+                                             Spacer as _CF_SP, Table as _CF_T, TableStyle as _CF_TS,
+                                             HRFlowable as _CF_HR, PageBreak as _CF_PB)
+
+            _buf = _CF_BytesIO()
+            _GN  = _CF_CLR.HexColor("#0A2E16")
+            _G2  = _CF_CLR.HexColor("#166534")
+            _G3  = _CF_CLR.HexColor("#22C55E")
+            _G4  = _CF_CLR.HexColor("#DCFCE7")
+            _ORO = _CF_CLR.HexColor("#B45309")
+            _OR2 = _CF_CLR.HexColor("#FEF3C7")
+            _BLU = _CF_CLR.HexColor("#1E3A8A")
+            _BL2 = _CF_CLR.HexColor("#DBEAFE")
+            _GRY = _CF_CLR.HexColor("#4B5563")
+            _GR2 = _CF_CLR.HexColor("#9CA3AF")
+            _ROS = _CF_CLR.HexColor("#991B1B")
+            _RO2 = _CF_CLR.HexColor("#FEE2E2")
+            _WH  = _CF_CLR.white
+            _BK  = _CF_CLR.HexColor("#111827")
+            _ROW1= _CF_CLR.HexColor("#F0FDF4")
+            _ROW2= _CF_CLR.white
+
+            _sty = _CF_GSS()
+            def _S(n, **k): return _CF_PS(n, parent=_sty["Normal"], **k)
+
+            _h1  = _S("h1",  fontSize=18, textColor=_GN,  fontName="Helvetica-Bold", spaceAfter=6)
+            _h2  = _S("h2",  fontSize=12, textColor=_G2,  fontName="Helvetica-Bold", spaceBefore=14, spaceAfter=4)
+            _h3  = _S("h3",  fontSize=10, textColor=_ORO, fontName="Helvetica-Bold", spaceBefore=8,  spaceAfter=3)
+            _bod = _S("bod", fontSize=9,  textColor=_GRY, fontName="Helvetica",      spaceAfter=4, leading=13)
+            _sm  = _S("sm",  fontSize=8,  textColor=_GR2, fontName="Helvetica",      spaceAfter=2, leading=11, italics=True)
+
+            def _C(t, bold=False, color=None, size=8.5):
+                return _CF_P(str(t), _S("c"+str(id(t))[:4], fontSize=size, textColor=color or _GRY,
+                             fontName="Helvetica-Bold" if bold else "Helvetica"))
+
+            _TS = _CF_TS([
+                ("BACKGROUND",   (0,0),(-1,0), _GN),
+                ("TEXTCOLOR",    (0,0),(-1,0), _WH),
+                ("FONTNAME",     (0,0),(-1,0), "Helvetica-Bold"),
+                ("FONTSIZE",     (0,0),(-1,-1),8.5),
+                ("ROWBACKGROUNDS",(0,1),(-1,-1),[_ROW1,_ROW2]),
+                ("TEXTCOLOR",    (0,1),(-1,-1),_GRY),
+                ("GRID",         (0,0),(-1,-1),0.4,_CF_CLR.HexColor("#D1D5DB")),
+                ("LINEBELOW",    (0,0),(-1,0), 1.5,_G3),
+                ("VALIGN",       (0,0),(-1,-1),"MIDDLE"),
+                ("TOPPADDING",   (0,0),(-1,-1),5),
+                ("BOTTOMPADDING",(0,0),(-1,-1),5),
+                ("LEFTPADDING",  (0,0),(-1,-1),6),
+                ("RIGHTPADDING", (0,0),(-1,-1),6),
+            ])
+
+            _doc = _CF_DOC(_buf, pagesize=_CF_A4,
+                           leftMargin=1.8*_CF_CM, rightMargin=1.8*_CF_CM,
+                           topMargin=1.8*_CF_CM, bottomMargin=1.8*_CF_CM)
+            _W = _CF_A4[0] - 3.6*_CF_CM
+            _st = []
+
+            # COPERTINA VERDE
+            _cov_data = [[_CF_P(
+                f"<b>ANALISI CARBON FARMING &amp; ESG</b><br/>"
+                f"Opportunità economiche dai crediti CO₂ e dalle filiere sostenibili",
+                _S("cov", fontSize=16, textColor=_WH, fontName="Helvetica-Bold", leading=22, alignment=1))]]
+            _t_cov = _CF_T(_cov_data, colWidths=[_W])
+            _t_cov.setStyle(_CF_TS([
+                ("BACKGROUND",   (0,0),(-1,-1),_GN),
+                ("TOPPADDING",   (0,0),(-1,-1),18),
+                ("BOTTOMPADDING",(0,0),(-1,-1),18),
+                ("LEFTPADDING",  (0,0),(-1,-1),16),
+                ("RIGHTPADDING", (0,0),(-1,-1),16),
+            ]))
+            _st.append(_t_cov)
+            _st.append(_CF_SP(1,6))
+
+            # Dati azienda
+            _az = [[_C("Azienda:",True),_C(cf_nome_cliente,True,_G2),
+                    _C("Consulente:",True),_C(agronomo)],
+                   [_C("Regione:",True),_C(f"{regione} / {zona}"),
+                    _C("Data analisi:",True),_C(datetime.now().strftime("%d/%m/%Y"))],
+                   [_C("Superficie:",True),_C(f"{round(tot_ha,1)} ha — {coltura_principale}"),
+                    _C("Score ESG:",True),_C(f"{score}/100 — {rcls}", True,
+                       _G2 if score>=65 else _ORO if score>=48 else _ROS)]]
+            _ta = _CF_T(_az, colWidths=[_W*0.16,_W*0.34,_W*0.16,_W*0.34])
+            _ta.setStyle(_CF_TS([("FONTSIZE",(0,0),(-1,-1),8.5),("TOPPADDING",(0,0),(-1,-1),5),
+                                  ("BOTTOMPADDING",(0,0),(-1,-1),5),
+                                  ("TEXTCOLOR",(0,0),(-1,-1),_GRY),("GRID",(0,0),(-1,-1),0.3,_CF_CLR.HexColor("#E5E7EB"))]))
+            _st.append(_ta)
+            _st.append(_CF_SP(1,8))
+
+            # KPI principali
+            _st.append(_CF_P("POTENZIALE ECONOMICO — I tuoi numeri", _h1))
+            _st.append(_CF_SP(1,4))
+            _kpi_data = [[
+                _CF_T([[_CF_P(f"<b>{round(cred_netti,1)} t</b>",_S("k1",fontSize=22,textColor=_G3,fontName="Helvetica-Bold",alignment=1))],
+                       [_CF_P("Crediti CO₂ cert./anno",_S("k1l",fontSize=8,textColor=_GR2,alignment=1))]],colWidths=[_W*0.22]),
+                _CF_T([[_CF_P(f"<b>€{int(ricavo_base):,}</b>",_S("k2",fontSize=22,textColor=_G3,fontName="Helvetica-Bold",alignment=1))],
+                       [_CF_P(f"Ricavo crediti @ €{cf_prezzo_base:.0f}/t/anno",_S("k2l",fontSize=8,textColor=_GR2,alignment=1))]],colWidths=[_W*0.22]),
+                _CF_T([[_CF_P(f"<b>€{int(tot_beneficio_anno):,}</b>",_S("k3",fontSize=22,textColor=_ORO,fontName="Helvetica-Bold",alignment=1))],
+                       [_CF_P("Beneficio totale annuo",_S("k3l",fontSize=8,textColor=_GR2,alignment=1))]],colWidths=[_W*0.22]),
+                _CF_T([[_CF_P(f"<b>€{int(tot_beneficio_7):,}</b>",_S("k4",fontSize=22,textColor=_BLU,fontName="Helvetica-Bold",alignment=1))],
+                       [_CF_P(f"Cumulato {cf_anni_contr} anni",_S("k4l",fontSize=8,textColor=_GR2,alignment=1))]],colWidths=[_W*0.22]),
+            ]]
+            _tk = _CF_T([_kpi_data[0]], colWidths=[_W*0.25]*4)
+            _tk.setStyle(_CF_TS([
+                ("BACKGROUND",(0,0),(0,0),_CF_CLR.HexColor("#F0FDF4")),
+                ("BACKGROUND",(1,0),(1,0),_CF_CLR.HexColor("#DCFCE7")),
+                ("BACKGROUND",(2,0),(2,0),_CF_CLR.HexColor("#FEF3C7")),
+                ("BACKGROUND",(3,0),(3,0),_CF_CLR.HexColor("#DBEAFE")),
+                ("GRID",(0,0),(-1,-1),0.5,_CF_CLR.HexColor("#D1D5DB")),
+                ("TOPPADDING",(0,0),(-1,-1),10),
+                ("BOTTOMPADDING",(0,0),(-1,-1),10),
+            ]))
+            _st.append(_tk)
+            _st.append(_CF_SP(1,8))
+
+            # Analisi flussi
+            _st.append(_CF_P("FLUSSI ECONOMICI ANNUI", _h2))
+            _fl_rows = [[_C("Voce di ricavo/risparmio",True),_C("Importo annuo",True),_C("Fonte/Metodologia",True)],
+                [_C(f"Crediti CO₂ Verra VCS @ €{cf_prezzo_base:.0f}/t"),
+                 _C(f"€{int(ricavo_base):,}",True,_G2 if ricavo_base>0 else _GR2),
+                 _C("IPCC Tier 1 · ISO 14064 · VM0042")],
+                [_C(f"Crediti CO₂ Gold Standard @ €{cf_prezzo_prem:.0f}/t (scenario premium)"),
+                 _C(f"€{int(ricavo_prem):,}",True,_G2),
+                 _C("Gold Standard per GGs")],
+                [_C("Premium filiera ESG (stima conservativa 12% fatturato)"),
+                 _C(f"€{int(premium_filiera):,}",True,_ORO),
+                 _C("CSRD/ESRS · GRI Standards 2021")],
+                [_C("PAC Eco-Scheme 2023-2027 (accessibili con pratiche attuali)"),
+                 _C(f"€{int(pac_eco_benefit):,}",True,_G2 if pac_eco_benefit>0 else _GR2),
+                 _C("AGEA 2024 · ES1-ES5")],
+                [_C("Risparmio fertilizzanti (riduzione 20% con organici)"),
+                 _C(f"€{int(risparmio_fert):,}",False,_G2),
+                 _C("ecoinvent 3.9 · IPCC EF")],
+                [_C("Risparmio interessi BEI green loan (stima)"),
+                 _C(f"€{int(accesso_bei):,}",False,_BLU),
+                 _C("BEI Agricultural Green Loan")],
+                [_C("TOTALE BENEFICIO ANNUO (stima conservativa)",True),
+                 _C(f"€{int(tot_beneficio_anno):,}",True,_G2),
+                 _C("Scenario base · senza Gold Standard")],
+            ]
+            _tfl = _CF_T(_fl_rows, colWidths=[_W*0.47,_W*0.22,_W*0.31])
+            _tts = _CF_TS(_TS.getCommands() + [
+                ("BACKGROUND",(0,-1),(-1,-1),_GN),
+                ("FONTNAME",(0,-1),(-1,-1),"Helvetica-Bold"),
+                ("TEXTCOLOR",(0,-1),(-1,-1),_WH),
+                ("LINEABOVE",(0,-1),(-1,-1),1.5,_G3)])
+            _tfl.setStyle(_tts)
+            _st.append(_tfl)
+            _st.append(_CF_SP(1,8))
+
+            # Analisi investimento
+            _st.append(_CF_P("ANALISI INVESTIMENTO E PAYBACK", _h2))
+            _inv_rows = [[_C("Voce",True),_C("Importo",True),_C("Note",True)],
+                [_C("Costo certificazione ISO 14064-3"),
+                 _C(f"€{int(costo_cert_eff_display):,}",False,_ORO),
+                 _C(f"{'Aggregato -60% ' if cf_aggregaz else ''}Bureau Veritas / DNV / RINA")],
+                [_C("Registrazione Verra VCS (annuale)"),_C("€400-800/anno"),_C("Fee registro")],
+                [_C("Monitoraggio e verifica annuale"),_C("€1.500-3.000/anno"),_C("DOE accreditato UNFCCC")],
+                [_C("Payback certificazione"),
+                 _C(f"{payback_mesi} mesi",True,_G2),
+                 _C(f"ROI 5 anni: {roi_5:.0f}% · ROI {cf_anni_contr} anni: {roi_7:.0f}%")],
+            ]
+            _tinv = _CF_T(_inv_rows, colWidths=[_W*0.40,_W*0.20,_W*0.40])
+            _tinv.setStyle(_TS)
+            _st.append(_tinv)
+            _st.append(_CF_SP(1,8))
+
+            # Percorso
+            _st.append(_CF_P("PERCORSO VERSO I PRIMI CREDITI — TIMELINE", _h2))
+            _path_rows = [[_C("Periodo",True),_C("Fase",True),_C("Azione",True),_C("Output AgroLog",True)],
+                [_C("Mese 1-2"),_C("Analisi & Baseline",False,_G2),
+                 _C("Analisi suolo, caricamento dati, calcolo GHG"),
+                 _C("Report ISO 14064-1 pronto")],
+                [_C("Mese 2-6"),_C("Pratiche rigenerative",False,_BLU),
+                 _C("Cover crops, compostaggio, riduzione arature"),
+                 _C("Quaderno campagna aggiornato")],
+                [_C("Mese 3-6"),_C("Certificazione ISO",False,_ORO),
+                 _C(f"Verifica ente terzo — costo €{int(costo_cert_eff_display):,}"),
+                 _C("Dichiarazione ISO 14064-3")],
+                [_C("Mese 6-12"),_C("Verra VCS",False,_G2),
+                 _C("PDD, validazione DOE, registrazione"),
+                 _C("MRV Report + Hash blockchain")],
+                [_C("Anno 1+"),_C("Prima vendita",False,_G2),
+                 _C(f"Emissione {round(cred_netti,1)} VCU, vendita @ €{cf_prezzo_base:.0f}/t"),
+                 _C(f"Ricavo €{int(ricavo_base):,}/anno")],
+            ]
+            _tpath = _CF_T(_path_rows, colWidths=[_W*0.14,_W*0.20,_W*0.38,_W*0.28])
+            _tpath.setStyle(_TS)
+            _st.append(_tpath)
+            _st.append(_CF_SP(1,8))
+
+            # Bilancio GHG
+            _st.append(_CF_P("BILANCIO GHG ATTUALE — SCOPE 1+2+3 (GHG Protocol)", _h2))
+            _ghg_rows = [[_C("Componente",True),_C("tCO₂eq/anno",True),_C("Scope",True),_C("Metodologia",True)],
+                [_C("Sequestro carbonio suolo"),_C(f"+{round(tot_seq,2)}",True,_G2),_C("Credito"),_C("IPCC Tier 1 — SOC")],
+                [_C("Emissioni Scope 1 (dirette)"),_C(f"-{round(scope1_total,2)}",False,_ROS),_C("Sc.1"),_C("DEFRA 2024 + IPCC EF")],
+                [_C("Emissioni Scope 3 (catena valore)"),_C(f"-{round(scope3_total,2)}",False,_ORO),_C("Sc.3"),_C("ecoinvent 3.9")],
+                [_C("BILANCIO NETTO",True),
+                 _C(f'{"+" if tot_netto>=0 else ""}{round(tot_netto,2)}',True,_G2 if tot_netto>=0 else _ROS),
+                 _C(""),_C(f"→ {round(cred_netti,1)} VCU cert. @ €{cf_prezzo_base:.0f}/t")],
+            ]
+            _tghg = _CF_T(_ghg_rows, colWidths=[_W*0.36,_W*0.18,_W*0.12,_W*0.34])
+            _tghg.setStyle(_CF_TS(_TS.getCommands() + [
+                ("BACKGROUND",(0,-1),(-1,-1),_GN),("FONTNAME",(0,-1),(-1,-1),"Helvetica-Bold"),
+                ("TEXTCOLOR",(0,-1),(-1,-1),_WH),("LINEABOVE",(0,-1),(-1,-1),1.5,_G3)]))
+            _st.append(_tghg)
+            _st.append(_CF_SP(1,8))
+
+            # Prossimi passi
+            _st.append(_CF_P("PROSSIMI PASSI — AZIONI IMMEDIATE", _h2))
+            _ns_data = [[_C("1.",True,_G2),_C("Firma autorizzazione analisi dati e consenso al trattamento per il Report ISO 14064",False,_BK)],
+                        [_C("2.",True,_G2),_C("Recupera i referti di analisi suolo degli ultimi 3-5 anni — più dati storici hai, più crediti puoi certificare",False,_BK)],
+                        [_C("3.",True,_G2),_C(f"Pianifica il sopralluogo in campo per verifica pratiche attuali e selezione appezzamenti con potenziale maggiore ({round(float(df_edit.nlargest(1,'SO %')['Ettari'].iloc[0]) if len(df_edit)>0 else 0,1)} ha attualmente a maggiore SO%)",False,_BK)],
+                        [_C("4.",True,_G2),_C("Contatta il tuo buyer principale per verificare se richiede già documentazione CSRD/ESG — probabile risposta: sì",False,_BK)],
+                        [_C("5.",True,_G2),_C(f"Avvia almeno una pratica rigenerativa prima della prossima stagione — cover crops autunnali o riduzione aratura su {round(tot_ha*0.3,0):.0f} ha prioritari",False,_BK)]]
+            _tns = _CF_T(_ns_data, colWidths=[_W*0.06,_W*0.94])
+            _tns.setStyle(_CF_TS([("FONTSIZE",(0,0),(-1,-1),9),("TOPPADDING",(0,0),(-1,-1),6),
+                                   ("BOTTOMPADDING",(0,0),(-1,-1),6),("TEXTCOLOR",(0,0),(-1,-1),_GRY),
+                                   ("GRID",(0,0),(-1,-1),0.3,_CF_CLR.HexColor("#E5E7EB")),
+                                   ("ROWBACKGROUNDS",(0,0),(-1,-1),[_ROW1,_ROW2])]))
+            _st.append(_tns)
+            _st.append(_CF_SP(1,8))
+
+            # Footer
+            _st.append(_CF_HR(width=_W, thickness=1.5, color=_G2))
+            _st.append(_CF_SP(1,4))
+            _st.append(_CF_P(
+                f"Report generato da AgroLog IA — {datetime.now().strftime('%d/%m/%Y %H:%M')} — "
+                f"IPCC 2006 Tier 1 · GHG Protocol Scope 1+2+3 · ecoinvent 3.9 · Verra VCS VM0042 · CSRD/ESRS EFRAG 2023",
+                _S("ftr", fontSize=7.5, textColor=_GR2, fontName="Helvetica", italics=True, alignment=1)))
+            _st.append(_CF_P(
+                f"Consulente: {agronomo} — {agronomo} · {regione} · agro-tool-9crcukpwy7ff4bf5kx2vaq.streamlit.app",
+                _S("ftr2", fontSize=7.5, textColor=_GR2, fontName="Helvetica", alignment=1)))
+
+            _doc.build(_st)
+            _buf.seek(0)
+            _pdf_cf = _buf.getvalue()
+            _fn_cf = f"CarbonFarming_{cf_nome_cliente.replace(' ','_')}_{datetime.now().strftime('%Y%m%d')}.pdf"
+
+            st.download_button(
+                label=f"⬇️ Scarica Report Carbon Farming — {cf_nome_cliente}",
+                data=_pdf_cf, file_name=_fn_cf, mime="application/pdf"
+            )
+            st.success(f"✅ **{_fn_cf}** — {round(len(_pdf_cf)/1024,0)} KB · Pronto da consegnare al cliente")
+
+    st.markdown("")
+
+    # ── SCRIPT DI PRESENTAZIONE ────────────────────────────────────
+    with st.expander("🎤 Script di presentazione al cliente — cosa dire in 5 minuti", expanded=False):
+        st.markdown(f"""<div style="background:#0d1a0d;border:1.5px solid #22c55e;border-radius:12px;
+          padding:1.2rem 1.5rem;font-size:.8rem;line-height:2;color:#e8f5e9">
+
+<b style="color:#4ade80;font-size:.95rem">Come presentare il Report Carbon Farming al tuo cliente</b>
+<br><br>
+
+<b style="color:#fbbf24">Apertura (30 secondi):</b><br>
+<i>"Ho analizzato i dati della tua azienda con uno strumento nuovo. Ho trovato {round(cred_netti,1)} tonnellate di CO₂ 
+che puoi vendere ogni anno. Al prezzo attuale di mercato, sono €{int(ricavo_base):,} all'anno — soldi nuovi 
+che oggi non stai incassando."</i>
+<br><br>
+
+<b style="color:#fbbf24">Il problema (1 minuto):</b><br>
+<i>"Dal 2026 i tuoi buyer principali — come [nomina il buyer principale del cliente] — saranno obbligati 
+per legge a dichiarare le emissioni dei loro fornitori. Se non hai questo documento, rischi di perdere 
+il contratto. Non è una scelta, è una scadenza normativa."</i>
+<br><br>
+
+<b style="color:#fbbf24">La soluzione (1 minuto):</b><br>
+<i>"Questo report che vedi [mostra il PDF] vale nel mercato tradizionale €15.000-20.000 di consulenza 
+e 4-6 settimane di lavoro. Io te lo produco con uno strumento certificato in 15 secondi. 
+Il mio costo è [inserisci il tuo prezzo]. Il tuo beneficio è €{int(tot_beneficio_anno):,} all'anno."</i>
+<br><br>
+
+<b style="color:#fbbf24">I numeri (1 minuto):</b><br>
+<i>"Guarda questi numeri: {round(cred_netti,1)} tonnellate di CO₂ certificabile × €{cf_prezzo_base:.0f} = 
+€{int(ricavo_base):,} all'anno solo dai crediti. Più €{int(pac_eco_benefit):,} di PAC che stai già perdendo. 
+Più il premium price sulle tue vendite. Totale annuo stimato: €{int(tot_beneficio_anno):,}."</i>
+<br><br>
+
+<b style="color:#fbbf24">La chiusura (30 secondi):</b><br>
+<i>"Ti propongo di iniziare subito con l'analisi baseline. In 2 settimane hai il report ISO 14064 pronto 
+per il tuo buyer. Nel frattempo avviamo una cover crop autunnale su [X] ettari — 
+questo ti qualifica già per i €{int(pac_eco_benefit or 110*int(tot_ha)):,}/anno di PAC aggiuntivi."</i>
+
+</div>""", unsafe_allow_html=True)
+
 # METODOLOGIA
 with st.expander("🔬 Metodologia Scientifica Completa — IPCC + GHG Protocol + FAO"):
     st.markdown("""
