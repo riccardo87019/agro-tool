@@ -574,69 +574,503 @@ def importa_profilo(raw_bytes):
         return False, f"Errore nel file JSON: {str(e)}"
 
 # ══════════════════════════════════════════════════════════════════════
-#  SIDEBAR
+#  SIDEBAR — ANAGRAFICA COMPLETA AZIENDA
 # ══════════════════════════════════════════════════════════════════════
 with st.sidebar:
     st.markdown("## 🌿 AgroLog IA")
     st.caption("Carbon & ESG Strategic Intelligence v7")
     st.markdown("---")
-    st.markdown("### 🏢 Azienda")
-    nome_az   = st.text_input("Ragione Sociale", "Az. Agr. Rossi")
-    agronomo  = st.text_input("Dottore Agronomo", "Dott. [Cognome]")
-    regione   = st.selectbox("Regione", list(COORDS.keys()))
-    zona      = st.selectbox("Zona Altimetrica", list(F_CLIMA.keys()))
-    email     = st.text_input("Email / Tel.", "")
-    st.markdown("---")
-    st.markdown("### 📜 Certificazioni")
-    cert_bio   = st.checkbox("Biologico (Reg. UE 2018/848)")
-    cert_sqnpi = st.checkbox("SQnpi")
-    cert_gap   = st.checkbox("GlobalG.A.P.")
-    cert_viva  = st.checkbox("VIVA Sostenibilità")
-    cert_iso   = st.checkbox("ISO 14064")
-    cert_csrd  = st.checkbox("CSRD / ESRS")
-    st.markdown("---")
-    st.markdown("### 💹 Mercato & Finanza")
-    prezzo_co2   = st.number_input("Prezzo CO₂ (€/t)", 10.0, 200.0, 42.0, 1.0)
-    crescita_co2 = st.slider("Crescita prezzo CO₂/anno (%)", 0, 20, 7)
-    costo_diesel = st.number_input("Gasolio (€/L)", 0.7, 2.5, 1.18, 0.05)
-    costo_acqua  = st.number_input("Irrigazione (€/m³)", 0.1, 2.0, 0.48, 0.05)
-    fatturato    = st.number_input("Fatturato (€/anno)", 0, 5000000, 220000, 5000)
-    costi_var    = st.number_input("Costi variabili (€/anno)", 0, 5000000, 115000, 5000)
-    st.markdown("---")
-    st.markdown("### 🔬 Tecnologia")
-    inv_iot      = st.checkbox("Sensori IoT suolo (+€3.500)")
-    inv_drip     = st.checkbox("Micro-irrigazione (+€6.000/ha)")
-    inv_gps      = st.checkbox("Precision farming GPS (+€8.000)")
-    inv_biochar  = st.checkbox("Biochar (+€1.200/ha)")
 
+    # ── Navigazione sezioni anagrafica ─────────────────────────────
+    sezione_sb = st.radio(
+        "📋 Sezione dati",
+        ["🏢 Azienda", "📜 Certificazioni", "💹 Finanza & Mercato",
+         "🔬 Tecnologia", "👥 Responsabili", "💾 Salva / Carica"],
+        label_visibility="collapsed"
+    )
 
     st.markdown("---")
-    st.markdown("### 💾 Salva / Carica Profilo")
-    
-    # Export JSON
-    profilo_json = esporta_profilo()
-    nome_file = nome_az.replace(" ","_") if nome_az else "AgroLog"
-    st.download_button(
-        label="⬇️ Salva profilo aziendale",
-        data=profilo_json.encode("utf-8"),
-        file_name=f"{nome_file}_profilo.json",
-        mime="application/json",
-        help="Scarica tutti i dati inseriti come file JSON — riaprilo la prossima volta."
-    )
-    
-    # Import JSON
-    uploaded = st.file_uploader(
-        "📂 Carica profilo salvato",
-        type=["json"],
-        help="Carica un profilo .json precedentemente salvato per ripristinare tutti i dati."
-    )
-    if uploaded is not None:
-        ok, msg = importa_profilo(uploaded.read())
-        if ok:
-            st.success(f"✅ {msg}")
+
+    # ══════════════════════════════════════════════
+    # SEZIONE 1 — DATI AZIENDA
+    # ══════════════════════════════════════════════
+    if sezione_sb == "🏢 Azienda":
+        st.markdown("### 🏢 Dati Azienda Agricola")
+
+        st.markdown("**Anagrafica**")
+        nome_az    = st.text_input("Ragione Sociale *", st.session_state.get("_nome_az","Az. Agr. Rossi"), key="sb_nome")
+        st.session_state["_nome_az"] = nome_az
+
+        forma_giur = st.selectbox("Forma giuridica", [
+            "Ditta individuale","Società Agricola Semplice","SRL",
+            "SNC","SAS","Cooperativa agricola","Consorzio","Altra"], key="sb_fg")
+
+        codice_fis = st.text_input("Codice Fiscale / P.IVA", st.session_state.get("_cf",""), key="sb_cf")
+        st.session_state["_cf"] = codice_fis
+
+        cuaa       = st.text_input("CUAA (Codice Univoco Azienda Agricola)", st.session_state.get("_cuaa",""), key="sb_cuaa",
+                                    help="Il CUAA identifica l'azienda nel fascicolo aziendale AGEA/CAA")
+        st.session_state["_cuaa"] = cuaa
+
+        st.markdown("**Sede e localizzazione**")
+        indirizzo  = st.text_input("Indirizzo sede legale", st.session_state.get("_indirizzo",""), key="sb_ind")
+        st.session_state["_indirizzo"] = indirizzo
+
+        comune_az  = st.text_input("Comune", st.session_state.get("_comune",""), key="sb_com")
+        st.session_state["_comune"] = comune_az
+
+        prov_az    = st.text_input("Provincia (es: AN, MC, PG)", st.session_state.get("_prov",""), key="sb_prov", max_chars=2)
+        st.session_state["_prov"] = prov_az
+
+        cap_az     = st.text_input("CAP", st.session_state.get("_cap",""), key="sb_cap", max_chars=5)
+        st.session_state["_cap"] = cap_az
+
+        regione    = st.selectbox("Regione *", list(COORDS.keys()), key="sb_reg")
+        zona       = st.selectbox("Zona altimetrica *", list(F_CLIMA.keys()), key="sb_zona")
+
+        st.markdown("**Contatti**")
+        email      = st.text_input("Email aziendale", st.session_state.get("_email",""), key="sb_email")
+        st.session_state["_email"] = email
+
+        telefono   = st.text_input("Telefono / Cellulare", st.session_state.get("_tel",""), key="sb_tel")
+        st.session_state["_tel"] = telefono
+
+        pec_az     = st.text_input("PEC", st.session_state.get("_pec",""), key="sb_pec")
+        st.session_state["_pec"] = pec_az
+
+        sito_web   = st.text_input("Sito web / Social", st.session_state.get("_web",""), key="sb_web")
+        st.session_state["_web"] = sito_web
+
+        st.markdown("**Anno di riferimento**")
+        anno_rif   = st.number_input("Anno rendicontazione", 2020, 2030, 2024, 1, key="sb_anno")
+        st.session_state["_anno_rif"] = anno_rif
+
+        # valori default per le altre sezioni
+        agronomo   = st.session_state.get("_agronomo", "Dott. [Cognome]")
+        cert_bio   = st.session_state.get("_cert_bio", False)
+        cert_sqnpi = st.session_state.get("_cert_sqnpi", False)
+        cert_gap   = st.session_state.get("_cert_gap", False)
+        cert_viva  = st.session_state.get("_cert_viva", False)
+        cert_iso   = st.session_state.get("_cert_iso", False)
+        cert_csrd  = st.session_state.get("_cert_csrd", False)
+        prezzo_co2   = st.session_state.get("_prezzo_co2", 42.0)
+        crescita_co2 = st.session_state.get("_crescita_co2", 7)
+        costo_diesel = st.session_state.get("_costo_diesel", 1.18)
+        costo_acqua  = st.session_state.get("_costo_acqua", 0.48)
+        fatturato    = st.session_state.get("_fatturato", 220000)
+        costi_var    = st.session_state.get("_costi_var", 115000)
+        inv_iot      = st.session_state.get("_inv_iot", False)
+        inv_drip     = st.session_state.get("_inv_drip", False)
+        inv_gps      = st.session_state.get("_inv_gps", False)
+        inv_biochar  = st.session_state.get("_inv_biochar", False)
+
+    # ══════════════════════════════════════════════
+    # SEZIONE 2 — CERTIFICAZIONI
+    # ══════════════════════════════════════════════
+    elif sezione_sb == "📜 Certificazioni":
+        st.markdown("### 📜 Certificazioni & Standard")
+
+        # leggo i valori attuali
+        nome_az    = st.session_state.get("_nome_az","Az. Agr. Rossi")
+        agronomo   = st.session_state.get("_agronomo","Dott. [Cognome]")
+        regione    = st.session_state.get("sb_reg", list(COORDS.keys())[0])
+        zona       = st.session_state.get("sb_zona", list(F_CLIMA.keys())[0])
+        email      = st.session_state.get("_email","")
+        anno_rif   = st.session_state.get("_anno_rif", 2024)
+
+        st.markdown("**Certificazioni produzione**")
+        cert_bio   = st.checkbox("🌿 Biologico (Reg. UE 2018/848)", st.session_state.get("_cert_bio",False), key="sb_cbio")
+        if cert_bio:
+            cert_bio_num = st.text_input("N° certificato biologico", st.session_state.get("_cert_bio_num",""), key="sb_cbion")
+            cert_bio_ente = st.text_input("Ente certificatore bio", st.session_state.get("_cert_bio_ente","es: ICEA, CCPB, Suolo e Salute"), key="sb_cbioe")
+            cert_bio_scad = st.text_input("Scadenza certificato (MM/AAAA)", st.session_state.get("_cert_bio_scad",""), key="sb_cbios")
+            st.session_state.update({"_cert_bio_num":cert_bio_num,"_cert_bio_ente":cert_bio_ente,"_cert_bio_scad":cert_bio_scad})
+
+        cert_sqnpi = st.checkbox("🔬 SQnpi — Produzione Integrata", st.session_state.get("_cert_sqnpi",False), key="sb_csqn")
+        cert_gap   = st.checkbox("🌍 GlobalG.A.P.", st.session_state.get("_cert_gap",False), key="sb_cgap")
+        if cert_gap:
+            cert_gap_num = st.text_input("GGN (GlobalG.A.P. Number)", st.session_state.get("_cert_gap_num",""), key="sb_cgapn")
+            st.session_state["_cert_gap_num"] = cert_gap_num
+
+        cert_viva  = st.checkbox("🍇 VIVA Sostenibilità Vite", st.session_state.get("_cert_viva",False), key="sb_cviva")
+        cert_dop   = st.checkbox("🏷️ DOP / IGP / DOC / DOCG", st.session_state.get("_cert_dop",False), key="sb_cdop")
+        if cert_dop:
+            cert_dop_nome = st.text_input("Nome denominazione (es: Verdicchio DOC)", st.session_state.get("_cert_dop_nome",""), key="sb_cdopn")
+            st.session_state["_cert_dop_nome"] = cert_dop_nome
+        cert_demeter = st.checkbox("🌀 Demeter / Biodinamico", st.session_state.get("_cert_demeter",False), key="sb_cdem")
+
+        st.markdown("**Certificazioni ESG & Sostenibilità**")
+        cert_iso   = st.checkbox("📊 ISO 14064 Carbon Footprint", st.session_state.get("_cert_iso",False), key="sb_ciso")
+        if cert_iso:
+            cert_iso_ente = st.text_input("Ente verifica ISO 14064-3", st.session_state.get("_cert_iso_ente",""), key="sb_cisoe")
+            cert_iso_anno = st.text_input("Anno ultima verifica", st.session_state.get("_cert_iso_anno",""), key="sb_cisoa")
+            st.session_state.update({"_cert_iso_ente":cert_iso_ente,"_cert_iso_anno":cert_iso_anno})
+
+        cert_csrd  = st.checkbox("🇪🇺 CSRD / ESRS 2023", st.session_state.get("_cert_csrd",False), key="sb_ccsrd")
+        cert_gri   = st.checkbox("📋 GRI Standards 2021", st.session_state.get("_cert_gri",False), key="sb_cgri")
+        cert_vsme  = st.checkbox("🏢 VSME EFRAG 2024", st.session_state.get("_cert_vsme",False), key="sb_cvsme")
+        cert_emas  = st.checkbox("🌱 EMAS / ISO 14001", st.session_state.get("_cert_emas",False), key="sb_cemas")
+        cert_sa8000= st.checkbox("👷 SA8000 Responsabilità Sociale", st.session_state.get("_cert_sa8000",False), key="sb_csa")
+
+        st.markdown("**Iscrizioni a registri**")
+        iscr_verra = st.checkbox("🌿 Progetto Verra VCS registrato", st.session_state.get("_iscr_verra",False), key="sb_iverra")
+        if iscr_verra:
+            verra_id = st.text_input("ID Progetto Verra", st.session_state.get("_verra_id",""), key="sb_verraid")
+            st.session_state["_verra_id"] = verra_id
+        iscr_gsp   = st.checkbox("⭐ Progetto Gold Standard registrato", st.session_state.get("_iscr_gsp",False), key="sb_igsp")
+
+        # salvo tutto
+        st.session_state.update({
+            "_cert_bio":cert_bio,"_cert_sqnpi":cert_sqnpi,"_cert_gap":cert_gap,
+            "_cert_viva":cert_viva,"_cert_dop":cert_dop,"_cert_demeter":cert_demeter,
+            "_cert_iso":cert_iso,"_cert_csrd":cert_csrd,"_cert_gri":cert_gri,
+            "_cert_vsme":cert_vsme,"_cert_emas":cert_emas,"_cert_sa8000":cert_sa8000,
+            "_iscr_verra":iscr_verra,"_iscr_gsp":iscr_gsp,
+        })
+
+        # default altri
+        prezzo_co2   = st.session_state.get("_prezzo_co2", 42.0)
+        crescita_co2 = st.session_state.get("_crescita_co2", 7)
+        costo_diesel = st.session_state.get("_costo_diesel", 1.18)
+        costo_acqua  = st.session_state.get("_costo_acqua", 0.48)
+        fatturato    = st.session_state.get("_fatturato", 220000)
+        costi_var    = st.session_state.get("_costi_var", 115000)
+        inv_iot      = st.session_state.get("_inv_iot", False)
+        inv_drip     = st.session_state.get("_inv_drip", False)
+        inv_gps      = st.session_state.get("_inv_gps", False)
+        inv_biochar  = st.session_state.get("_inv_biochar", False)
+
+    # ══════════════════════════════════════════════
+    # SEZIONE 3 — FINANZA & MERCATO
+    # ══════════════════════════════════════════════
+    elif sezione_sb == "💹 Finanza & Mercato":
+        st.markdown("### 💹 Dati Economici & Mercato")
+
+        nome_az    = st.session_state.get("_nome_az","Az. Agr. Rossi")
+        agronomo   = st.session_state.get("_agronomo","Dott. [Cognome]")
+        regione    = st.session_state.get("sb_reg", list(COORDS.keys())[0])
+        zona       = st.session_state.get("sb_zona", list(F_CLIMA.keys())[0])
+        email      = st.session_state.get("_email","")
+        anno_rif   = st.session_state.get("_anno_rif", 2024)
+        cert_bio   = st.session_state.get("_cert_bio", False)
+        cert_sqnpi = st.session_state.get("_cert_sqnpi", False)
+        cert_gap   = st.session_state.get("_cert_gap", False)
+        cert_viva  = st.session_state.get("_cert_viva", False)
+        cert_iso   = st.session_state.get("_cert_iso", False)
+        cert_csrd  = st.session_state.get("_cert_csrd", False)
+        inv_iot    = st.session_state.get("_inv_iot", False)
+        inv_drip   = st.session_state.get("_inv_drip", False)
+        inv_gps    = st.session_state.get("_inv_gps", False)
+        inv_biochar= st.session_state.get("_inv_biochar", False)
+
+        st.markdown("**Dati economici azienda**")
+        fatturato    = st.number_input("Fatturato totale (€/anno)", 0, 10000000,
+                                        st.session_state.get("_fatturato",220000), 5000, key="sb_fatt")
+        st.session_state["_fatturato"] = fatturato
+
+        costi_var    = st.number_input("Costi variabili totali (€/anno)", 0, 10000000,
+                                        st.session_state.get("_costi_var",115000), 5000, key="sb_cvar")
+        st.session_state["_costi_var"] = costi_var
+
+        ricavo_ha    = st.number_input("Ricavo medio per ettaro (€/ha)", 0, 50000,
+                                        st.session_state.get("_ricavo_ha",1200), 100, key="sb_richa")
+        st.session_state["_ricavo_ha"] = ricavo_ha
+
+        debiti_banca = st.number_input("Debiti bancari (€)", 0, 10000000,
+                                        st.session_state.get("_debiti",0), 10000, key="sb_deb")
+        st.session_state["_debiti"] = debiti_banca
+
+        st.markdown("**Canali di vendita principali**")
+        canali_vendita = st.multiselect("Canali vendita", [
+            "GDO (supermercati nazionali)","GDO biologica (es. NaturaSì)",
+            "Cooperativa/consorzio","Industria alimentare (es. Barilla, Ferrero)",
+            "Vendita diretta in azienda","Mercati locali/km0",
+            "HO.RE.CA. (ristoranti, hotel)","Export UE (Germania, Austria, CH)",
+            "Export extra-UE (USA, Giappone)","E-commerce proprio",
+            "Agriturismo","Altro"],
+            default=st.session_state.get("_canali",["Cooperativa/consorzio"]),
+            key="sb_canali")
+        st.session_state["_canali"] = canali_vendita
+
+        st.markdown("**Buyer principali (per CSRD Scope 3)**")
+        buyer1 = st.text_input("Buyer principale (es: Barilla SpA)", st.session_state.get("_buyer1",""), key="sb_b1")
+        buyer2 = st.text_input("Buyer secondario", st.session_state.get("_buyer2",""), key="sb_b2")
+        buyer3 = st.text_input("Buyer terziario / export", st.session_state.get("_buyer3",""), key="sb_b3")
+        st.session_state.update({"_buyer1":buyer1,"_buyer2":buyer2,"_buyer3":buyer3})
+
+        st.markdown("**Mercato CO₂ e prezzi inputs**")
+        prezzo_co2   = st.number_input("Prezzo CO₂ attuale (€/t)", 10.0, 200.0,
+                                        st.session_state.get("_prezzo_co2",42.0), 1.0, key="sb_pco2")
+        st.session_state["_prezzo_co2"] = prezzo_co2
+
+        crescita_co2 = st.slider("Crescita prezzo CO₂/anno (%)", 0, 20,
+                                  st.session_state.get("_crescita_co2",7), key="sb_gco2")
+        st.session_state["_crescita_co2"] = crescita_co2
+
+        costo_diesel = st.number_input("Gasolio agricolo (€/L)", 0.7, 2.5,
+                                        st.session_state.get("_costo_diesel",1.18), 0.05, key="sb_dies")
+        st.session_state["_costo_diesel"] = costo_diesel
+
+        costo_acqua  = st.number_input("Acqua irrigua (€/m³)", 0.1, 2.0,
+                                        st.session_state.get("_costo_acqua",0.48), 0.05, key="sb_acq")
+        st.session_state["_costo_acqua"] = costo_acqua
+
+        costo_fert_kg= st.number_input("Costo medio fertilizzanti (€/kg)", 0.3, 5.0,
+                                        st.session_state.get("_costo_fert",0.85), 0.05, key="sb_fert")
+        st.session_state["_costo_fert"] = costo_fert_kg
+
+    # ══════════════════════════════════════════════
+    # SEZIONE 4 — TECNOLOGIA
+    # ══════════════════════════════════════════════
+    elif sezione_sb == "🔬 Tecnologia":
+        st.markdown("### 🔬 Tecnologie & Investimenti")
+
+        nome_az    = st.session_state.get("_nome_az","Az. Agr. Rossi")
+        agronomo   = st.session_state.get("_agronomo","Dott. [Cognome]")
+        regione    = st.session_state.get("sb_reg", list(COORDS.keys())[0])
+        zona       = st.session_state.get("sb_zona", list(F_CLIMA.keys())[0])
+        email      = st.session_state.get("_email","")
+        anno_rif   = st.session_state.get("_anno_rif", 2024)
+        cert_bio   = st.session_state.get("_cert_bio", False)
+        cert_sqnpi = st.session_state.get("_cert_sqnpi", False)
+        cert_gap   = st.session_state.get("_cert_gap", False)
+        cert_viva  = st.session_state.get("_cert_viva", False)
+        cert_iso   = st.session_state.get("_cert_iso", False)
+        cert_csrd  = st.session_state.get("_cert_csrd", False)
+        prezzo_co2   = st.session_state.get("_prezzo_co2", 42.0)
+        crescita_co2 = st.session_state.get("_crescita_co2", 7)
+        costo_diesel = st.session_state.get("_costo_diesel", 1.18)
+        costo_acqua  = st.session_state.get("_costo_acqua", 0.48)
+        fatturato    = st.session_state.get("_fatturato", 220000)
+        costi_var    = st.session_state.get("_costi_var", 115000)
+
+        st.markdown("**Tecnologie attive in azienda**")
+        inv_iot     = st.checkbox("📡 Sensori IoT suolo (+€3.500)", st.session_state.get("_inv_iot",False), key="sb_iot")
+        inv_drip    = st.checkbox("💧 Micro-irrigazione goccia (+€6.000/ha)", st.session_state.get("_inv_drip",False), key="sb_drip")
+        inv_gps     = st.checkbox("🛰️ Precision farming GPS (+€8.000)", st.session_state.get("_inv_gps",False), key="sb_gps")
+        inv_biochar = st.checkbox("🔬 Biochar in campo (+€1.200/ha)", st.session_state.get("_inv_biochar",False), key="sb_bc")
+        inv_fotov   = st.checkbox("☀️ Fotovoltaico in azienda", st.session_state.get("_inv_fotov",False), key="sb_pv")
+        inv_biogas  = st.checkbox("⚡ Impianto biogas", st.session_state.get("_inv_biogas",False), key="sb_bg")
+        inv_drone   = st.checkbox("🚁 Drone con camera multispettrale", st.session_state.get("_inv_drone",False), key="sb_dr")
+        inv_sw_gest = st.checkbox("💻 Software gestionale aziendale", st.session_state.get("_inv_sw",False), key="sb_sw")
+        inv_met_stat= st.checkbox("🌦️ Stazione meteo aziendale", st.session_state.get("_inv_met",False), key="sb_ms")
+        inv_lab_suolo=st.checkbox("🧪 Analisi suolo proprie (kit lab)", st.session_state.get("_inv_lab",False), key="sb_lab")
+
+        st.markdown("**Parco macchine principale**")
+        n_trattori  = st.number_input("N° trattori", 0, 50, st.session_state.get("_n_trattori",1), key="sb_ntr")
+        cv_medio    = st.number_input("CV medio trattori", 30, 500, st.session_state.get("_cv_medio",100), key="sb_cv")
+        st.session_state.update({
+            "_inv_iot":inv_iot,"_inv_drip":inv_drip,"_inv_gps":inv_gps,
+            "_inv_biochar":inv_biochar,"_inv_fotov":inv_fotov,"_inv_biogas":inv_biogas,
+            "_inv_drone":inv_drone,"_inv_sw":inv_sw_gest,"_inv_met":inv_met_stat,
+            "_inv_lab":inv_lab_suolo,"_n_trattori":n_trattori,"_cv_medio":cv_medio,
+        })
+
+    # ══════════════════════════════════════════════
+    # SEZIONE 5 — RESPONSABILI
+    # ══════════════════════════════════════════════
+    elif sezione_sb == "👥 Responsabili":
+        st.markdown("### 👥 Responsabili & Figure Professionali")
+
+        nome_az    = st.session_state.get("_nome_az","Az. Agr. Rossi")
+        regione    = st.session_state.get("sb_reg", list(COORDS.keys())[0])
+        zona       = st.session_state.get("sb_zona", list(F_CLIMA.keys())[0])
+        email      = st.session_state.get("_email","")
+        anno_rif   = st.session_state.get("_anno_rif", 2024)
+        cert_bio   = st.session_state.get("_cert_bio", False)
+        cert_sqnpi = st.session_state.get("_cert_sqnpi", False)
+        cert_gap   = st.session_state.get("_cert_gap", False)
+        cert_viva  = st.session_state.get("_cert_viva", False)
+        cert_iso   = st.session_state.get("_cert_iso", False)
+        cert_csrd  = st.session_state.get("_cert_csrd", False)
+        prezzo_co2   = st.session_state.get("_prezzo_co2", 42.0)
+        crescita_co2 = st.session_state.get("_crescita_co2", 7)
+        costo_diesel = st.session_state.get("_costo_diesel", 1.18)
+        costo_acqua  = st.session_state.get("_costo_acqua", 0.48)
+        fatturato    = st.session_state.get("_fatturato", 220000)
+        costi_var    = st.session_state.get("_costi_var", 115000)
+        inv_iot      = st.session_state.get("_inv_iot", False)
+        inv_drip     = st.session_state.get("_inv_drip", False)
+        inv_gps      = st.session_state.get("_inv_gps", False)
+        inv_biochar  = st.session_state.get("_inv_biochar", False)
+
+        st.markdown("**Dottore Agronomo responsabile**")
+        agronomo   = st.text_input("Nome e cognome Agronomo *",
+                                    st.session_state.get("_agronomo","Dott. [Cognome]"), key="sb_agro")
+        st.session_state["_agronomo"] = agronomo
+
+        n_albo     = st.text_input("N° Iscrizione Albo Agronomi",
+                                    st.session_state.get("_n_albo",""), key="sb_albo")
+        st.session_state["_n_albo"] = n_albo
+
+        ordine_prov = st.text_input("Ordine Provinciale (es: AN, PG)",
+                                     st.session_state.get("_ordine_prov",""), key="sb_ord", max_chars=5)
+        st.session_state["_ordine_prov"] = ordine_prov
+
+        email_agro = st.text_input("Email agronomo", st.session_state.get("_email_agro",""), key="sb_eagro")
+        st.session_state["_email_agro"] = email_agro
+
+        tel_agro   = st.text_input("Telefono agronomo", st.session_state.get("_tel_agro",""), key="sb_tagro")
+        st.session_state["_tel_agro"] = tel_agro
+
+        st.markdown("**Titolare / Legale Rappresentante**")
+        titolare   = st.text_input("Nome Titolare / Legale Rappresentante",
+                                    st.session_state.get("_titolare",""), key="sb_tit")
+        st.session_state["_titolare"] = titolare
+
+        cf_titolare= st.text_input("CF Titolare", st.session_state.get("_cf_tit",""), key="sb_cftit")
+        st.session_state["_cf_tit"] = cf_titolare
+
+        st.markdown("**Responsabile Sostenibilità (se diverso dall'agronomo)**")
+        resp_sost  = st.text_input("Responsabile Sostenibilità",
+                                    st.session_state.get("_resp_sost",""), key="sb_rs",
+                                    placeholder="Lascia vuoto se coincide con l'agronomo")
+        st.session_state["_resp_sost"] = resp_sost
+
+        st.markdown("**Consulenti e figure esterne**")
+        commerc    = st.text_input("Commercialista / Studio fiscale", st.session_state.get("_commerc",""), key="sb_comm")
+        legale     = st.text_input("Consulente legale", st.session_state.get("_legale",""), key="sb_leg")
+        ente_cert  = st.text_input("Ente certificatore principale", st.session_state.get("_ente_cert",""), key="sb_ec")
+        caa_ref    = st.text_input("CAA di riferimento", st.session_state.get("_caa",""), key="sb_caa")
+        st.session_state.update({"_commerc":commerc,"_legale":legale,"_ente_cert":ente_cert,"_caa":caa_ref})
+
+        st.markdown("**Note interne**")
+        note_int   = st.text_area("Note interne (non compaiono nei report pubblici)",
+                                   st.session_state.get("_note_int",""), height=80, key="sb_note")
+        st.session_state["_note_int"] = note_int
+
+    # ══════════════════════════════════════════════
+    # SEZIONE 6 — SALVA / CARICA
+    # ══════════════════════════════════════════════
+    elif sezione_sb == "💾 Salva / Carica":
+        st.markdown("### 💾 Gestione Profilo Aziendale")
+
+        # leggo tutti i valori
+        nome_az    = st.session_state.get("_nome_az","Az. Agr. Rossi")
+        agronomo   = st.session_state.get("_agronomo","Dott. [Cognome]")
+        regione    = st.session_state.get("sb_reg", list(COORDS.keys())[0])
+        zona       = st.session_state.get("sb_zona", list(F_CLIMA.keys())[0])
+        email      = st.session_state.get("_email","")
+        anno_rif   = st.session_state.get("_anno_rif", 2024)
+        cert_bio   = st.session_state.get("_cert_bio", False)
+        cert_sqnpi = st.session_state.get("_cert_sqnpi", False)
+        cert_gap   = st.session_state.get("_cert_gap", False)
+        cert_viva  = st.session_state.get("_cert_viva", False)
+        cert_iso   = st.session_state.get("_cert_iso", False)
+        cert_csrd  = st.session_state.get("_cert_csrd", False)
+        prezzo_co2   = st.session_state.get("_prezzo_co2", 42.0)
+        crescita_co2 = st.session_state.get("_crescita_co2", 7)
+        costo_diesel = st.session_state.get("_costo_diesel", 1.18)
+        costo_acqua  = st.session_state.get("_costo_acqua", 0.48)
+        fatturato    = st.session_state.get("_fatturato", 220000)
+        costi_var    = st.session_state.get("_costi_var", 115000)
+        inv_iot      = st.session_state.get("_inv_iot", False)
+        inv_drip     = st.session_state.get("_inv_drip", False)
+        inv_gps      = st.session_state.get("_inv_gps", False)
+        inv_biochar  = st.session_state.get("_inv_biochar", False)
+
+        # Riepilogo dati inseriti
+        campi_ok = sum([
+            bool(nome_az and nome_az != "Az. Agr. Rossi"),
+            bool(agronomo and agronomo != "Dott. [Cognome]"),
+            bool(st.session_state.get("_comune","")),
+            bool(st.session_state.get("_cf","")),
+            bool(st.session_state.get("_cuaa","")),
+            bool(st.session_state.get("_email","")),
+            bool(st.session_state.get("_titolare","")),
+        ])
+        st.markdown(f"""<div style="background:#0d1a0d;border-radius:8px;padding:.6rem .8rem;
+          border:1px solid rgba(34,197,94,.3);font-size:.75rem;margin-bottom:.6rem">
+          📊 <b style="color:#4ade80">Completezza profilo: {campi_ok}/7 campi chiave</b><br>
+          <span style="color:#86efac">{'✅ Profilo completo per i report' if campi_ok>=6 else '⚠️ Completa i dati nelle sezioni precedenti'}</span>
+        </div>""", unsafe_allow_html=True)
+
+        st.markdown("**Esporta profilo completo**")
+        profilo_json = esporta_profilo()
+        nome_file = nome_az.replace(" ","_") if nome_az else "AgroLog"
+        st.download_button(
+            label="⬇️ Salva profilo aziendale (.json)",
+            data=profilo_json.encode("utf-8"),
+            file_name=f"{nome_file}_profilo_{datetime.now().strftime('%Y%m%d')}.json",
+            mime="application/json",
+            help="Scarica tutti i dati inseriti — ricaricali la prossima volta senza reinserire nulla."
+        )
+        st.caption("Il file JSON contiene campi, dati suolo, fertilizzanti, storico analisi e tutti i dati ESRS. Conservalo come backup.")
+
+        st.markdown("**Importa profilo salvato**")
+        uploaded = st.file_uploader(
+            "📂 Carica profilo .json",
+            type=["json"],
+            help="Carica un profilo salvato precedentemente per ripristinare tutti i dati in un click."
+        )
+        if uploaded is not None:
+            ok, msg = importa_profilo(uploaded.read())
+            if ok:
+                st.success(f"✅ {msg}")
+                st.rerun()
+            else:
+                st.error(f"❌ {msg}")
+
+        st.markdown("**Resetta tutto**")
+        if st.button("🗑️ Azzera tutti i dati (nuovo cliente)", key="sb_reset"):
+            keys_to_clear = [k for k in st.session_state.keys()
+                             if k.startswith("_") or k.startswith("editor_") or
+                             k in ["storico_analisi","storico_operazioni","storico_rese",
+                                   "df_campi","df_fert","df_fito","df_scarti",
+                                   "df_materie","df_trasporti"]]
+            for k in keys_to_clear:
+                del st.session_state[k]
+            st.success("✅ Dati azzerati — inserisci i dati della nuova azienda")
             st.rerun()
-        else:
-            st.error(f"❌ {msg}")
+
+    # ── Leggo i valori dalla sidebar indipendentemente da quale sezione è attiva ──
+    # (così tutte le variabili esistono sempre nel resto dell'app)
+    if sezione_sb != "🏢 Azienda":
+        regione = st.session_state.get("sb_reg", list(COORDS.keys())[0])
+        zona    = st.session_state.get("sb_zona", list(F_CLIMA.keys())[0])
+    if sezione_sb not in ["💹 Finanza & Mercato"]:
+        prezzo_co2   = st.session_state.get("_prezzo_co2", 42.0)
+        crescita_co2 = st.session_state.get("_crescita_co2", 7)
+        costo_diesel = st.session_state.get("_costo_diesel", 1.18)
+        costo_acqua  = st.session_state.get("_costo_acqua", 0.48)
+        fatturato    = st.session_state.get("_fatturato", 220000)
+        costi_var    = st.session_state.get("_costi_var", 115000)
+    if sezione_sb not in ["🔬 Tecnologia"]:
+        inv_iot     = st.session_state.get("_inv_iot", False)
+        inv_drip    = st.session_state.get("_inv_drip", False)
+        inv_gps     = st.session_state.get("_inv_gps", False)
+        inv_biochar = st.session_state.get("_inv_biochar", False)
+    if sezione_sb not in ["📜 Certificazioni"]:
+        cert_bio   = st.session_state.get("_cert_bio", False)
+        cert_sqnpi = st.session_state.get("_cert_sqnpi", False)
+        cert_gap   = st.session_state.get("_cert_gap", False)
+        cert_viva  = st.session_state.get("_cert_viva", False)
+        cert_iso   = st.session_state.get("_cert_iso", False)
+        cert_csrd  = st.session_state.get("_cert_csrd", False)
+    if sezione_sb not in ["👥 Responsabili"]:
+        agronomo = st.session_state.get("_agronomo", "Dott. [Cognome]")
+    if sezione_sb not in ["🏢 Azienda"]:
+        nome_az  = st.session_state.get("_nome_az", "Az. Agr. Rossi")
+        email    = st.session_state.get("_email", "")
+        anno_rif = st.session_state.get("_anno_rif", 2024)
+
+    # Variabili derivate usate nei report
+    n_albo       = st.session_state.get("_n_albo", "")
+    ordine_prov  = st.session_state.get("_ordine_prov", "")
+    titolare     = st.session_state.get("_titolare", "")
+    comune_az    = st.session_state.get("_comune", "")
+    prov_az      = st.session_state.get("_prov", "")
+    indirizzo    = st.session_state.get("_indirizzo", "")
+    cuaa         = st.session_state.get("_cuaa", "")
+    buyer1       = st.session_state.get("_buyer1", "")
+    buyer2       = st.session_state.get("_buyer2", "")
+    canali_vendita = st.session_state.get("_canali", [])
+    forma_giur   = st.session_state.get("sb_fg", "Ditta individuale")
+    resp_sost    = st.session_state.get("_resp_sost", "") or agronomo
+    cert_dop     = st.session_state.get("_cert_dop", False)
+    cert_gri     = st.session_state.get("_cert_gri", False)
+    inv_fotov    = st.session_state.get("_inv_fotov", False)
+    inv_biogas   = st.session_state.get("_inv_biogas", False)
 
 # ══════════════════════════════════════════════════════════════════════
 #  METEO
@@ -963,6 +1397,597 @@ with mr2:
         </div>""", unsafe_allow_html=True)
     else:
         st.info("Dati storici annuali non disponibili momentaneamente.")
+
+# ══════════════════════════════════════════════════════════════════════
+#  SCHEDA COMPLETA AZIENDA — dati che alimentano tutti i report
+# ══════════════════════════════════════════════════════════════════════
+st.markdown('<div class="sec">🏛️ Scheda Anagrafica Completa Azienda</div>', unsafe_allow_html=True)
+st.caption("Inserisci tutti i dati aziendali una volta sola — alimentano automaticamente ogni sezione del Report di Sostenibilità, il GRI Content Index, il Report Carbon Farming e i documenti per l'auditor.")
+
+with st.expander("📋 Clicca per aprire/modificare la Scheda Azienda Completa", expanded=False):
+
+    az_t1, az_t2, az_t3, az_t4, az_t5, az_t6, az_t7 = st.tabs([
+        "🏢 Anagrafica",
+        "👥 Persone & Ruoli",
+        "💰 Dati Economici",
+        "🌍 Attività & Prodotti",
+        "⚖️ Governance & Etica",
+        "🏦 Banche & Finanza Verde",
+        "📝 Note Auditor"
+    ])
+
+    # ══ TAB 1 — ANAGRAFICA ══════════════════════════════════════════
+    with az_t1:
+        st.markdown("**Dati identificativi obbligatori**")
+        an_c1, an_c2 = st.columns(2)
+        with an_c1:
+            az_ragione   = st.text_input("Ragione Sociale *",
+                st.session_state.get("_az_ragione", nome_az), key="az_rag")
+            az_forma     = st.selectbox("Forma giuridica *", [
+                "Ditta individuale","Imprenditore agricolo professionale (IAP)",
+                "Società Agricola Semplice (s.s.)","Società Semplice (s.s.)",
+                "SRL","SRL Agricola","SNC","SAS","Cooperativa agricola",
+                "Consorzio","Ente pubblico","Altra"],
+                index=max(0, ["Ditta individuale","Imprenditore agricolo professionale (IAP)",
+                       "Società Agricola Semplice (s.s.)","Società Semplice (s.s.)",
+                       "SRL","SRL Agricola","SNC","SAS","Cooperativa agricola",
+                       "Consorzio","Ente pubblico","Altra"].index(
+                    st.session_state.get("_az_forma","Ditta individuale"))
+                    if st.session_state.get("_az_forma","Ditta individuale") in
+                    ["Ditta individuale","Imprenditore agricolo professionale (IAP)",
+                     "Società Agricola Semplice (s.s.)","Società Semplice (s.s.)",
+                     "SRL","SRL Agricola","SNC","SAS","Cooperativa agricola",
+                     "Consorzio","Ente pubblico","Altra"] else 0),
+                key="az_forma")
+            az_piva      = st.text_input("Partita IVA",
+                st.session_state.get("_az_piva",""), key="az_piva")
+            az_cf_az     = st.text_input("Codice Fiscale (se diverso da P.IVA)",
+                st.session_state.get("_az_cf_az",""), key="az_cfaz")
+            az_cuaa      = st.text_input("CUAA (Codice Univoco Azienda Agricola)",
+                st.session_state.get("_az_cuaa",""), key="az_cuaa",
+                help="Presente nel fascicolo aziendale del tuo CAA/CREA")
+            az_rea       = st.text_input("N° REA (Registro Imprese / Camera di Commercio)",
+                st.session_state.get("_az_rea",""), key="az_rea")
+        with an_c2:
+            az_indirizzo = st.text_input("Indirizzo sede legale *",
+                st.session_state.get("_az_indirizzo",""), key="az_ind")
+            az_comune_az = st.text_input("Comune *",
+                st.session_state.get("_az_comune_az",""), key="az_comaz")
+            az_prov      = st.text_input("Provincia (sigla 2 lettere, es: AN)",
+                st.session_state.get("_az_prov",""), key="az_provaz", max_chars=3)
+            az_cap       = st.text_input("CAP",
+                st.session_state.get("_az_cap",""), key="az_capaz", max_chars=5)
+            az_regione_doc = st.text_input("Regione (per i documenti ufficiali)",
+                st.session_state.get("_az_regione_doc", regione), key="az_reg_doc")
+            az_anno_fond = st.number_input("Anno fondazione azienda",
+                1800, 2030, int(st.session_state.get("_az_anno_fond", 2000)), key="az_fond")
+        st.markdown("**Contatti ufficiali**")
+        co_c1, co_c2, co_c3 = st.columns(3)
+        with co_c1:
+            az_email_az  = st.text_input("Email aziendale *",
+                st.session_state.get("_az_email_az",""), key="az_emailaz")
+            az_pec       = st.text_input("PEC (Posta Certificata)",
+                st.session_state.get("_az_pec",""), key="az_pec")
+        with co_c2:
+            az_tel_az    = st.text_input("Telefono / Cellulare principale",
+                st.session_state.get("_az_tel_az",""), key="az_telaz")
+            az_fax       = st.text_input("Fax (se presente)",
+                st.session_state.get("_az_fax",""), key="az_fax")
+        with co_c3:
+            az_web       = st.text_input("Sito web aziendale",
+                st.session_state.get("_az_web",""), key="az_web")
+            az_social    = st.text_input("LinkedIn / Instagram / Facebook",
+                st.session_state.get("_az_social",""), key="az_social")
+        st.markdown("**Iscrizioni e registrazioni**")
+        reg_c1, reg_c2 = st.columns(2)
+        with reg_c1:
+            az_caa_ref   = st.text_input("CAA di riferimento",
+                st.session_state.get("_az_caa_ref",""), key="az_caa",
+                placeholder="es: CAA CIA, CAA Coldiretti, CAA Confagricoltura")
+            az_op        = st.text_input("Organizzazione di Produttori (OP) se associato",
+                st.session_state.get("_az_op",""), key="az_op")
+            az_consorzio = st.text_input("Consorzio / Cooperativa di appartenenza",
+                st.session_state.get("_az_consorzio",""), key="az_cons")
+        with reg_c2:
+            az_fascicolo = st.text_input("N° Fascicolo Aziendale AGEA",
+                st.session_state.get("_az_fascicolo",""), key="az_fasc")
+            az_ateco     = st.text_input("Codice ATECO principale",
+                st.session_state.get("_az_ateco","01."), key="az_ateco",
+                help="es: 01.11 Coltivazione cereali, 01.21 Viticoltura, 01.26 Olivicoltura")
+            az_anno_rif_doc = st.number_input("Anno di rendicontazione del report",
+                2018, 2030, int(st.session_state.get("_az_anno_rif_doc", 2024)), key="az_annorif")
+        st.session_state.update({
+            "_az_ragione":az_ragione, "_az_forma":az_forma, "_az_piva":az_piva,
+            "_az_cf_az":az_cf_az, "_az_cuaa":az_cuaa, "_az_rea":az_rea,
+            "_az_indirizzo":az_indirizzo, "_az_comune_az":az_comune_az, "_az_prov":az_prov,
+            "_az_cap":az_cap, "_az_regione_doc":az_regione_doc, "_az_anno_fond":az_anno_fond,
+            "_az_email_az":az_email_az, "_az_pec":az_pec, "_az_tel_az":az_tel_az,
+            "_az_fax":az_fax, "_az_web":az_web, "_az_social":az_social,
+            "_az_caa_ref":az_caa_ref, "_az_op":az_op, "_az_consorzio":az_consorzio,
+            "_az_fascicolo":az_fascicolo, "_az_ateco":az_ateco,
+            "_az_anno_rif_doc":az_anno_rif_doc,
+            "_nome_az": az_ragione,
+        })
+        if az_ragione: nome_az = az_ragione
+
+    # ══ TAB 2 — PERSONE & RUOLI ══════════════════════════════════════
+    with az_t2:
+        st.markdown("**Titolare / Legale Rappresentante**")
+        pr_c1, pr_c2 = st.columns(2)
+        with pr_c1:
+            az_titolare  = st.text_input("Nome e Cognome *",
+                st.session_state.get("_az_titolare",""), key="az_tit")
+            az_cf_tit    = st.text_input("Codice Fiscale titolare",
+                st.session_state.get("_az_cf_tit",""), key="az_cftit")
+            az_nato      = st.text_input("Nato a / Data di nascita (per i documenti)",
+                st.session_state.get("_az_nato",""), key="az_nato")
+        with pr_c2:
+            az_ruolo_tit = st.selectbox("Ruolo nei documenti ufficiali", [
+                "Titolare","Legale Rappresentante","Amministratore Delegato",
+                "Presidente del CdA","Socio amministratore","Altro"], key="az_rtit")
+            az_tel_tit   = st.text_input("Telefono diretto titolare",
+                st.session_state.get("_az_tel_tit",""), key="az_ttit")
+            az_email_tit = st.text_input("Email titolare",
+                st.session_state.get("_az_email_tit",""), key="az_etit")
+        st.markdown("**Dottore Agronomo responsabile del report**")
+        ag_c1, ag_c2 = st.columns(2)
+        with ag_c1:
+            az_agronomo_s = st.text_input("Nome e Cognome Agronomo *",
+                st.session_state.get("_agronomo", agronomo), key="az_agros")
+            az_n_albo_s  = st.text_input("N° iscrizione Albo Agronomi e Forestali",
+                st.session_state.get("_az_n_albo",""), key="az_albos")
+            az_ordine_s  = st.text_input("Ordine Provinciale (es: AN — Ancona)",
+                st.session_state.get("_az_ordine",""), key="az_ords")
+        with ag_c2:
+            az_email_agro= st.text_input("Email agronomo (compare nel report)",
+                st.session_state.get("_az_email_agro",""), key="az_eagros")
+            az_tel_agro  = st.text_input("Telefono agronomo",
+                st.session_state.get("_az_tel_agro",""), key="az_tagros")
+            az_studio    = st.text_input("Studio professionale / Società di consulenza",
+                st.session_state.get("_az_studio",""), key="az_studs")
+        st.markdown("**Responsabile Sostenibilità ESG**")
+        rs_c1, rs_c2 = st.columns(2)
+        with rs_c1:
+            az_resp_sost_s = st.text_input("Nome Responsabile Sostenibilità",
+                st.session_state.get("_az_resp_sost",""), key="az_rsos",
+                placeholder="Lascia vuoto se coincide con il Dottore Agronomo")
+            az_ruolo_rs  = st.selectbox("Ruolo formale del responsabile", [
+                "Dottore Agronomo (incarico esterno)","Dipendente interno",
+                "Consulente ESG esterno","Amministratore","Non ancora nominato"], key="az_rrs")
+        with rs_c2:
+            az_nomina_s  = st.selectbox("Delibera / Atto di nomina ESG firmato", [
+                "Sì — delibera formale CdA","Sì — lettera d'incarico",
+                "No — in elaborazione","No"], key="az_noms")
+            az_freq_rev  = st.selectbox("Frequenza aggiornamento dati sostenibilità", [
+                "Annuale","Semestrale","Trimestrale","Ad hoc","Mai effettuata"], key="az_freq")
+        st.markdown("**Altre figure professionali chiave**")
+        alt_c1, alt_c2 = st.columns(2)
+        with alt_c1:
+            az_commerc   = st.text_input("Commercialista / Studio fiscale",
+                st.session_state.get("_az_commerc",""), key="az_comms")
+            az_legale    = st.text_input("Consulente legale / Notaio",
+                st.session_state.get("_az_legale",""), key="az_legs")
+            az_ente_cert = st.text_input("Ente certificatore principale",
+                st.session_state.get("_az_ente_cert",""), key="az_ecs",
+                placeholder="es: ICEA, Bureau Veritas, DNV, RINA")
+        with alt_c2:
+            az_cons_pac  = st.text_input("Consulente PAC / Agronomo CAA",
+                st.session_state.get("_az_cons_pac",""), key="az_cpacs")
+            az_broker    = st.text_input("Broker crediti CO₂ (se presente)",
+                st.session_state.get("_az_broker",""), key="az_broks",
+                placeholder="es: South Pole, Carbonsink.it, CMCC")
+            az_auditor   = st.text_input("Revisore / Auditor esterno ESG",
+                st.session_state.get("_az_auditor",""), key="az_auds")
+        st.session_state.update({
+            "_az_titolare":az_titolare, "_az_cf_tit":az_cf_tit, "_az_nato":az_nato,
+            "_az_tel_tit":az_tel_tit, "_az_email_tit":az_email_tit,
+            "_agronomo":az_agronomo_s, "_az_n_albo":az_n_albo_s, "_az_ordine":az_ordine_s,
+            "_az_email_agro":az_email_agro, "_az_tel_agro":az_tel_agro, "_az_studio":az_studio,
+            "_az_resp_sost":az_resp_sost_s, "_az_commerc":az_commerc,
+            "_az_legale":az_legale, "_az_ente_cert":az_ente_cert,
+            "_az_cons_pac":az_cons_pac, "_az_broker":az_broker, "_az_auditor":az_auditor,
+        })
+        if az_agronomo_s and az_agronomo_s != "Dott. [Cognome]":
+            agronomo = az_agronomo_s
+
+    # ══ TAB 3 — DATI ECONOMICI ═══════════════════════════════════════
+    with az_t3:
+        st.markdown("**Conto Economico — anno di rendicontazione**")
+        ec_c1, ec_c2, ec_c3 = st.columns(3)
+        with ec_c1:
+            az_fatt_tot  = st.number_input("Fatturato totale (€) *",
+                0, 50000000, int(st.session_state.get("_az_fatt", fatturato)), 5000, key="az_fatts")
+            az_fatt_prod = st.number_input("Di cui vendita prodotti agricoli (€)",
+                0, 50000000, int(st.session_state.get("_az_fatt_prod",180000)), 5000, key="az_fatprods")
+            az_fatt_serv = st.number_input("Di cui servizi / agriturismo / altro (€)",
+                0, 10000000, int(st.session_state.get("_az_fatt_serv",0)), 1000, key="az_fatservs")
+            az_contrib   = st.number_input("Contributi PAC e PSR effettivamente percepiti (€)",
+                0, 500000, int(st.session_state.get("_az_contrib",30000)), 1000, key="az_contribs")
+        with ec_c2:
+            az_costi_tot = st.number_input("Costi totali (€) *",
+                0, 50000000, int(st.session_state.get("_az_costi_tot", costi_var)), 5000, key="az_costis")
+            az_costi_pers= st.number_input("Di cui costo personale dipendente (€)",
+                0, 5000000, int(st.session_state.get("_az_costi_pers",0)), 1000, key="az_cperss")
+            az_costi_fert= st.number_input("Di cui fertilizzanti e fitofarmaci (€)",
+                0, 500000, int(st.session_state.get("_az_costi_fert",25000)), 500, key="az_cferts")
+            az_costi_mec = st.number_input("Di cui meccanizzazione, gasolio, riparazioni (€)",
+                0, 200000, int(st.session_state.get("_az_costi_mec",18000)), 500, key="az_cmecs")
+        with ec_c3:
+            az_ebitda    = st.number_input("EBITDA — utile lordo prima ammortamenti (€)",
+                -2000000, 20000000, int(st.session_state.get("_az_ebitda", fatturato - costi_var)), 5000, key="az_ebitdas")
+            az_debiti    = st.number_input("Debiti bancari totali (€)",
+                0, 10000000, int(st.session_state.get("_az_debiti",0)), 5000, key="az_debs")
+            az_invest_prev = st.number_input("Investimenti previsti prossimi 3 anni (€)",
+                0, 10000000, int(st.session_state.get("_az_invest",0)), 5000, key="az_invs")
+            az_val_fond  = st.number_input("Valore stimato fondo agricolo (€) — CREA-AA",
+                0, 100000000, int(st.session_state.get("_az_val_fond",0)), 10000, key="az_vfonds")
+        st.markdown("**Distribuzione del fatturato per canale di vendita (%)**")
+        can_c1, can_c2, can_c3 = st.columns(3)
+        with can_c1:
+            az_pct_gdo   = st.number_input("% GDO nazionale", 0, 100,
+                int(st.session_state.get("_az_pct_gdo",0)), key="az_pgdos")
+            az_pct_ind   = st.number_input("% Industria alimentare", 0, 100,
+                int(st.session_state.get("_az_pct_ind",0)), key="az_pinds")
+        with can_c2:
+            az_pct_coop  = st.number_input("% Cooperativa / Consorzio", 0, 100,
+                int(st.session_state.get("_az_pct_coop",0)), key="az_pcoops")
+            az_pct_dir   = st.number_input("% Vendita diretta / km0", 0, 100,
+                int(st.session_state.get("_az_pct_dir",0)), key="az_pdirs")
+        with can_c3:
+            az_pct_exp   = st.number_input("% Export (UE + extra-UE)", 0, 100,
+                int(st.session_state.get("_az_pct_exp",0)), key="az_pexps")
+            az_pct_ho    = st.number_input("% HO.RE.CA. / ristorazione", 0, 100,
+                int(st.session_state.get("_az_pct_ho",0)), key="az_phos")
+        tot_pct = az_pct_gdo + az_pct_ind + az_pct_coop + az_pct_dir + az_pct_exp + az_pct_ho
+        if tot_pct > 100:
+            st.warning(f"⚠️ Totale canali: {tot_pct}% — deve essere ≤ 100%")
+        elif tot_pct > 0:
+            st.success(f"✅ Distribuzione canali: {tot_pct}% — {'completa' if tot_pct==100 else f'rimane {100-tot_pct}% non classificato'}")
+        st.markdown("**Buyer principali — CSRD Scope 3 supply chain disclosure**")
+        by_c1, by_c2, by_c3 = st.columns(3)
+        with by_c1:
+            az_buyer1_s  = st.text_input("Buyer principale *",
+                st.session_state.get("_az_buyer1",""), key="az_buy1s",
+                placeholder="es: Barilla SpA, Granarolo, Coop Italia")
+            az_buy1_pct  = st.number_input("% fatturato su buyer 1", 0, 100,
+                int(st.session_state.get("_az_buy1_pct",0)), key="az_buy1ps")
+            az_buy1_csrd = st.checkbox("Buyer 1 obbligato CSRD 2026",
+                st.session_state.get("_az_buy1_csrd",False), key="az_buy1cs")
+        with by_c2:
+            az_buyer2_s  = st.text_input("Buyer secondario",
+                st.session_state.get("_az_buyer2",""), key="az_buy2s")
+            az_buy2_pct  = st.number_input("% fatturato su buyer 2", 0, 100,
+                int(st.session_state.get("_az_buy2_pct",0)), key="az_buy2ps")
+            az_buy2_csrd = st.checkbox("Buyer 2 obbligato CSRD 2026",
+                st.session_state.get("_az_buy2_csrd",False), key="az_buy2cs")
+        with by_c3:
+            az_buyer3_s  = st.text_input("Buyer terziario / export",
+                st.session_state.get("_az_buyer3",""), key="az_buy3s")
+            az_buy3_req  = st.text_input("Richieste ESG del buyer 3",
+                st.session_state.get("_az_buy3_req",""), key="az_buy3rs",
+                placeholder="es: GRI Report, CSRD, CO₂ cert.")
+        st.session_state.update({
+            "_az_fatt":az_fatt_tot, "_az_fatt_prod":az_fatt_prod,
+            "_az_fatt_serv":az_fatt_serv, "_az_contrib":az_contrib,
+            "_az_costi_tot":az_costi_tot, "_az_costi_pers":az_costi_pers,
+            "_az_costi_fert":az_costi_fert, "_az_costi_mec":az_costi_mec,
+            "_az_ebitda":az_ebitda, "_az_debiti":az_debiti,
+            "_az_invest":az_invest_prev, "_az_val_fond":az_val_fond,
+            "_az_pct_gdo":az_pct_gdo, "_az_pct_ind":az_pct_ind,
+            "_az_pct_coop":az_pct_coop, "_az_pct_dir":az_pct_dir,
+            "_az_pct_exp":az_pct_exp, "_az_pct_ho":az_pct_ho,
+            "_az_buyer1":az_buyer1_s, "_az_buy1_pct":az_buy1_pct,
+            "_az_buy1_csrd":az_buy1_csrd, "_az_buyer2":az_buyer2_s,
+            "_az_buy2_pct":az_buy2_pct, "_az_buy2_csrd":az_buy2_csrd,
+            "_az_buyer3":az_buyer3_s, "_az_buy3_req":az_buy3_req,
+            "_fatturato": az_fatt_tot, "_costi_var": az_costi_tot,
+        })
+
+    # ══ TAB 4 — ATTIVITÀ & PRODOTTI ══════════════════════════════════
+    with az_t4:
+        st.markdown("**Descrizione dell'azienda (compare nel report)**")
+        ap_c1, ap_c2 = st.columns(2)
+        with ap_c1:
+            az_descr     = st.text_area("Descrizione sintetica attività *",
+                st.session_state.get("_az_descr",""), height=100, key="az_descrs",
+                placeholder="es: Azienda a conduzione familiare di 45 ha in collina marchigiana, specializzata in cerealicoltura biologica e produzione di olio DOP Cartoceto. Terza generazione, dal 1962.")
+            az_storia    = st.text_area("Storia e valori aziendali (per il report narrativo)",
+                st.session_state.get("_az_storia",""), height=80, key="az_storias",
+                placeholder="es: Fondata nel 1962 da Giovanni Rossi, l'azienda è giunta alla terza generazione con una visione sempre più orientata alla sostenibilità...")
+            az_visione   = st.text_area("Visione strategica (per ESRS 2 — General Disclosures)",
+                st.session_state.get("_az_visione",""), height=70, key="az_vis",
+                placeholder="es: Diventare azienda carbon positive entro 2030 e punto di riferimento per l'agricoltura rigenerativa nelle Marche.")
+        with ap_c2:
+            az_prodotti  = st.multiselect("Prodotti commercializzati *", [
+                "Frumento tenero","Frumento duro","Orzo","Mais","Soia",
+                "Girasole","Colza","Vino DOC/IGT","Uva da tavola",
+                "Olio DOP/IGP","Olive da tavola","Nocciole","Mele",
+                "Pere","Pesche/Albicocche","Ciliegie","Fragole",
+                "Pomodoro industria","Pomodoro fresco","Insalate/Ortaggi",
+                "Patate","Cipolla/Aglio","Erba medica/Fieno","Tabacco",
+                "Barbabietola","Latte bovino","Latte ovino/caprino",
+                "Carne bovina","Carne suina","Pollame/Uova","Miele",
+                "Tartufo","Funghi","Erbe aromatiche","Altro"],
+                default=st.session_state.get("_az_prodotti",[]),
+                key="az_prods")
+            az_princ_col = st.text_input("Coltura/prodotto principale (in lettere)",
+                st.session_state.get("_az_princ_col", coltura_principale if 'coltura_principale' in dir() else ""), key="az_princol")
+            az_pack      = st.selectbox("Tipo di confezionamento/consegna principale", [
+                "Sfuso non confezionato","Alla rinfusa (cereali/olio cisterna)",
+                "Bottiglie/vasetti etichettati","Cassette/vaschette fresco",
+                "Sacchi/big bag","Legatura/mazzo","Contenitori gas","Misto"], key="az_packs")
+            az_stagionale= st.selectbox("Tipo di produzione", [
+                "Continua tutto l'anno","Prevalentemente stagionale",
+                "Fortemente stagionale (solo 1-3 mesi)","Variabile per coltura"], key="az_stag")
+        st.markdown("**Strutture e immobili aziendali**")
+        str_c1, str_c2, str_c3 = st.columns(3)
+        with str_c1:
+            az_capannoni_n = st.number_input("Capannoni/magazzini (n°)", 0, 50,
+                int(st.session_state.get("_az_capannoni",0)), key="az_capns")
+            az_mq_cap    = st.number_input("Superficie coperta totale (m²)", 0, 100000,
+                int(st.session_state.get("_az_mq_cap",0)), 50, key="az_mqs")
+            az_serre_n   = st.number_input("Serre (n°)", 0, 200,
+                int(st.session_state.get("_az_serre",0)), key="az_serres")
+            az_mq_serre  = st.number_input("Superficie serre (m²)", 0, 500000,
+                int(st.session_state.get("_az_mq_serre",0)), 100, key="az_mqs2")
+        with str_c2:
+            az_cantina   = st.checkbox("Cantina di vinificazione propria", key="az_cants")
+            az_oleificio = st.checkbox("Frantoio / oleificio proprio", key="az_oleis")
+            az_agritur   = st.checkbox("Agriturismo attivo con pernottamento", key="az_agrits")
+            az_rist      = st.checkbox("Ristorante / osteria aziendale", key="az_rists")
+        with str_c3:
+            az_celle     = st.checkbox("Celle frigorifere proprie", key="az_celles")
+            az_laborat   = st.checkbox("Laboratorio di trasformazione alimenti", key="az_labs")
+            az_pvend     = st.checkbox("Punto vendita diretto in azienda", key="az_pvends")
+            az_ecommerce = st.checkbox("E-commerce / vendita online propria", key="az_ecomm")
+        st.session_state.update({
+            "_az_descr":az_descr, "_az_storia":az_storia, "_az_visione":az_visione,
+            "_az_prodotti":az_prodotti, "_az_princ_col":az_princ_col,
+            "_az_pack":az_pack, "_az_capannoni":az_capannoni_n,
+            "_az_mq_cap":az_mq_cap, "_az_serre":az_serre_n, "_az_mq_serre":az_mq_serre,
+        })
+
+    # ══ TAB 5 — GOVERNANCE & ETICA ════════════════════════════════════
+    with az_t5:
+        st.markdown("**Struttura di governance (ESRS 2 — obbligatorio CSRD)**")
+        go_c1, go_c2 = st.columns(2)
+        with go_c1:
+            az_gov_tipo  = st.selectbox("Modello di governance adottato", [
+                "Gestione familiare diretta — titolare unico decisore",
+                "CdA con soci familiari","CdA con amministratori indipendenti",
+                "Management professionale esterno","Cooperativa con assemblea soci",
+                "Consorzio con governance condivisa","Altro"], key="az_govs")
+            az_cda_comp  = st.text_area("Composizione CdA / organo di governance",
+                st.session_state.get("_az_cda",""), height=70, key="az_cdas",
+                placeholder="es: Titolare Mario Rossi + coniuge Laura Bianchi (soci al 50/50), entrambi con deleghe operative. Nessun amministratore indipendente.")
+            az_verbali   = st.selectbox("Verbali riunioni con tema sostenibilità", [
+                "Sì — regolari e archiviati","Sì — occasionali e conservati",
+                "No — non formalizzati"], key="az_verbs")
+        with go_c2:
+            az_freq_riu  = st.selectbox("Frequenza riunioni su temi ESG/sostenibilità", [
+                "Mensile","Trimestrale","Semestrale","Annuale","Mai effettuate"], key="az_frius")
+            az_strategia = st.text_area("Strategia di sostenibilità (compare nel report ESRS 2)",
+                st.session_state.get("_az_strategia",""), height=90, key="az_strats",
+                placeholder="es: Conversione progressiva al biologico entro 2030. Riduzione fertilizzanti minerali del 50% entro 2027. Certificazione ISO 14064 entro 2025. Carbon positive entro 2030.")
+            az_obj_sost  = st.selectbox("Obiettivi con target numerici e scadenze", [
+                "Sì — verificabili e documentati con data","Sì — definiti ma non ancora formalizzati",
+                "No — in fase di definizione","No"], key="az_objs")
+        st.markdown("**Politiche etiche — ESRS G1**")
+        et_c1, et_c2 = st.columns(2)
+        with et_c1:
+            az_codice_et = st.selectbox("Codice etico aziendale adottato", [
+                "Sì — pubblicato sul sito web e comunicato","Sì — documento interno",
+                "In elaborazione","No"], key="az_codes")
+            az_anticorr  = st.selectbox("Politica anticorruzione / anti-frode", [
+                "Sì — formale con registro violazioni","Sì — informale",
+                "No","Non applicabile (azienda familiare <5 dipendenti)"], key="az_acorrs")
+            az_whistle   = st.selectbox("Canale segnalazione irregolarità (whistleblowing)", [
+                "Sì — sistema digitale anonimo certificato","Sì — referente interno designato",
+                "No — in valutazione","No"], key="az_whis")
+        with et_c2:
+            az_conflitti = st.selectbox("Procedura gestione conflitti di interesse", [
+                "Sì — formale con registro dichiarazioni","Sì — informale",
+                "No","Non applicabile"], key="az_confs")
+            az_form_et   = st.checkbox("Formazione su etica/anticorruzione erogata ai dipendenti", key="az_feths")
+            az_violaz    = st.number_input("Violazioni normative significative (ultimi 3 anni)",
+                0, 100, int(st.session_state.get("_az_viol",0)), key="az_viols")
+            az_sanzioni  = st.number_input("Sanzioni amministrative ricevute (n°/anno)",
+                0, 100, int(st.session_state.get("_az_san",0)), key="az_sans")
+        st.markdown("**Stakeholder Engagement — ESRS 1 prerequisito obbligatorio**")
+        sk_c1, sk_c2 = st.columns(2)
+        with sk_c1:
+            az_sk_coinv  = st.multiselect("Stakeholder coinvolti nell'analisi di materialità", [
+                "Clienti/buyer principali","Fornitori/contoterzisti",
+                "Dipendenti e lavoratori stagionali","Comunità locali e vicini",
+                "Enti locali (Comune, Regione, Parchi)","Banche/investitori",
+                "Enti certificatori (ICEA, Bureau Veritas...)","Consumatori finali",
+                "ONG/Associazioni ambientali","Media e giornalisti agricoli",
+                "Università e centri di ricerca"],
+                default=st.session_state.get("_az_sk_coinv",[]), key="az_skcs")
+            az_sk_metodo = st.multiselect("Metodi di coinvolgimento utilizzati", [
+                "Questionari strutturati online","Interviste dirette faccia a faccia",
+                "Focus group","Workshop/riunioni","Email/comunicazione scritta",
+                "Sopralluogo condiviso","Nessuno ancora"],
+                default=st.session_state.get("_az_sk_met",[]), key="az_skms")
+        with sk_c2:
+            az_sk_data   = st.text_input("Data ultima consultazione stakeholder (MM/AAAA)",
+                st.session_state.get("_az_sk_data",""), key="az_skds")
+            az_sk_freq   = st.selectbox("Frequenza revisione analisi di materialità", [
+                "Annuale","Biennale","Ad hoc (dopo eventi rilevanti)","Mai effettuata"], key="az_skfs")
+            az_sk_ris    = st.text_area("Sintesi risultati engagement (per l'auditor)",
+                st.session_state.get("_az_sk_ris",""), height=80, key="az_skrs",
+                placeholder="es: Consultazione con 3 buyer principali e 2 dipendenti il 15/03/2024. Temi prioritari emersi: 1) Scope 3 fertilizzanti 2) Consumo acqua 3) Tracciabilità prodotto.")
+        st.session_state.update({
+            "_az_cda":az_cda_comp, "_az_strategia":az_strategia,
+            "_az_viol":az_violaz, "_az_san":az_sanzioni,
+            "_az_sk_coinv":az_sk_coinv, "_az_sk_met":az_sk_metodo,
+            "_az_sk_data":az_sk_data, "_az_sk_ris":az_sk_ris,
+        })
+
+    # ══ TAB 6 — BANCHE & FINANZA VERDE ════════════════════════════════
+    with az_t6:
+        st.markdown("**Rapporti bancari**")
+        bk_c1, bk_c2 = st.columns(2)
+        with bk_c1:
+            az_banca_pri = st.text_input("Banca principale",
+                st.session_state.get("_az_banca_pri",""), key="az_bpris",
+                placeholder="es: UniCredit, Intesa Sanpaolo, BCC Marche, Cassa Rurale")
+            az_banca_sec = st.text_input("Seconda banca (se presente)",
+                st.session_state.get("_az_banca_sec",""), key="az_bsecs")
+            az_fido_tot  = st.number_input("Fido bancario totale concesso (€)", 0, 10000000,
+                int(st.session_state.get("_az_fido",0)), 5000, key="az_fidos")
+            az_mutuo     = st.number_input("Mutuo fondiario residuo da pagare (€)", 0, 5000000,
+                int(st.session_state.get("_az_mutuo",0)), 5000, key="az_mutuos")
+        with bk_c2:
+            az_tasso_att = st.number_input("Tasso medio finanziamenti attuali (%)", 0.0, 15.0,
+                float(st.session_state.get("_az_tasso",4.5)), 0.1, format="%.1f", key="az_tassos")
+            az_rating    = st.selectbox("Rating bancario / classe di merito creditizio", [
+                "Non comunicato dalla banca","AAA — eccellente",
+                "AA — ottimo","A — buono","BBB — adeguato",
+                "BB — sotto la media","B — scarso","Altro"], key="az_rats")
+            az_scad_fin  = st.text_input("Scadenza finanziamento principale (MM/AAAA)",
+                st.session_state.get("_az_scad_fin",""), key="az_scadfins")
+        st.markdown("**Accesso a finanziamenti agevolati e verdi**")
+        fv_c1, fv_c2 = st.columns(2)
+        with fv_c1:
+            st.markdown("*Misure PSR/CSR attive o richieste*")
+            az_psr_attivi= st.multiselect("Misure attive", [
+                "Mis. 4.1 — Investimenti aziende agricole",
+                "Mis. 4.2 — Trasformazione agroalimentare",
+                "Mis. 10 — Pagamenti agro-ambiente-clima",
+                "Mis. 11 — Agricoltura biologica",
+                "Mis. 13 — Zone svantaggiate/montagna",
+                "Mis. 16 — Cooperazione e innovazione",
+                "PAC Eco-Scheme ES1 (biologico)","PAC Eco-Scheme ES2 (pratiche clima)",
+                "PAC Eco-Scheme ES4 (impollinatori)","PAC Eco-Scheme ES5 (risorse idriche)",
+                "Agro-climatica carbonio suolo","Altra misura","Nessuna"], key="az_psrs")
+            az_pnrr_att  = st.multiselect("Bandi PNRR presentati o in istruttoria", [
+                "Agritech (Mis. 2.3 — fondi ricerca)","Contratti di filiera e d'area",
+                "Infrastrutture irrigue ammodernamento",
+                "Fotovoltaico + batterie in agricoltura",
+                "Altro bando PNRR","Nessuno"], key="az_pnrrs")
+        with fv_c2:
+            st.markdown("*Accesso a strumenti finanziari agevolati*")
+            az_bei       = st.checkbox("Accesso a prestiti BEI (Banca Europea Investimenti)", key="az_beis")
+            az_ismea     = st.checkbox("Prodotti ISMEA (mutui/garanzie agevolate)", key="az_ismeas")
+            az_garanzie  = st.checkbox("Garanzie SGFA (Sezione Speciale Agric.)", key="az_sgfas")
+            az_score_esg_b = st.selectbox("ESG score bancario formale assegnato dalla banca", [
+                "No — non valutato","Sì — calcolato dalla banca",
+                "Sì — da AgroLog IA (in fase di riconoscimento)","In valutazione"], key="az_esgbs")
+            az_tasso_esg = st.number_input("Tasso agevolato ESG ottenuto o previsto (%)", 0.0, 10.0,
+                float(st.session_state.get("_az_tasso_esg",0.0)), 0.1, format="%.1f", key="az_tassoesgs",
+                help="Risparmio tasso per il merito ESG — es: -0.8% su mutuo grazie a certificazione ISO 14064")
+        st.markdown("**Assicurazioni agricole**")
+        ass_c1, ass_c2 = st.columns(2)
+        with ass_c1:
+            az_assic_gran= st.checkbox("Assicurazione grandine / avversità atmosferiche", key="az_assgrs")
+            az_assic_sicc= st.checkbox("Assicurazione siccità / mancata resa", key="az_assis")
+            az_assic_resp= st.checkbox("RC Professionale del Dottore Agronomo attiva", key="az_assrcs")
+        with ass_c2:
+            az_assic_ente= st.text_input("Compagnia assicurativa principale",
+                st.session_state.get("_az_assic_ente",""), key="az_asses",
+                placeholder="es: Cattolica Assicurazioni, Generali, UnipolSai")
+            az_premi_ann = st.number_input("Premi assicurativi agricoli annui (€)", 0, 200000,
+                int(st.session_state.get("_az_premi",0)), 500, key="az_prems")
+        st.session_state.update({
+            "_az_banca_pri":az_banca_pri, "_az_banca_sec":az_banca_sec,
+            "_az_fido":az_fido_tot, "_az_mutuo":az_mutuo, "_az_tasso":az_tasso_att,
+            "_az_scad_fin":az_scad_fin, "_az_tasso_esg":az_tasso_esg,
+            "_az_assic_ente":az_assic_ente, "_az_premi":az_premi_ann,
+        })
+
+    # ══ TAB 7 — NOTE AUDITOR ══════════════════════════════════════════
+    with az_t7:
+        st.markdown("**Note tecniche riservate (non compaiono nei report pubblici)**")
+        na_c1, na_c2 = st.columns(2)
+        with na_c1:
+            az_note_gen  = st.text_area("Note generali sull'azienda per l'agronomo",
+                st.session_state.get("_az_note_gen",""), height=90, key="az_notegs",
+                placeholder="es: Azienda in transizione biologica dal 2023 — dati SO% in miglioramento ma non ancora stabili. Campo Nord A1 ha avuto problemi di siccità nel 2023...")
+            az_note_ghg  = st.text_area("Note calcolo GHG — incertezze e assunzioni",
+                st.session_state.get("_az_note_ghg",""), height=80, key="az_noteghgs",
+                placeholder="es: Dato irrigazione campo Nord A1 stimato per difetto — da verificare con contatore reale. N₂O probabilmente sovrastimato per il vigneto (poche lavorazioni)...")
+        with na_c2:
+            az_note_dma  = st.text_area("Note analisi doppia materialità (DMA)",
+                st.session_state.get("_az_note_dma",""), height=80, key="az_notedmas",
+                placeholder="es: Consultazione effettuata 15/03/2024 con buyer Barilla e 2 lavoratori stagionali. Priorità: acqua e fertilizzanti. Prossima consultazione: marzo 2025.")
+            az_note_cert = st.text_area("Note iter certificazione — stato avanzamento",
+                st.session_state.get("_az_note_cert",""), height=80, key="az_notecerts",
+                placeholder="es: Contatto Bureau Veritas avviato 02/2024. Preventivo ISO 14064-3: €3.200. Verifica pianificata giugno 2024. Verra VCS: da avviare dopo ISO.")
+        st.markdown("**Dichiarazioni ufficiali che compaiono nel report**")
+        az_dichiar   = st.text_area("Dichiarazione metodologica del Dottore Agronomo (compare nel report)",
+            st.session_state.get("_az_dichiar",
+            "Il presente report è elaborato sulla base dei dati aziendali forniti dal titolare "
+            "e verificati in campo dal sottoscritto Dottore Agronomo. Le metodologie di calcolo GHG "
+            "seguono lo standard IPCC 2006 Tier 1 e il GHG Protocol Corporate Standard. "
+            "I dati sono rappresentativi dell'anno di rendicontazione indicato e soggetti "
+            "a revisione annuale secondo quanto previsto dagli standard applicati."),
+            height=100, key="az_dichs")
+        az_limitazioni = st.text_area("Limitazioni e omissioni da dichiarare — ESRS 1 richiede trasparenza",
+            st.session_state.get("_az_limit",""), height=70, key="az_lims",
+            placeholder="es: Dati Scope 2 non disponibili in quanto l'azienda non ha misurato il consumo elettrico. Dati N₂O calcolati con Tier 1 (incertezza ±50%). Scope 3 trasporti stimato...")
+        col_firma1, col_firma2 = st.columns(2)
+        with col_firma1:
+            az_data_firma= st.text_input("Data di emissione del report (GG/MM/AAAA)",
+                st.session_state.get("_az_data_firma", datetime.now().strftime("%d/%m/%Y")),
+                key="az_datafs")
+        with col_firma2:
+            az_luogo_firma = st.text_input("Luogo di firma del report",
+                st.session_state.get("_az_luogo",""), key="az_luogos",
+                placeholder="es: Ancona")
+        st.session_state.update({
+            "_az_note_gen":az_note_gen, "_az_note_ghg":az_note_ghg,
+            "_az_note_dma":az_note_dma, "_az_note_cert":az_note_cert,
+            "_az_dichiar":az_dichiar, "_az_limit":az_limitazioni,
+            "_az_data_firma":az_data_firma, "_az_luogo":az_luogo_firma,
+        })
+
+    # ── Barra completezza ──────────────────────────────────────────
+    st.markdown("---")
+    _campi_obblig = [
+        ("Ragione Sociale", bool(st.session_state.get("_az_ragione",""))),
+        ("P.IVA", bool(st.session_state.get("_az_piva",""))),
+        ("Comune", bool(st.session_state.get("_az_comune_az",""))),
+        ("Email aziendale", bool(st.session_state.get("_az_email_az",""))),
+        ("Titolare", bool(st.session_state.get("_az_titolare",""))),
+        ("Dottore Agronomo", bool(st.session_state.get("_agronomo","") not in ["","Dott. [Cognome]"])),
+        ("N° Albo Agronomi", bool(st.session_state.get("_az_n_albo",""))),
+        ("Fatturato", bool(st.session_state.get("_az_fatt",0) > 0)),
+        ("Buyer principale", bool(st.session_state.get("_az_buyer1",""))),
+        ("Descrizione attività", bool(st.session_state.get("_az_descr",""))),
+        ("Strategia ESG", bool(st.session_state.get("_az_strategia",""))),
+        ("Dichiarazione agronomo", bool(st.session_state.get("_az_dichiar",""))),
+    ]
+    _ok_count = sum(1 for _, v in _campi_obblig if v)
+    _pct_ok = round(_ok_count / len(_campi_obblig) * 100)
+    _col_pct = "#4ade80" if _pct_ok >= 80 else "#fbbf24" if _pct_ok >= 50 else "#f87171"
+    st.markdown(f"""<div style="background:#0d1a0d;border-radius:12px;padding:.9rem 1.1rem;
+      border:1px solid rgba(34,197,94,.25)">
+      <div style="font-size:.82rem;font-weight:700;color:{_col_pct};margin-bottom:.5rem">
+        📊 Completezza scheda aziendale: {_pct_ok}% — {_ok_count}/{len(_campi_obblig)} campi chiave
+      </div>
+      <div style="background:rgba(0,0,0,.3);border-radius:4px;height:6px;margin-bottom:.6rem">
+        <div style="background:{_col_pct};height:6px;border-radius:4px;width:{_pct_ok}%"></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:.25rem">
+        {"".join([
+          f'<span style="font-size:.66rem;padding:2px 8px;border-radius:10px;'
+          f'background:{"rgba(34,197,94,.12)" if v else "rgba(239,68,68,.1)"};'
+          f'color:{"#4ade80" if v else "#fca5a5"};'
+          f'border:1px solid {"rgba(34,197,94,.25)" if v else "rgba(239,68,68,.25)"}">'
+          f'{"✅" if v else "○"} {k}</span>'
+          for k, v in _campi_obblig])}
+      </div>
+      <div style="font-size:.7rem;margin-top:.5rem;color:{"#4ade80" if _pct_ok>=80 else "#fbbf24"}">
+        {"✅ Scheda completa — i report possono essere generati con dati verificabili e certificabili." if _pct_ok>=80 else "⚠️ Completa i campi mancanti nelle tab sopra — sono necessari per i report CSRD/GRI/ISO 14064 ufficiali."}
+      </div>
+    </div>""", unsafe_allow_html=True)
+
+    # Aggiorna variabili globali usate nel resto dell'app
+    _n_az = st.session_state.get("_az_ragione","")
+    if _n_az: nome_az = _n_az; st.session_state["_nome_az"] = _n_az
+    _ag = st.session_state.get("_agronomo","")
+    if _ag and _ag not in ["","Dott. [Cognome]"]: agronomo = _ag
 
 # ══════════════════════════════════════════════════════════════════════
 #  TABELLA APPEZZAMENTI
